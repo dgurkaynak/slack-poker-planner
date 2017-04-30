@@ -1,7 +1,7 @@
 const winston = require('winston');
 const Hapi = require('hapi');
 const path = require('path');
-const request = require('request-promise');
+const rp = require('request-promise');
 require('dotenv').config();
 
 
@@ -13,9 +13,10 @@ server.route({
     path: path.join(process.env.BASE_PATH, 'slack/pp-command'),
     handler: (request, reply) => {
         winston.info('pp-command', request.payload);
+        reply();
 
-        request({
-            url: request.payload.response_url,
+        rp({
+            uri: request.payload.response_url,
             method: 'POST',
             body: {
                 text: 'Some response kanki',
@@ -56,9 +57,13 @@ server.route({
                         ]
                     }
                 ]
-            }
-        })
-        reply();
+            },
+            json: true
+        }).catch((err) => {
+            winston.error('Could not respond pp-command', err);
+        });
+
+
     }
 });
 
