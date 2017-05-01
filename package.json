@@ -29,6 +29,7 @@
     "dotenv": "4.0.0",
     "handlebars": "4.0.7",
     "hapi": "16.1.1",
+    "inert": "4.2.0",
     "lodash": "4.17.4",
     "request": "2.81.0",
     "request-promise": "4.2.0",

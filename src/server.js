@@ -3,6 +3,7 @@ const Hapi = require('hapi');
 const path = require('path');
 const Vision = require('vision');
 const Handlebars = require('handlebars');
+const inert = require('inert');
 
 
 function create() {
@@ -19,6 +20,11 @@ function create() {
             },
             path: __dirname + '/views'
         });
+    });
+    server.register(inert, (err) => {
+        if (err) {
+            winston.error('Cannot register inert');
+        }
     });
 
     return server;
@@ -47,6 +53,14 @@ function initRoutes(server) {
         method: 'GET',
         path: process.env.BASE_PATH,
         handler: require('./routes/index')
+    });
+
+    server.route({
+        method: 'GET',
+        path: path.join(process.env.BASE_PATH, 'demo.gif'),
+        handler: function (request, reply) {
+            reply.file('./demo.gif');
+        }
     });
 
     server.route({
