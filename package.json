@@ -1,17 +1,23 @@
 {
   "name": "slack-poker-planner",
   "version": "0.0.1",
-  "description": "Slack app for poker planning",
-  "main": "src/server.js",
+  "description": "Poker planning app for slack",
+  "main": "src/app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/app.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/dgurkaynak/slack-poker-planner.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "slack",
+    "poker planning",
+    "poker planner",
+    "bot"
+  ],
+  "author": "Deniz Gurkaynak <dgurkaynak@gmail.com>",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/dgurkaynak/slack-poker-planner/issues"
