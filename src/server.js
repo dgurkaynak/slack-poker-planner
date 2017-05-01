@@ -4,11 +4,65 @@ const Hapi = require('hapi');
 const path = require('path');
 const Topic = require('./topic');
 const rp = require('request-promise');
+const Vision = require('vision');
+const Handlebars = require('handlebars');
+const WebClient = require('@slack/client').WebClient;
 
 
 const topics = {};
 const server = new Hapi.Server();
 server.connection({ port: process.env.PORT });
+server.register(Vision, (err) => {
+    if (err) {
+        winston.error('Cannot register vision');
+    }
+
+    server.views({
+        engines: {
+            html: Handlebars
+        },
+        path: __dirname + '/views',
+        // layout: 'layout'
+    });
+})
+
+
+server.route({
+    method: 'GET',
+    path: process.env.BASE_PATH,
+    handler: (request, reply) => {
+        reply.view('index', {
+            SLACK_CLIENT_ID: process.env.SLACK_CLIENT_ID,
+            SLACK_SCOPE: process.env.SLACK_SCOPE
+        });
+    }
+});
+
+
+server.route({
+    method: 'GET',
+    path: path.join(process.env.BASE_PATH, 'oauth'),
+    handler: (request, reply) => {
+        if (request.query.code) {
+            // Installed!
+            const webClient = new WebClient();
+            webClient.oauth
+                .access(process.env.SLACK_CLIENT_ID, process.env.SLACK_CLIENT_SECRET, request.query.code)
+                .then((response) => {
+                    console.log('response', response);
+                })
+                .catch((err) => {
+                    console.log('err', err);
+                });
+        } else if (request.query.error) {
+            // Error
+        } else {
+            // Unknown error
+        }
+
+        reply();
+    }
+});
 
 
 server.route({
