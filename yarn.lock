@@ -19,6 +19,10 @@
     winston "^2.1.1"
     ws "^1.0.1"
 
+"@types/es6-promise@0.0.32":
+  version "0.0.32"
+  resolved "https://registry.yarnpkg.com/@types/es6-promise/-/es6-promise-0.0.32.tgz#3bcf44fb1e429f3df76188c8c6d874463ba371fd"
+
 accept@2.x.x:
   version "2.1.3"
   resolved "https://registry.yarnpkg.com/accept/-/accept-2.1.3.tgz#ab0f5bda4c449bbe926aea607b3522562f5acf86"
@@ -191,6 +195,13 @@ ecc-jsbn@~0.1.1:
   resolved "https://registry.yarnpkg.com/ecc-jsbn/-/ecc-jsbn-0.1.1.tgz#0fc73a9ed5f0d53c38193398523ef7e543777505"
   dependencies:
     jsbn "~0.1.0"
+
+event-emitter-extra@0.1.7:
+  version "0.1.7"
+  resolved "https://registry.yarnpkg.com/event-emitter-extra/-/event-emitter-extra-0.1.7.tgz#eebf9cb3d156d429f8a783e11dff80da13a8ff10"
+  dependencies:
+    "@types/es6-promise" "0.0.32"
+    promise-polyfill "6.0.2"
 
 eventemitter3@^1.1.1:
   version "1.2.0"
@@ -375,7 +386,7 @@ jsprim@^1.2.2:
     json-schema "0.2.3"
     verror "1.3.6"
 
-lodash@^4.13.1:
+lodash@4.17.4, lodash@^4.13.1:
   version "4.17.4"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.4.tgz#78203a4d1c328ae1d86dca6460e369b57f4055ae"
 
@@ -440,6 +451,10 @@ podium@^1.2.x:
     hoek "4.x.x"
     items "2.x.x"
     joi "10.x.x"
+
+promise-polyfill@6.0.2:
+  version "6.0.2"
+  resolved "https://registry.yarnpkg.com/promise-polyfill/-/promise-polyfill-6.0.2.tgz#d9c86d3dc4dc2df9016e88946defd69b49b41162"
 
 punycode@^1.4.1:
   version "1.4.1"
@@ -593,7 +608,7 @@ url-join@0.0.1:
   version "0.0.1"
   resolved "https://registry.yarnpkg.com/url-join/-/url-join-0.0.1.tgz#1db48ad422d3402469a87f7d97bdebfe4fb1e3c8"
 
-uuid@^3.0.0:
+uuid@3.0.1, uuid@^3.0.0:
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-3.0.1.tgz#6544bba2dfda8c1cf17e629a3a305e2bb1fee6c1"
 

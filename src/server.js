@@ -1,12 +1,15 @@
+require('dotenv').config();
 const winston = require('winston');
 const Hapi = require('hapi');
 const path = require('path');
+const Topic = require('./topic');
 const rp = require('request-promise');
-require('dotenv').config();
 
 
+const topics = {};
 const server = new Hapi.Server();
 server.connection({ port: process.env.PORT });
+
 
 server.route({
     method: 'POST',
@@ -15,57 +18,23 @@ server.route({
         winston.info('pp-command', request.payload);
         reply();
 
-        rp({
-            uri: request.payload.response_url,
-            method: 'POST',
-            body: {
-                text: 'Some response kanki',
-                response_type: 'ephemeral',
-                attachments: [
-                    {
-                        "text": "Choose a game to play",
-                        "fallback": "You are unable to choose a game",
-                        "callback_id": "wopr_game",
-                        "color": "#3AA3E3",
-                        "attachment_type": "default",
-                        "actions": [
-                            {
-                                "name": "game",
-                                "text": "Chess",
-                                "type": "button",
-                                "value": "chess"
-                            },
-                            {
-                                "name": "game",
-                                "text": "Falken's Maze",
-                                "type": "button",
-                                "value": "maze"
-                            },
-                            {
-                                "name": "game",
-                                "text": "Thermonuclear War",
-                                "style": "danger",
-                                "type": "button",
-                                "value": "war",
-                                "confirm": {
-                                    "title": "Are you sure?",
-                                    "text": "Wouldn't you prefer a good game of chess?",
-                                    "ok_text": "Yes",
-                                    "dismiss_text": "No"
-                                }
-                            }
-                        ]
-                    }
-                ]
-            },
-            json: true
-        }).catch((err) => {
-            winston.error('Could not respond pp-command', err);
-        });
+        const topic = new Topic(request.payload);
+        topic
+            .init()
+            .then(() => {
+                topics[topic.id] = topic;
 
-
+                topic.once('revealed', () => {
+                    topics[topic.id].removeAllListeners();
+                    delete topics[topic.id];
+                });
+            })
+            .catch((err) => {
+                winston.error('Could not init topic', err);
+            });
     }
 });
+
 
 server.route({
     method: 'POST',
@@ -73,8 +42,40 @@ server.route({
     handler: (request, reply) => {
         winston.info('action-endpoint', request.payload);
         reply();
+
+        const payload = JSON.parse(request.payload.payload);
+        const parts = payload.callback_id.split('_');
+        if (parts.length != 2) {
+            winston.warn('Could not parse callback id', payload.callback_id);
+            return;
+        }
+
+        const action = parts[0];
+        const id = parts[1];
+        const topic = topics[id];
+        const username = payload.user.name;
+
+        if (!topic) {
+            winston.warn('Could not find topic', {id, action, callbackId: payload.callback_id});
+            return;
+        }
+
+        switch (action) {
+            case 'action':
+                topic.reveal();
+                break;
+            case 'vote':
+                topic
+                    .vote(payload.user.name, payload.actions[0].value)
+                    .catch(() => {});
+                break;
+            default:
+                winston.warn('Unknown action', {id, action, callbackId: payload.callback_id});
+                break;
+        }
     }
 });
+
 
 server.route({
     method: 'POST',
@@ -84,6 +85,7 @@ server.route({
         reply();
     }
 });
+
 
 server.start((err) => {
     if (err) {
