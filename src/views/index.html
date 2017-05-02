@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Poker Planning App for Slack</title>
-    <meta name="description" content="">
+    <title>Slack Poker Planner</title>
+    <meta name="description" content="Poker planning app for Slack. Make your agile estimations and sprint planning in your Slack.">
     <meta name="author" content="Deniz Gurkaynak">
 
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -31,26 +31,36 @@
         </div>
 
         <div class="row" style="text-align: center;">
-            <img src="./demo.gif" alt="Demo of poker planner app for Slack" class="u-max-full-width">
+            <div class="one columns">&nbsp;</div>
+            <div class="ten columns">
+                <img src="./demo.gif" alt="Demo of poker planner app for Slack" class="u-max-full-width">
+            </div>
+            <div class="one columns">&nbsp;</div>
         </div>
 
         <div class="row" style="margin-top: 10%;">
+            <h4>What is this?</h4>
+            <p>
+                This is a free and open-source project lets you make estimating and planning
+                just from Slack, without any need of external software or web-app. You can read more
+                <a href="https://en.wikipedia.org/wiki/Planning_poker">planning poker on wiki</a>.
+                This service is totally free, you can install the app with "Add to Slack" button above.
+                If you want to host your own app, please check <a href="https://github.com/dgurkaynak/slack-poker-planner">the setup guide on Github</a>.
+            </p>
+        </div>
+
+        <div class="row" style="border-bottom: 1px solid #ddd; margin-bottom: 30px;">
             <h4>Usage</h4>
             <p>
-                After successful installation with "Add to Slack" button above,
-                <code>/pp</code> command will be avaliable in your slack.
-            </p>
-            <p>
+                After successful installation, <code>/pp</code> command will be avaliable in your slack team.
                 Just type <code>/pp some task name</code> with a short description to
-                start a poker planning. This command will be find active users in the
-                channel/group and add them as participants to poker planning.
+                start a poker planning. This command will find active users in the
+                current channel/group and add them as participants to poker planning.
+                (Therefore <code>/pp</code> command does not work in direct messages.)
             </p>
             <p>
-                Alternatively you can specifically add users to poker planning by mentioning them:
+                Alternatively you can specifically add users to poker planning just by mentioning them:
                 <code>/pp some task name @user1 @user2</code>
-            </p>
-            <p>
-                Please note that <code>/pp</code> command does not work in direct messages.
             </p>
         </div>
     </div>
