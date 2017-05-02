@@ -28,9 +28,9 @@ function update(data) {
         `UPDATE
             team
         SET
-            name = $name
-            access_token = $access_token
-            scope = $scope
+            name = $name,
+            access_token = $access_token,
+            scope = $scope,
             user_id = $user_id
         WHERE
             id = $id`,
