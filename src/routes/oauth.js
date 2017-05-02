@@ -1,6 +1,7 @@
 const winston = require('winston');
 const WebClient = require('@slack/client').WebClient;
 const Team = require('../team');
+const Boom = require('boom');
 
 
 module.exports = (request, reply) => {
@@ -20,13 +21,16 @@ module.exports = (request, reply) => {
                 // Display success
                 reply('Success');
             })
-            .catch(err => winston.error('Could not oauth', err));
+            .catch((err) => {
+                winston.error('Could not oauth', err);
+                reply(err);
+            });
     } else if (request.query.error) {
         // Error
         // Display error
+        reply(request.query.error);
     } else {
         // Unknown error
+        reply('Unknown error');
     }
-
-    reply();
 };
