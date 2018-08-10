@@ -9,20 +9,19 @@ const utils = require('./utils');
 const topics = {};
 
 
-function get(id) {
-    return Promise.resolve(topics[id]);
+async function get(id) {
+    return topics[id];
 }
 
 
-function save(topic) {
+async function save(topic) {
     topics[topic.id] = topic;
-    return Promise.resolve(topic);
+    return topic;
 }
 
 
-function remove(topic) {
+async function remove(topic) {
     delete topics[topic.id];
-    return Promise.resolve();
 }
 
 
@@ -42,25 +41,22 @@ function createFromPPCommand(ppCommand) {
 }
 
 
-function init(topic, team) {
+async function init(topic, team) {
     if (!topic.title) {
-        return Promise.reject(new Error('Please provide a valid topic name'));
+        throw new Error('Please provide a valid topic name');
     }
 
     if (topic.ppCommand.channel_name == 'directmessage') {
-        return Promise.reject(new Error('Poker planning cannot be started in direct messages.'));
+        throw new Error('Poker planning cannot be started in direct messages.');
     }
 
-    return decideParticipants(topic, team)
-        .then((participants) => {
-            topic.participants = participants;
-            return postTopicMessage(topic, team);
-        })
-        .then(() => save(topic));
+    topic.participants = await decideParticipants(topic, team);
+    await postTopicMessage(topic, team);
+    await save(topic);
 }
 
 
-function decideParticipants(topic, team) {
+async function decideParticipants(topic, team) {
     const slackWebClient = new WebClient(team.access_token);
 
     // Custom mentioned participants
@@ -70,45 +66,33 @@ function decideParticipants(topic, team) {
             name: topic.ppCommand.user_name
         }]);
         const participants = _.uniq(mentionsIncludingSelf, 'name');
-        return Promise.resolve(participants);
+        return participants;
     }
 
     // No mentions, get active users of current channel/group
-    let channelUserIds = [];
-    return slackWebClient[topic.ppCommand.channel_name == 'privategroup' ? 'groups' : 'channels']
-        .info(topic.ppCommand.channel_id)
-        .then((response) => {
-            channelUserIds = (response.channel || response.group).members;
-            const tasks = channelUserIds.map(id => slackWebClient.users.getPresence(id));
-            return Promise.all(tasks);
-        })
-        .then(responses => channelUserIds.filter((id, index) => responses[index].presence == 'active'))
-        .then((onlineUserIds) => {
-            const tasks = onlineUserIds.map(id => slackWebClient.users.info(id));
-            return Promise.all(tasks);
-        })
-        .then((responses) => {
-            return responses.map(response => ({
-                id: response.user.id,
-                name: response.user.name
-            }));
-        });
+    const apiNamespace = topic.ppCommand.channel_name == 'privategroup' ? 'groups' : 'channels';
+    const info = await slackWebClient[apiNamespace].info(topic.ppCommand.channel_id);
+    const channelUserIds = (info.channel || info.group).members;
+    const presenceTasks = channelUserIds.map(id => slackWebClient.users.getPresence(id));
+    const presences = await Promise.all(presenceTasks);
+    const onlineUserIds = channelUserIds.filter((id, index) => presences[index].presence == 'active')
+    const infoTasks = onlineUserIds.map(id => slackWebClient.users.info(id));
+    const infos = await Promise.all(infoTasks);
+    return infos.map(response => ({
+        id: response.user.id,
+        name: response.user.name
+    }));
 }
 
 
-function postTopicMessage(topic, team) {
+async function postTopicMessage(topic, team) {
     const slackWebClient = new WebClient(team.access_token);
-
-    return slackWebClient.chat
-        .postMessage(
-            topic.ppCommand.channel_id,
-            `Please vote the topic: *"${topic.title}"* \nParticipants: ` +
-                `${topic.participants.map(user => `<@${user.id}|${user.name}>`).join(' ')}`,
-            buildTopicMessageOptions(topic)
-        )
-        .then((res) => {
-            topic.topicMessage = res;
-        });
+    topic.topicMessage = await slackWebClient.chat.postMessage(
+        topic.ppCommand.channel_id,
+        `Please vote the topic: *"${topic.title}"* \nParticipants: ` +
+            `${topic.participants.map(user => `<@${user.id}|${user.name}>`).join(' ')}`,
+        buildTopicMessageOptions(topic)
+    );
 }
 
 
@@ -227,37 +211,33 @@ function rejectPPCommand(ppCommand, reason) {
 }
 
 
-function reveal(topic, team) {
+async function reveal(topic, team) {
     const slackWebClient = new WebClient(team.access_token);
     topic.isRevealed = true;
-
-    return slackWebClient.chat
-        .update(
-            topic.topicMessage.ts,
-            topic.topicMessage.channel,
-            `Votes for topic *"${topic.title}"*: \n` +
-                (_.map(topic.votes, (vote) => `<@${vote.user.id}|${vote.user.name}>: *${vote.point}*\n`).join('').trim() || 'No votes'),
-            { attachments: [] }
-        )
-        .then(() => remove(topic));
+    await slackWebClient.chat.update(
+        topic.topicMessage.ts,
+        topic.topicMessage.channel,
+        `Votes for topic *"${topic.title}"*: \n` +
+            (_.map(topic.votes, (vote) => `<@${vote.user.id}|${vote.user.name}>: *${vote.point}*\n`).join('').trim() || 'No votes'),
+        { attachments: [] }
+    );
+    await remove(topic);
 }
 
 
-function vote(topic, team, username, point) {
+async function vote(topic, team, username, point) {
     if (topic.isRevealed)
-        return Promise.reject(new Error('You could not vote revealed topic.'));
+        throw new Error('You could not vote revealed topic.');
 
     const user = _.find(topic.participants, user => user.name == username);
     if (!user)
-        return Promise.reject(new Error('You are not a participant for this topic.'));
+        throw new Error('You are not a participant for this topic.');
 
     topic.votes[username] = {point, user};
 
     if (Object.keys(topic.votes).length == topic.participants.length) {
         return reveal(topic, team);
     }
-
-    return Promise.resolve();
 }
 
 

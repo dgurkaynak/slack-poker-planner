@@ -1,12 +1,12 @@
 const db = require('sqlite');
 
 
-function get(id) {
+async function get(id) {
     return db.get('SELECT * FROM team WHERE id = ?', id);
 }
 
 
-function create(data) {
+async function create(data) {
     return db.run(
         `INSERT INTO
             team (id, name, access_token, scope, user_id)
@@ -23,7 +23,7 @@ function create(data) {
 }
 
 
-function update(data) {
+async function update(data) {
     return db.run(
         `UPDATE
             team
@@ -45,13 +45,13 @@ function update(data) {
 }
 
 
-function createOrUpdate(data) {
-    return get(data.id)
-        .then((team) => {
-            if (!team) return create(data);
-            return update(data);
-        })
-        .then(() => get(data.id));
+async function createOrUpdate(data) {
+    const team = await get(data.id);
+    if (!team)
+        await create(data);
+    else
+        await update(data);
+    return get(data.id);
 }
 
 

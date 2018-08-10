@@ -4,8 +4,6 @@ const winston = require('winston');
 const Server = require('./server');
 
 
-const server = Server.create();
-
 
 /**
  * Set-up logging
@@ -26,12 +24,22 @@ winston.add(new winston.transports.Console({
 /**
  * Boot flow
  */
-winston.info('Opening db...');
-db
-    .open(process.env.DB_FILE, { Promise })
-    .then(() => winston.info(`Migrating db (force: ${!!process.env.DB_FORCE_MIGRATIONS})...`))
-    .then(() => db.migrate({ force: process.env.DB_FORCE_MIGRATIONS ? 'last' : false }))
-    .then(() => winston.info('Starting the server...'))
-    .then(() => Server.start(server))
-    .then(() => winston.info('Boot successful!'))
-    .catch(err => winston.error(`Could not boot - ${err}`));
+async function main() {
+    winston.info('Opening db...');
+    await db.open(process.env.DB_FILE, { Promise });
+
+    winston.info(`Migrating db (force: ${!!process.env.DB_FORCE_MIGRATIONS})...`);
+    await db.migrate({ force: process.env.DB_FORCE_MIGRATIONS ? 'last' : false });
+
+    winston.info('Starting the server...');
+    const server = Server.create();
+    await Server.start(server);
+
+    winston.info('Boot successful!');
+}
+
+
+main().catch((err) => {
+    console.error('Could not boot', err);
+    process.exit(1);
+});

@@ -4,28 +4,31 @@ const Team = require('../team');
 const Boom = require('boom');
 
 
-module.exports = (request, reply) => {
+module.exports = async (request, reply) => {
     if (request.query.code) {
         // Installed!
-        const slackWebClient = new WebClient();
-        return slackWebClient.oauth
-            .access(process.env.SLACK_CLIENT_ID, process.env.SLACK_CLIENT_SECRET, request.query.code)
-            .then(response => Team.createOrUpdate({
-                id: response.team_id,
-                name: response.team_name,
-                access_token: response.access_token,
-                scope: response.scope,
-                user_id: response.user_id
-            }))
-            .then((team) => {
-                // Display success
-                winston.info(`Added to team "${team.name}" (${team.id}) by user ${team.user_id}`);
-                reply('Success');
-            })
-            .catch((err) => {
-                winston.error(`Could not oauth, slack-side error - ${err}`);
-                reply(err);
+        try {
+            const slackWebClient = new WebClient();
+            const accessResponse = await slackWebClient.oauth.access(
+                process.env.SLACK_CLIENT_ID,
+                process.env.SLACK_CLIENT_SECRET,
+                request.query.code
+            );
+
+            const team = await Team.createOrUpdate({
+                id: accessResponse.team_id,
+                name: accessResponse.team_name,
+                access_token: accessResponse.access_token,
+                scope: accessResponse.scope,
+                user_id: accessResponse.user_id
             });
+
+            winston.info(`Added to team "${team.name}" (${team.id}) by user ${team.user_id}`);
+            reply('Success');
+        } catch (err) {
+            winston.error(`Could not oauth, slack-side error - ${err}`);
+            reply(err);
+        }
     } else if (request.query.error) {
         // Error
         // Display error
