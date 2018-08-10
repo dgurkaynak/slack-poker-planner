@@ -29,7 +29,7 @@ async function remove(topic) {
 function createFromPPCommand(ppCommand) {
     const id = uuidV4();
     const title = ppCommand.text.split('<')[0].trim();
-    const mentions = utils.matchAll(ppCommand.text, /<@(.+)>/g).map(str => ({
+    const mentions = utils.matchAll(ppCommand.text, /<@(.*?)>/g).map(str => ({
         id: str.split('|')[0],
         name: str.split('|')[1]
     }));
