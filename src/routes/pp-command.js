@@ -10,15 +10,27 @@ module.exports = async (request, reply) => {
 
     if (ppCommand.token != process.env.SLACK_VERIFICATION_TOKEN) {
         winston.error(`Could not created topic, slack verification token is invalid`, ppCommand);
-        return reply(Boom.badRequest(`Invalid slack verification token, please get in touch with the maintainer`));
+        return reply({
+            text: `Invalid slack verification token, please get in touch with the maintainer`,
+            response_type: 'ephemeral',
+            replace_original: false
+        });
     }
 
     if (!topic.title) {
-        return reply(Boom.badRequest(`Topic cannot be empty`));
+        return reply({
+            text: `Topic cannot be empty`,
+            response_type: 'ephemeral',
+            replace_original: false
+        });
     }
 
     if (topic.ppCommand.channel_name == 'directmessage') {
-        return reply(Boom.badRequest(`Poker planning cannot be started in direct messages`));
+        return reply({
+            text: `Poker planning cannot be started in direct messages`,
+            response_type: 'ephemeral',
+            replace_original: false
+        });
     }
 
     let team;
@@ -26,12 +38,20 @@ module.exports = async (request, reply) => {
         team = await Team.get(ppCommand.team_id);
     } catch (err) {
         winston.error(`Could not created topic, could not get the team from db, ${err}`, ppCommand);
-        return reply(Boom.badImplementation(`Internal server error, please try again later`));
+        return reply({
+            text: `Internal server error, please try again later`,
+            response_type: 'ephemeral',
+            replace_original: false
+        });
     }
 
     if (!team) {
         winston.error(`Could not created topic, team could not be found`, ppCommand);
-        return reply(Boom.badRequest(`Your slack team "${ppCommand.team_domain}" could not be found, please add Poker Planner app to your slack team again`));
+        return reply({
+            text: `Your slack team "${ppCommand.team_domain}" could not be found, please add Poker Planner app to your slack team again`,
+            response_type: 'ephemeral',
+            replace_original: false
+        });
     }
 
     reply();
