@@ -11,7 +11,7 @@ function create() {
     server.connection({ port: process.env.PORT });
     server.register(Vision, (err) => {
         if (err) {
-            winston.error('Cannot register vision');
+            winston.error(`Cannot register vision - ${err}`);
         }
 
         server.views({
@@ -23,7 +23,7 @@ function create() {
     });
     server.register(inert, (err) => {
         if (err) {
-            winston.error('Cannot register inert');
+            winston.error(`Cannot register inert - ${err}`);
         }
     });
 
@@ -37,7 +37,7 @@ function start(server) {
 
         server.start((err) => {
             if (err) {
-                winston.error('Could not start server', err);
+                winston.error(`Could not start server - ${err}`);
                 return reject(err);
             }
 

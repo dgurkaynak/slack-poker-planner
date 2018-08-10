@@ -17,20 +17,23 @@ module.exports = (request, reply) => {
                 scope: response.scope,
                 user_id: response.user_id
             }))
-            .then(() => {
+            .then((team) => {
                 // Display success
+                winston.info(`Added to team "${team.name}" (${team.id}) by user ${team.user_id}`);
                 reply('Success');
             })
             .catch((err) => {
-                winston.error('Could not oauth', err);
+                winston.error(`Could not oauth, slack-side error - ${err}`);
                 reply(err);
             });
     } else if (request.query.error) {
         // Error
         // Display error
+        winston.error(`Could not oauth, error from query - ${request.query.error}`);
         reply(request.query.error);
     } else {
         // Unknown error
+        winston.error(`Could not oauth, unknown error`);
         reply('Unknown error');
     }
 };

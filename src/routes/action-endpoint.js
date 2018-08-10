@@ -38,7 +38,7 @@ module.exports = (request, reply) => {
                         .reveal(topic, team)
                         .then(() => reply())
                         .catch((err) => {
-                            winston.error('Could not reveal topic', err);
+                            winston.error(`Could not reveal topic, ${err}`);
                             reply(Boom.badImplementation('Internal server error, please try again later.', err));
                         });
                 case 'vote':
@@ -46,7 +46,7 @@ module.exports = (request, reply) => {
                         .vote(topic, team, payload.user.name, payload.actions[0].value)
                         .then(() => reply())
                         .catch((err) => {
-                            winston.error('Could not vote', err);
+                            winston.error(`Could not vote, ${err}`);
                             reply(Boom.badImplementation('Internal server error, please try again later.', err));
                         });
                 default:
