@@ -12,6 +12,7 @@ For any reason, if you want to host your own app, follow this steps.
 
 - Create a new Slack app [from here](https://api.slack.com/apps).
 - Create a new Slash Command `/pp` (or any command you want) and set request url as `http://my.awesome.project.url/slack/pp-command`
+    - Make sure that "Escape channels, users, and links sent to your app" option is turned on
 - Activate Interactive Messages with request url `http://my.awesome.project.url/slack/action-endpoint`, options load url is not used, you can leave it blank.
 - Add a new OAuth Redirect URL: `http://my.awesome.project.url/oauth`
 - Required permission scopes: `commands`, `channels:read`, `chat:write:bot`, `groups:read`, `users:read`
