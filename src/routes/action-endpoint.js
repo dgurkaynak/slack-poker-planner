@@ -5,25 +5,32 @@ const Boom = require('boom');
 
 
 module.exports = async (request, reply) => {
-    // winston.info('action-endpoint', request.payload);
-
     const payload = JSON.parse(request.payload.payload);
     const parts = payload.callback_id.split('_');
 
     if (payload.token != process.env.SLACK_VERIFICATION_TOKEN) {
         winston.error(`Could not process action, invalid verification token`, payload);
-        return reply(Boom.badRequest('Invalid slack verification token, please get in touch with the maintainer'));
+        return reply({
+            text: `Invalid slack verification token, please get in touch with the maintainer`,
+            response_type: 'ephemeral',
+            replace_original: false
+        });
     }
 
     if (parts.length != 2) {
         winston.error(`Could not process action, could not parse callback_id`, payload);
-        return reply(Boom.badRequest(`Could not parse callback_id "${payload.callback_id}"`));
+        return reply({
+            text: `Could not parse callback_id "${payload.callback_id}"`,
+            response_type: 'ephemeral',
+            replace_original: false
+        });
     }
 
     const action = parts[0];
     const id = parts[1];
     const username = payload.user.name;
 
+    // TODO: Handle errors
     const [topic, team] = await Promise.all([
         Topic.get(id),
         Team.get(payload.team.id)
@@ -51,6 +58,8 @@ module.exports = async (request, reply) => {
          */
         case 'action':
             try {
+                winston.info(`[${team.name}(${team.id})] ${username}(${payload.user.id}) revealing votes ` +
+                    `for "${topic.title}" w/ id: ${topic.id}`);
                 await Topic.revealTopicMessage(topic, team);
                 return reply();
             } catch (err) {
@@ -83,6 +92,8 @@ module.exports = async (request, reply) => {
             }
 
             try {
+                winston.info(`[${team.name}(${team.id})] ${username}(${payload.user.id}) voting ` +
+                    `${payload.actions[0].value} points for "${topic.title}" w/ id: ${topic.id}`);
                 await Topic.vote(topic, team, payload.user.name, payload.actions[0].value);
                 return reply({
                     text: `You voted ${payload.actions[0].value}`,

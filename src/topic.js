@@ -256,6 +256,8 @@ async function vote(topic, team, username, point) {
 
     if (Object.keys(topic.votes).length == topic.participants.length) {
         await revealTopicMessage(topic, team);
+        winston.info(`[${team.name}(${team.id})] Auto revealing votes ` +
+            `for "${topic.title}" w/ id: ${topic.id}`);
     } else {
         try {
             await refreshTopicMessage(topic, team);

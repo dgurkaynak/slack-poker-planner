@@ -5,8 +5,6 @@ const Boom = require('boom');
 
 
 module.exports = async (request, reply) => {
-    // winston.info('pp-command', request.payload);
-
     const ppCommand = request.payload;
     const topic = Topic.createFromPPCommand(ppCommand);
 
@@ -39,6 +37,9 @@ module.exports = async (request, reply) => {
     reply();
 
     try {
+        winston.info(`[${team.name}(${team.id})] ${ppCommand.user_name}(${ppCommand.user_id}) creating ` +
+            `a topic with title "${topic.title}" on #${ppCommand.channel_name}(${ppCommand.channel_id}) ` +
+            `w/ ${topic.mentions.length} mention(s), id: ${topic.id}`);
         await Topic.init(topic, team);
     } catch (err) {
         winston.error(`Could not created topic, ${err}`, ppCommand);
