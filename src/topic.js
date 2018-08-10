@@ -1,3 +1,4 @@
+const winston = require('winston');
 const rp = require('request-promise');
 const uuidV4 = require('uuid/v4');
 const _ = require('lodash');
@@ -42,17 +43,11 @@ function createFromPPCommand(ppCommand) {
 
 
 async function init(topic, team) {
-    if (!topic.title) {
-        throw new Error('Please provide a valid topic name');
-    }
-
-    if (topic.ppCommand.channel_name == 'directmessage') {
-        throw new Error('Poker planning cannot be started in direct messages.');
-    }
-
     topic.participants = await decideParticipants(topic, team);
-    await postTopicMessage(topic, team);
-    await save(topic);
+    await Promise.all([
+        postTopicMessage(topic, team),
+        save(topic)
+    ]);
 }
 
 
@@ -211,7 +206,33 @@ function rejectPPCommand(ppCommand, reason) {
 }
 
 
-async function reveal(topic, team) {
+async function refreshTopicMessage(topic, team) {
+    const slackWebClient = new WebClient(team.access_token);
+
+    if (topic.isRevealed) {
+        await slackWebClient.chat.update(
+            topic.topicMessage.ts,
+            topic.topicMessage.channel,
+            `Votes for topic *"${topic.title}"*: \n` +
+                (_.map(topic.votes, (vote) => `<@${vote.user.id}|${vote.user.name}>: *${vote.point}*\n`).join('').trim() || 'No votes'),
+            { attachments: [] }
+        );
+    } else {
+        await slackWebClient.chat.update(
+            topic.topicMessage.ts,
+            topic.topicMessage.channel,
+            `Please vote the topic: *"${topic.title}"* \nParticipants: ` +
+                `${topic.participants.map(user => {
+                    const s = didVote(topic, user.name) ? '~' : '';
+                    return `${s}<@${user.id}|${user.name}>${s}`;
+                }).join(' ')}`,
+            buildTopicMessageOptions(topic)
+        );
+    }
+}
+
+
+async function revealTopicMessage(topic, team) {
     const slackWebClient = new WebClient(team.access_token);
     topic.isRevealed = true;
     await slackWebClient.chat.update(
@@ -224,28 +245,41 @@ async function reveal(topic, team) {
     await remove(topic);
 }
 
+function getParticipant(topic, username) {
+    return _.find(topic.participants, user => user.name == username);
+}
+
 
 async function vote(topic, team, username, point) {
-    if (topic.isRevealed)
-        throw new Error('You could not vote revealed topic.');
-
-    const user = _.find(topic.participants, user => user.name == username);
-    if (!user)
-        throw new Error('You are not a participant for this topic.');
-
+    const user = getParticipant(topic, username);
     topic.votes[username] = {point, user};
 
     if (Object.keys(topic.votes).length == topic.participants.length) {
-        return reveal(topic, team);
+        await revealTopicMessage(topic, team);
+    } else {
+        try {
+            await refreshTopicMessage(topic, team);
+        } catch (err) {
+            winston.warn(`Could not refreshed topic after a vote, ${err}`)
+        }
     }
+}
+
+
+function didVote(topic, username) {
+    return !!topic.votes[username];
 }
 
 
 module.exports = {
     get,
+    save,
     createFromPPCommand,
+    postTopicMessage,
+    decideParticipants,
+    getParticipant,
     init,
     rejectPPCommand,
-    reveal,
+    revealTopicMessage,
     vote
 };
