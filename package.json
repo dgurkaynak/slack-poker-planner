@@ -24,7 +24,7 @@
   },
   "homepage": "https://github.com/dgurkaynak/slack-poker-planner#readme",
   "dependencies": {
-    "@slack/client": "3.9.0",
+    "@slack/client": "4.4.0",
     "boom": "4.3.1",
     "dotenv": "4.0.0",
     "handlebars": "4.0.7",

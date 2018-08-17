@@ -9,11 +9,11 @@ module.exports = async (request, reply) => {
         // Installed!
         try {
             const slackWebClient = new WebClient();
-            const accessResponse = await slackWebClient.oauth.access(
-                process.env.SLACK_CLIENT_ID,
-                process.env.SLACK_CLIENT_SECRET,
-                request.query.code
-            );
+            const accessResponse = await slackWebClient.oauth.access({
+                client_id: process.env.SLACK_CLIENT_ID,
+                client_secret: process.env.SLACK_CLIENT_SECRET,
+                code: request.query.code
+            });
 
             const team = await Team.createOrUpdate({
                 id: accessResponse.team_id,
