@@ -32,7 +32,7 @@ async function main() {
     await db.migrate({ force: process.env.DB_FORCE_MIGRATIONS ? 'last' : false });
 
     winston.info('Starting the server...');
-    const server = Server.create();
+    const server = await Server.create();
     await Server.start(server);
 
     winston.info('Boot successful!');

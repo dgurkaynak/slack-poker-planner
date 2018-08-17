@@ -6,45 +6,26 @@ const Handlebars = require('handlebars');
 const inert = require('inert');
 
 
-function create() {
-    const server = new Hapi.Server();
-    server.connection({ port: process.env.PORT });
-    server.register(Vision, (err) => {
-        if (err) {
-            winston.error(`Cannot register vision - ${err}`);
-        }
+async function create() {
+    const server = new Hapi.Server({ port: process.env.PORT });
 
-        server.views({
-            engines: {
-                html: Handlebars
-            },
-            path: __dirname + '/views'
-        });
+    await server.register(Vision);
+    server.views({
+        engines: {
+            html: Handlebars
+        },
+        path: __dirname + '/views'
     });
-    server.register(inert, (err) => {
-        if (err) {
-            winston.error(`Cannot register inert - ${err}`);
-        }
-    });
+    await server.register(inert);
 
     return server;
 }
 
 
-function start(server) {
-    return new Promise((resolve, reject) => {
-        initRoutes(server);
-
-        server.start((err) => {
-            if (err) {
-                winston.error(`Could not start server - ${err}`);
-                return reject(err);
-            }
-
-            winston.info(`Server running at: ${server.info.uri}`);
-            resolve();
-        });
-    });
+async function start(server) {
+    initRoutes(server);
+    await server.start();
+    winston.info(`Server running at: ${server.info.uri}`);
 }
 
 
@@ -59,7 +40,7 @@ function initRoutes(server) {
         method: 'GET',
         path: path.join(process.env.BASE_PATH, 'demo.gif'),
         handler: function (request, reply) {
-            reply.file('./demo.gif');
+            return reply.file('./demo.gif');
         }
     });
 
