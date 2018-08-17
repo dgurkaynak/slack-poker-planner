@@ -9,6 +9,16 @@ const utils = require('./utils');
 // In memory db for now
 const topics = {};
 
+// Summary of active topics in every minute
+setInterval(() => {
+    const shortIds = Object.keys(topics).map(id => id.split('-')[0]);
+    winston.info(
+        shortIds.length == 0 ?
+        `There is no active topics` :
+        `There are ${shortIds.length} active topic(s): ${shortIds.join(', ')}`
+    );
+}, 60000);
+
 
 async function get(id) {
     return topics[id];
