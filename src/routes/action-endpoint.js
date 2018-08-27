@@ -57,19 +57,51 @@ module.exports = async (request, reply) => {
          * REVEAL
          */
         case 'action':
-            try {
-                winston.info(`[${team.name}(${team.id})] ${username}(${payload.user.id}) revealing votes ` +
-                    `for "${topic.title}" w/ id: ${topic.id}`);
-                await Topic.revealTopicMessage(topic, team);
-                return '';
-            } catch (err) {
-                winston.error(`Could not reveal topic, ${err}`);
+            const topicAction = payload.actions[0].value;
+
+            /**
+             * REVEAL
+             */
+            if (topicAction == 'reveal') {
+                try {
+                    winston.info(`[${team.name}(${team.id})] ${username}(${payload.user.id}) revealing votes ` +
+                        `for "${topic.title}" w/ id: ${topic.id}`);
+                    await Topic.revealTopicMessage(topic, team);
+                    return '';
+                } catch (err) {
+                    winston.error(`Could not reveal topic, ${err}`);
+                    return {
+                        text: `Could not reveal the topic. Internal server error, please try again later.`,
+                        response_type: 'ephemeral',
+                        replace_original: false
+                    };
+                }
+            /**
+             * CANCEL
+             */
+            } else if (topicAction == 'cancel') {
+                try {
+                    winston.info(`[${team.name}(${team.id})] ${username}(${payload.user.id}) cancelling topic ` +
+                        `"${topic.title}" w/ id: ${topic.id}`);
+                    await Topic.cancelTopicMessage(topic, team);
+                    return '';
+                } catch (err) {
+                    winston.error(`Could not cancel topic, ${err}`);
+                    return {
+                        text: `Could not cancel the topic. Internal server error, please try again later.`,
+                        response_type: 'ephemeral',
+                        replace_original: false
+                    };
+                }
+            } else {
+                winston.error(`Unknown topic action "${topicAction}"`);
                 return {
-                    text: `Could not reveal the topic. Internal server error, please try again later.`,
+                    text: `Internal server error, please try again later.`,
                     response_type: 'ephemeral',
                     replace_original: false
                 };
             }
+
             break;
         /**
          * VOTE
@@ -77,7 +109,15 @@ module.exports = async (request, reply) => {
         case 'vote':
             if (topic.isRevealed) {
                 return {
-                    text: `You cannot vote already revealed topic`,
+                    text: `You cannot vote on already revealed topic`,
+                    response_type: 'ephemeral',
+                    replace_original: false
+                };
+            }
+
+            if (topic.isCancelled) {
+                return {
+                    text: `You cannot vote on cancelled topic`,
                     response_type: 'ephemeral',
                     replace_original: false
                 };

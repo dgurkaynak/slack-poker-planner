@@ -46,9 +46,10 @@ function createFromPPCommand(ppCommand) {
     const participants = [];
     const votes = {};
     const isRevealed = false;
+    const isCancelled = false;
     const topicMessage = null;
 
-    return {id, title, ppCommand, mentions, participants, votes, isRevealed, topicMessage};
+    return {id, title, ppCommand, mentions, participants, votes, isRevealed, isCancelled, topicMessage};
 }
 
 
@@ -125,6 +126,13 @@ async function refreshTopicMessage(topic, team) {
                 (_.map(topic.votes, (vote) => `<@${vote.user.id}|${vote.user.name}>: *${vote.point}*\n`).join('').trim() || 'No votes'),
             attachments: []
         });
+    } else if (topic.isCancelled) {
+        await slackWebClient.chat.update({
+            ts: topic.topicMessage.ts,
+            channel: topic.topicMessage.channel,
+            text: `Cancelled topic *"${topic.title}"*`,
+            attachments: []
+        });
     } else {
         await slackWebClient.chat.update({
             ts: topic.topicMessage.ts,
@@ -152,6 +160,20 @@ async function revealTopicMessage(topic, team) {
     });
     await remove(topic);
 }
+
+
+async function cancelTopicMessage(topic, team) {
+    const slackWebClient = new WebClient(team.access_token);
+    topic.isCancelled = true;
+    await slackWebClient.chat.update({
+        ts: topic.topicMessage.ts,
+        channel: topic.topicMessage.channel,
+        text: `Cancelled topic *"${topic.title}"*`,
+        attachments: []
+    });
+    await remove(topic);
+}
+
 
 function getParticipant(topic, username) {
     return _.find(topic.participants, user => user.name == username);
@@ -270,9 +292,16 @@ function buildTopicMessageAttachments(topic) {
             actions: [
                 {
                     name: 'action',
-                    text: 'Reveal Votes',
+                    text: 'Reveal',
                     type: 'button',
                     value: 'reveal',
+                    style: 'danger'
+                },
+                {
+                    name: 'action',
+                    text: 'Cancel',
+                    type: 'button',
+                    value: 'cancel',
                     style: 'danger'
                 }
             ]
@@ -291,5 +320,6 @@ module.exports = {
     init,
     rejectPPCommand,
     revealTopicMessage,
+    cancelTopicMessage,
     vote
 };
