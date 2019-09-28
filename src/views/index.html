@@ -73,14 +73,31 @@
     </div>
 
     <script async defer src="https://buttons.github.io/buttons.js"></script>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-55136062-4"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
 
-        gtag('config', 'UA-55136062-4');
+    <script type='text/javascript'>
+        //some default pre init
+        var Countly = Countly || {};
+        Countly.q = Countly.q || [];
+
+        //provide countly initialization parameters
+        Countly.app_key = 'a5de58ab142e4459108167c410777d8edf9be80d';
+        Countly.url = 'https://countly.deniz.co';
+
+        Countly.q.push(['track_sessions']);
+        Countly.q.push(['track_pageview']);
+        Countly.q.push(['track_errors']);
+
+        //load countly script asynchronously
+        (function() {
+           var cly = document.createElement('script'); cly.type = 'text/javascript';
+           cly.async = true;
+           //enter url of script here
+           cly.src = 'https://countly.deniz.co/sdk/web/countly.min.js';
+           cly.onload = function(){Countly.init()};
+           var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(cly, s);
+        })();
     </script>
+
 </body>
 </html>
 
