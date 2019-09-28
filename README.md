@@ -1,6 +1,8 @@
 # slack-poker-planner
 
-Poker planning app for Slack. You can directly add it to your slack team [from here](https://deniz.co/pp/).
+Poker planning app for Slack. You can directly add it to your slack team from:
+
+[https://deniz.co/slack-poker-planner](https://deniz.co/slack-poker-planner/)
 
 ![Demonstration](demo.gif)
 
