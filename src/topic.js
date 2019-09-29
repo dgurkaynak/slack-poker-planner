@@ -54,6 +54,15 @@ function createFromPPCommand(ppCommand) {
 
 
 async function init(topic, team) {
+    topic.points = [
+        '0', '1/2', '1', '2', '3',
+        '5', '8', '13', '20', '40',
+        '100', '∞', '?'
+    ];
+    if (team.custom_points) {
+        topic.points = team.custom_points.split(' ');
+    }
+
     topic.participants = await decideParticipants(topic, team);
     await Promise.all([
         postTopicMessage(topic, team),
@@ -204,85 +213,24 @@ function didVote(topic, username) {
 
 
 function buildTopicMessageAttachments(topic) {
+    const pointAttachments = _.chunk(topic.points, 5).map((points) => {
+        return {
+            text: '',
+            fallback: 'You are unable to vote',
+            callback_id: `vote_${topic.id}`,
+            color: '#3AA3E3',
+            attachment_type: 'default',
+            actions: points.map(point => ({
+                name: 'point',
+                text: point,
+                type: 'button',
+                value: point
+            }))
+        };
+    });
+
     return [
-        {
-            text: '',
-            fallback: 'You are unable to vote',
-            callback_id: `vote_${topic.id}`,
-            color: '#3AA3E3',
-            attachment_type: 'default',
-            actions: [
-                {
-                    name: 'point',
-                    text: '0',
-                    type: 'button',
-                    value: '0'
-                },
-                {
-                    name: 'point',
-                    text: '1',
-                    type: 'button',
-                    value: '1'
-                },
-                {
-                    name: 'point',
-                    text: '2',
-                    type: 'button',
-                    value: '2'
-                },
-                {
-                    name: 'point',
-                    text: '3',
-                    type: 'button',
-                    value: '3'
-                },
-                {
-                    name: 'point',
-                    text: '5',
-                    type: 'button',
-                    value: '5'
-                }
-            ]
-        },
-        {
-            text: '',
-            fallback: 'You are unable to vote',
-            callback_id: `vote_${topic.id}`,
-            color: '#3AA3E3',
-            attachment_type: 'default',
-            actions: [
-                {
-                    name: 'point',
-                    text: '8',
-                    type: 'button',
-                    value: '8'
-                },
-                {
-                    name: 'point',
-                    text: '13',
-                    type: 'button',
-                    value: '13'
-                },
-                {
-                    name: 'point',
-                    text: '20',
-                    type: 'button',
-                    value: '20'
-                },
-                {
-                    name: 'point',
-                    text: '40',
-                    type: 'button',
-                    value: '40'
-                },
-                {
-                    name: 'point',
-                    text: '100',
-                    type: 'button',
-                    value: '100'
-                }
-            ]
-        },
+        ...pointAttachments,
         {
             text: 'Actions',
             fallback: 'You are unable to send action',
