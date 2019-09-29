@@ -1,6 +1,7 @@
 const logger = require('../logger');
 const WebClient = require('@slack/client').WebClient;
 const Team = require('../team');
+const Countly = require('countly-sdk-nodejs');
 
 
 module.exports = async (request, reply) => {
@@ -20,6 +21,12 @@ module.exports = async (request, reply) => {
                 access_token: accessResponse.access_token,
                 scope: accessResponse.scope,
                 user_id: accessResponse.user_id
+            });
+
+            Countly.add_event({
+                'key': 'added_to_team',
+                'count': 1,
+                'segmentation': {}
             });
 
             logger.info(`Added to team "${team.name}" (${team.id}) by user ${team.user_id}`);

@@ -1,7 +1,7 @@
 const logger = require('../logger');
 const Team = require('../team');
 const Topic = require('../topic');
-const Boom = require('boom');
+const Countly = require('countly-sdk-nodejs');
 
 
 module.exports = async (request, reply) => {
@@ -38,7 +38,7 @@ module.exports = async (request, reply) => {
 
     if (!topic) {
         return {
-            text: `Ooops, could not find that topic`,
+            text: `Ooops, could not find that topic, it may be expired`,
             response_type: 'ephemeral',
             replace_original: false
         };
@@ -67,6 +67,13 @@ module.exports = async (request, reply) => {
                     logger.info(`[${team.name}(${team.id})] ${username}(${payload.user.id}) revealing votes ` +
                         `for "${topic.title}" w/ id: ${topic.id}`);
                     await Topic.revealTopicMessage(topic, team);
+
+                    Countly.add_event({
+                        'key': 'topic_revealed',
+                        'count': 1,
+                        'segmentation': {}
+                    });
+
                     return '';
                 } catch (err) {
                     logger.error(`Could not reveal topic, ${err}`);
@@ -84,6 +91,13 @@ module.exports = async (request, reply) => {
                     logger.info(`[${team.name}(${team.id})] ${username}(${payload.user.id}) cancelling topic ` +
                         `"${topic.title}" w/ id: ${topic.id}`);
                     await Topic.cancelTopicMessage(topic, team);
+
+                    Countly.add_event({
+                        'key': 'topic_cancelled',
+                        'count': 1,
+                        'segmentation': {}
+                    });
+
                     return '';
                 } catch (err) {
                     logger.error(`Could not cancel topic, ${err}`);
@@ -135,6 +149,15 @@ module.exports = async (request, reply) => {
                 logger.info(`[${team.name}(${team.id})] ${username}(${payload.user.id}) voting ` +
                     `${payload.actions[0].value} points for "${topic.title}" w/ id: ${topic.id}`);
                 await Topic.vote(topic, team, payload.user.name, payload.actions[0].value);
+
+                Countly.add_event({
+                    'key': 'topic_voted',
+                    'count': 1,
+                    'segmentation': {
+                        'points': payload.actions[0].value
+                    }
+                });
+
                 return {
                     text: `You voted ${payload.actions[0].value}`,
                     response_type: 'ephemeral',

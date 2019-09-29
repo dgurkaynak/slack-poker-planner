@@ -1,6 +1,7 @@
 const logger = require('../logger');
 const Team = require('../team');
 const Topic = require('../topic');
+const Countly = require('countly-sdk-nodejs');
 
 
 module.exports = async (request, reply) => {
@@ -60,6 +61,15 @@ module.exports = async (request, reply) => {
                 `a topic with title "${topic.title}" on #${ppCommand.channel_name}(${ppCommand.channel_id}) ` +
                 `w/ ${topic.mentions.length} mention(s), id: ${topic.id}`);
             await Topic.init(topic, team);
+
+            Countly.add_event({
+                'key': 'topic_created',
+                'count': 1,
+                'segmentation': {
+                    'mentions': topic.mentions.length
+                }
+            });
+
         } catch (err) {
             logger.error(`Could not created topic, ${err}`, ppCommand);
             await Topic.rejectPPCommand(ppCommand, `Internal server error, please try again later`);
