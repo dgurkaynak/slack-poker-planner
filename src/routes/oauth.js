@@ -23,7 +23,7 @@ module.exports = async (request, reply) => {
                 user_id: accessResponse.user_id
             });
 
-            Countly.add_event({
+            process.env.COUNTLY_APP_KEY && Countly.add_event({
                 'key': 'added_to_team',
                 'count': 1,
                 'segmentation': {}

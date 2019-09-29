@@ -20,10 +20,13 @@ async function main() {
     const server = await Server.create();
     await Server.start(server);
 
-    Countly.init({
-        app_key: 'a5de58ab142e4459108167c410777d8edf9be80d',
-        url: 'https://countly.deniz.co'
-    });
+    if (process.env.COUNTLY_APP_KEY && process.env.COUNTLY_URL) {
+        logger.info(`Initing countly - ${process.env.COUNTLY_URL} with app key: ${process.env.COUNTLY_APP_KEY}`);
+        Countly.init({
+            app_key: process.env.COUNTLY_APP_KEY,
+            url: process.env.COUNTLY_URL
+        });
+    }
 
     logger.info('Boot successful!');
 }

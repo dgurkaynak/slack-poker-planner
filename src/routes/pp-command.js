@@ -62,7 +62,7 @@ module.exports = async (request, reply) => {
                 `w/ ${topic.mentions.length} mention(s), id: ${topic.id}`);
             await Topic.init(topic, team);
 
-            Countly.add_event({
+            process.env.COUNTLY_APP_KEY && Countly.add_event({
                 'key': 'topic_created',
                 'count': 1,
                 'segmentation': {

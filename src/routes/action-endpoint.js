@@ -68,7 +68,7 @@ module.exports = async (request, reply) => {
                         `for "${topic.title}" w/ id: ${topic.id}`);
                     await Topic.revealTopicMessage(topic, team);
 
-                    Countly.add_event({
+                    process.env.COUNTLY_APP_KEY && Countly.add_event({
                         'key': 'topic_revealed',
                         'count': 1,
                         'segmentation': {}
@@ -92,7 +92,7 @@ module.exports = async (request, reply) => {
                         `"${topic.title}" w/ id: ${topic.id}`);
                     await Topic.cancelTopicMessage(topic, team);
 
-                    Countly.add_event({
+                    process.env.COUNTLY_APP_KEY && Countly.add_event({
                         'key': 'topic_cancelled',
                         'count': 1,
                         'segmentation': {}
@@ -150,7 +150,7 @@ module.exports = async (request, reply) => {
                     `${payload.actions[0].value} points for "${topic.title}" w/ id: ${topic.id}`);
                 await Topic.vote(topic, team, payload.user.name, payload.actions[0].value);
 
-                Countly.add_event({
+                process.env.COUNTLY_APP_KEY && Countly.add_event({
                     'key': 'topic_voted',
                     'count': 1,
                     'segmentation': {
