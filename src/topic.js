@@ -1,4 +1,4 @@
-const winston = require('winston');
+const logger = require('./logger');
 const rp = require('request-promise');
 const uuidV4 = require('uuid/v4');
 const _ = require('lodash');
@@ -12,7 +12,7 @@ const topics = {};
 // Summary of active topics in every minute
 setInterval(() => {
     const shortIds = Object.keys(topics).map(id => id.split('-')[0]);
-    winston.info(
+    logger.info(
         shortIds.length == 0 ?
         `There is no active topics` :
         `There are ${shortIds.length} active topic(s): ${shortIds.join(', ')}`
@@ -186,13 +186,13 @@ async function vote(topic, team, username, point) {
 
     if (Object.keys(topic.votes).length == topic.participants.length) {
         await revealTopicMessage(topic, team);
-        winston.info(`[${team.name}(${team.id})] Auto revealing votes ` +
+        logger.info(`[${team.name}(${team.id})] Auto revealing votes ` +
             `for "${topic.title}" w/ id: ${topic.id}`);
     } else {
         try {
             await refreshTopicMessage(topic, team);
         } catch (err) {
-            winston.warn(`Could not refreshed topic after a vote, ${err}`)
+            logger.warn(`Could not refreshed topic after a vote, ${err}`)
         }
     }
 }

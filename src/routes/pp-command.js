@@ -1,7 +1,6 @@
-const winston = require('winston');
+const logger = require('../logger');
 const Team = require('../team');
 const Topic = require('../topic');
-const Boom = require('boom');
 
 
 module.exports = async (request, reply) => {
@@ -9,7 +8,7 @@ module.exports = async (request, reply) => {
     const topic = Topic.createFromPPCommand(ppCommand);
 
     if (ppCommand.token != process.env.SLACK_VERIFICATION_TOKEN) {
-        winston.error(`Could not created topic, slack verification token is invalid`, ppCommand);
+        logger.error(`Could not created topic, slack verification token is invalid`, ppCommand);
         return {
             text: `Invalid slack verification token, please get in touch with the maintainer`,
             response_type: 'ephemeral',
@@ -37,7 +36,7 @@ module.exports = async (request, reply) => {
     try {
         team = await Team.get(ppCommand.team_id);
     } catch (err) {
-        winston.error(`Could not created topic, could not get the team from db, ${err}`, ppCommand);
+        logger.error(`Could not created topic, could not get the team from db, ${err}`, ppCommand);
         return {
             text: `Internal server error, please try again later`,
             response_type: 'ephemeral',
@@ -46,7 +45,7 @@ module.exports = async (request, reply) => {
     }
 
     if (!team) {
-        winston.error(`Could not created topic, team could not be found`, ppCommand);
+        logger.error(`Could not created topic, team could not be found`, ppCommand);
         return {
             text: `Your slack team "${ppCommand.team_domain}" could not be found, please add Poker Planner app to your slack team again`,
             response_type: 'ephemeral',
@@ -57,12 +56,12 @@ module.exports = async (request, reply) => {
     // WTF HAPI???
     setTimeout(async () => {
         try {
-            winston.info(`[${team.name}(${team.id})] ${ppCommand.user_name}(${ppCommand.user_id}) creating ` +
+            logger.info(`[${team.name}(${team.id})] ${ppCommand.user_name}(${ppCommand.user_id}) creating ` +
                 `a topic with title "${topic.title}" on #${ppCommand.channel_name}(${ppCommand.channel_id}) ` +
                 `w/ ${topic.mentions.length} mention(s), id: ${topic.id}`);
             await Topic.init(topic, team);
         } catch (err) {
-            winston.error(`Could not created topic, ${err}`, ppCommand);
+            logger.error(`Could not created topic, ${err}`, ppCommand);
             await Topic.rejectPPCommand(ppCommand, `Internal server error, please try again later`);
         }
     }, 0);

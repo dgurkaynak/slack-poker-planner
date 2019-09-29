@@ -35,7 +35,6 @@
     "request-promise": "4.2.2",
     "sqlite": "2.9.2",
     "uuid": "3.3.2",
-    "vision": "5.3.3",
-    "winston": "3.0.0"
+    "vision": "5.3.3"
   }
 }

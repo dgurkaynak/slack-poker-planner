@@ -1,4 +1,4 @@
-const winston = require('winston');
+const logger = require('./logger');
 const Hapi = require('hapi');
 const path = require('path');
 const Vision = require('vision');
@@ -25,7 +25,7 @@ async function create() {
 async function start(server) {
     initRoutes(server);
     await server.start();
-    winston.info(`Server running at: ${server.info.uri}`);
+    logger.info(`Server running at: ${server.info.uri}`);
 }
 
 
@@ -66,7 +66,7 @@ function initRoutes(server) {
     //     method: 'POST',
     //     path: path.join(process.env.BASE_PATH, 'slack/options-load-endpoint'),
     //     handler: (request, reply) => {
-    //         winston.info('options-load-endpoint', request.payload);
+    //         logger.info('options-load-endpoint', request.payload);
     //         reply();
     //     }
     // });
