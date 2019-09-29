@@ -55,4 +55,24 @@ async function createOrUpdate(data) {
 }
 
 
-module.exports = {get, create, update, createOrUpdate};
+async function updateCustomPoints(teamId, customPoints) {
+    const customPointsArr = customPoints.match(/\S+/g) || [];
+    customPoints = customPointsArr.join(' ');
+    if (!customPoints) customPoints = null;
+
+    return db.run(
+        `UPDATE
+            team
+        SET
+            custom_points = $customPoints
+        WHERE
+            id = $id`,
+        {
+            $id: teamId,
+            $customPoints: customPoints
+        }
+    );
+}
+
+
+module.exports = {get, create, update, createOrUpdate, updateCustomPoints};
