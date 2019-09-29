@@ -77,6 +77,24 @@ module.exports = async (request, reply) => {
         };
     }
 
+    if (customPointsArr.length > 25) {
+        return {
+            text: `Maximum 25 values are supported`,
+            response_type: 'ephemeral',
+            replace_original: false
+        };
+    }
+
+    for (let customPoint of customPointsArr) {
+        if (customPoint.length > 20) {
+            return {
+                text: `Poker values must be under 20 characters`,
+                response_type: 'ephemeral',
+                replace_original: false
+            };
+        }
+    }
+
     try {
         await Team.updateCustomPoints(team.id, customPoints);
         logger.info(`[${team.name}(${team.id})] ${cmd.user_name}(${cmd.user_id}) configured custom points: ${customPoints}`);
