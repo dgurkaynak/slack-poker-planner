@@ -58,6 +58,12 @@ function initRoutes(server) {
 
     server.route({
         method: 'POST',
+        path: path.join(process.env.BASE_PATH, 'slack/pp-config-command'),
+        handler: require('./routes/pp-config-command')
+    });
+
+    server.route({
+        method: 'POST',
         path: path.join(process.env.BASE_PATH, 'slack/action-endpoint'),
         handler: require('./routes/action-endpoint')
     });
