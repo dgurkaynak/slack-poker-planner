@@ -50,8 +50,9 @@
         <div class="row" style="margin-top: 50px; border-bottom: 1px solid #ddd; margin-bottom: 20px;">
             <h4>What is this?</h4>
             <p>
-                This is a free and open-source project lets you make estimating and planning
-                just from Slack, without any need of external software or web-app. You can read more
+                This is a free and open-source project lets you make estimations with poker planning
+                directly in Slack, without any need of external software.
+                It can be a useful tool for agile remote teams. You can read more about
                 <a href="https://en.wikipedia.org/wiki/Planning_poker">planning poker on wiki</a>.
                 This service is free in goodwill, and hopefully will remain free. You can install
                 the app with "Add to Slack" button above. If you want to host your own app,
@@ -60,13 +61,13 @@
 
             <h4 id="usage">Usage</h4>
             <p>
-                After successful installation, <code>/pp</code> and <code>/pp-config</code>
-                slash commands will be avaliable in your slack team.
+                After successful installation, <code>/pp</code>
+                slash command will be avaliable in your team workspace.
             </p>
 
             <p>
-                <h5><code>/pp some task name</code></h5>
-                This command starts a poker planning session for specified task,
+                <h5><code>/pp some topic text</code></h5>
+                This command starts a poker planning session on specified topic,
                 or simply anything you typed after <code>/pp</code>. It
                 works in: <br /><br />
 
@@ -77,34 +78,43 @@
                 </ul>
 
                 This command will automatically find active (online and not-away) users in the current
-                channel or group and add them as participants to poker planning session.
-                Therefore <code>/pp</code> command does not work in direct messages.
+                channel/group and add them as participants to poker planning session.
+                Therefore <code>/pp</code> command does not work in direct messages.<br /><br />
+
+                <strong>WARNING:</strong> Topic text cannot start with "<strong>config</strong>" and
+                "<strong>help</strong>" (case-sensitive). They have another functionalities
+                which will be described below.
             </p>
 
             <p>
-                <h5><code>/pp some task name @user1 @user2</code></h5>
+                <h5><code>/pp some topic text @user1 @user2</code></h5>
                 This command works exactly like above, however specifically mentioned
                 users will be added to the session, even if they are offline.
                 <br /><br />
-                Mentions must come after the description text. User group mentions like
+                Mentions must come after the topic text. User group mentions like
                 <code>@channel</code>, <code>@all</code>, <code>@customGroup</code> are not supported.
             </p>
 
             <p>
-                <h5><code>/pp-config value1 value2 ...</code></h5>
+                <h5><code>/pp config value1 value2 ...</code></h5>
                 This command lets you customize poker values just for your team.
                 If you want to estimate with t-shirt sizing, just type
-                <code>/pp-config XS S M L XL</code>. After this command, all the
+                <code>/pp config XS S M L XL</code>. After this command, all the
                 voting sessions will have just these options, until you
-                configure Poker Planner again with <code>/pp-config</code> command.
+                configure Poker Planner again with <code>/pp config</code> command.
                 <br /><br />
                 At least 2 values must be provided, seperated with space character.
                 Each value cannot be more than 20 characters, and maximum 25 poker values are supported.
             </p>
 
             <p>
-                <h5><code>/pp-config reset</code></h5>
+                <h5><code>/pp config reset</code></h5>
                 This command resets the poker values back to default settings.
+            </p>
+
+            <p>
+                <h5><code>/pp help</code></h5>
+                TODO
             </p>
 
             <h4 id="slack-permissions">Required Slack Permissions</h4>
@@ -113,8 +123,7 @@
                     <code>commands</code> - Add slash commands and add actions to messages (and view related content)
                     <ul>
                         <li>
-                            We will add 2 slash commands:
-                            <code>/pp</code> and <code>/pp-config</code>
+                            We will add <code>/pp</code> slash command
                         </li>
                     </ul>
                 </li>
