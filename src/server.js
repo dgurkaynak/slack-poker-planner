@@ -7,7 +7,14 @@ const inert = require('inert');
 
 
 async function create() {
-    const server = new Hapi.Server({ port: process.env.PORT });
+    const server = new Hapi.Server({
+        port: process.env.PORT,
+        routes: {
+            files: {
+                relativeTo: path.join(__dirname, 'public')
+            }
+        }
+    });
 
     await server.register(Vision);
     server.views({
@@ -38,10 +45,8 @@ function initRoutes(server) {
 
     server.route({
         method: 'GET',
-        path: path.join(process.env.BASE_PATH, 'demo.gif'),
-        handler: function (request, reply) {
-            return reply.file('./demo.gif');
-        }
+        path: path.join(process.env.BASE_PATH, 'privacy'),
+        handler: require('./routes/privacy')
     });
 
     server.route({
@@ -68,14 +73,16 @@ function initRoutes(server) {
         handler: require('./routes/action-endpoint')
     });
 
-    // server.route({
-    //     method: 'POST',
-    //     path: path.join(process.env.BASE_PATH, 'slack/options-load-endpoint'),
-    //     handler: (request, reply) => {
-    //         logger.info('options-load-endpoint', request.payload);
-    //         reply();
-    //     }
-    // });
+    server.route({
+        method: 'GET',
+        path: path.join(process.env.BASE_PATH, '{param*}'),
+        handler: {
+            directory: {
+                path: '.',
+                redirectToSlash: true
+            }
+        }
+    });
 }
 
 
