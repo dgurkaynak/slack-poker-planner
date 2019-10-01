@@ -2,6 +2,7 @@ const logger = require('../logger');
 const Team = require('../team');
 const Topic = require('../topic');
 const Countly = require('countly-sdk-nodejs');
+const shortid = require('shortid');
 
 
 module.exports = async (request, reply) => {
@@ -30,11 +31,25 @@ module.exports = async (request, reply) => {
     const id = parts[1];
     const username = payload.user.name;
 
-    // TODO: Handle errors
-    const [topic, team] = await Promise.all([
-        Topic.get(id),
-        Team.get(payload.team.id)
-    ]);
+    let topic;
+    let team;
+    try {
+        const [topic_, team_] = await Promise.all([
+            Topic.get(id),
+            Team.get(payload.team.id)
+        ]);
+        topic = topic_;
+        team = team_;
+    } catch (err) {
+        const errorId = shortid.generate();
+        logger.error(`(${errorId}) Could not get team or topic`, payload, err);
+        return {
+            text: `Internal server error, please try again later\n` +
+                `A_GET_FAIL (${errorId})`,
+            response_type: 'ephemeral',
+            replace_original: false
+        };
+    }
 
     if (!topic) {
         return {
@@ -46,7 +61,7 @@ module.exports = async (request, reply) => {
 
     if (!team) {
         return {
-            text: `Your slack team with id "${payload.team.id}" could not be found. Please try to add Poker Planner app to your slack team again.`,
+            text: `Your slack team with id "${payload.team.id}" could not be found. Please try to add Poker Planner to your Slack team again.`,
             response_type: 'ephemeral',
             replace_original: false
         };
@@ -76,9 +91,11 @@ module.exports = async (request, reply) => {
 
                     return '';
                 } catch (err) {
-                    logger.error(`Could not reveal topic, ${err}`);
+                    const errorId = shortid.generate();
+                    logger.error(`(${errorId}) Could not reveal topic`, err);
                     return {
-                        text: `Could not reveal the topic. Internal server error, please try again later.`,
+                        text: `Could not reveal the topic. Internal server error, please try again later\n` +
+                            `A_REVEAL_FAIL (${errorId})`,
                         response_type: 'ephemeral',
                         replace_original: false
                     };
@@ -100,17 +117,21 @@ module.exports = async (request, reply) => {
 
                     return '';
                 } catch (err) {
-                    logger.error(`Could not cancel topic, ${err}`);
+                    const errorId = shortid.generate();
+                    logger.error(`(${errorId}) Could not cancel topic`, err);
                     return {
-                        text: `Could not cancel the topic. Internal server error, please try again later.`,
+                        text: `Could not cancel the topic. Internal server error, please try again later\n` +
+                            `A_CANCEL_FAIL (${errorId})`,
                         response_type: 'ephemeral',
                         replace_original: false
                     };
                 }
             } else {
-                logger.error(`Unknown topic action "${topicAction}"`);
+                const errorId = shortid.generate();
+                logger.error(`(${errorId}) Unknown topic action "${topicAction}"`, payload);
                 return {
-                    text: `Internal server error, please try again later.`,
+                    text: `Internal server error, please try again later\n`
+                        `A_UNKNOWN_ACTION (${errorId})`,
                     response_type: 'ephemeral',
                     replace_original: false
                 };
@@ -164,9 +185,11 @@ module.exports = async (request, reply) => {
                     replace_original: false
                 };
             } catch (err) {
-                logger.error(`Could not vote, ${err}`);
+                const errorId = shortid.generate();
+                logger.error(`(${errorId}) Could not vote`, err);
                 return {
-                    text: `Could not vote. Internal server error, please try again later.`,
+                    text: `Could not vote. Internal server error, please try again later\n`
+                        `A_VOTE_FAIL (${errorId})`,
                     response_type: 'ephemeral',
                     replace_original: false
                 };

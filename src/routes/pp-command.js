@@ -2,6 +2,7 @@ const logger = require('../logger');
 const Team = require('../team');
 const Topic = require('../topic');
 const Countly = require('countly-sdk-nodejs');
+const shortid = require('shortid');
 
 
 module.exports = async (request, reply) => {
@@ -78,9 +79,11 @@ async function configure(cmd) {
     try {
         team = await Team.get(cmd.team_id);
     } catch (err) {
-        logger.error(`Could not created topic, could not get the team from db, ${err}`, cmd);
+        const errorId = shortid.generate();
+        logger.error(`(${errorId}) Could not created topic, could not get the team from db`, cmd, err);
         return {
-            text: `Internal server error, please try again later`,
+            text: `Internal server error, please try again later\n` +
+                `SC_TEAM_GET_FAIL (${errorId})`,
             response_type: 'ephemeral',
             replace_original: false
         };
@@ -89,7 +92,7 @@ async function configure(cmd) {
     if (!team) {
         logger.error(`Could not created topic, team could not be found`, cmd);
         return {
-            text: `Your slack team "${cmd.team_domain}" could not be found, please add Poker Planner app to your slack team again`,
+            text: `Your slack team "${cmd.team_domain}" could not be found, please add Poker Planner to your Slack team again`,
             response_type: 'ephemeral',
             replace_original: false
         };
@@ -118,9 +121,11 @@ async function configure(cmd) {
 
             return `Poker planner's configuration is successfully reset to default values`;
         } catch (err) {
-            logger.error(`Could not reset custom points, db error, ${err}`, cmd);
+            const errorId = shortid.generate();
+            logger.error(`(${errorId}) Could not reset custom points, db error`, cmd, err);
             return {
-                text: `Internal server error, please try again later`,
+                text: `Internal server error, please try again later\n` +
+                    `SC_RESET_FAIL (${errorId})`,
                 response_type: 'ephemeral',
                 replace_original: false
             };
@@ -170,9 +175,11 @@ async function configure(cmd) {
 
         return `Poker planner will use ${customPointsArr.length} poker values from now on: ${customPointsArr.join(', ')}`;
     } catch (err) {
-        logger.error(`Could not set custom points, db error, ${err}`, cmd);
+        const errorId = shortid.generate();
+        logger.error(`(${errorId}) Could not set custom points, db error`, cmd, err);
         return {
-            text: `Internal server error, please try again later`,
+            text: `Internal server error, please try again later\n` +
+                `SC_SET_FAIL (${errorId})`,
             response_type: 'ephemeral',
             replace_original: false
         };
@@ -203,9 +210,11 @@ async function createTopic(cmd) {
     try {
         team = await Team.get(cmd.team_id);
     } catch (err) {
-        logger.error(`Could not created topic, could not get the team from db, ${err}`, cmd);
+        const errorId = shortid.generate();
+        logger.error(`(${errorId}) Could not created topic, could not get the team from db`, cmd, err);
         return {
-            text: `Internal server error, please try again later`,
+            text: `Internal server error, please try again later\n` +
+                `ST_TEAM_GET_FAIL (${errorId})`,
             response_type: 'ephemeral',
             replace_original: false
         };
@@ -214,7 +223,7 @@ async function createTopic(cmd) {
     if (!team) {
         logger.error(`Could not created topic, team could not be found`, cmd);
         return {
-            text: `Your slack team "${cmd.team_domain}" could not be found, please add Poker Planner app to your slack team again`,
+            text: `Your slack team "${cmd.team_domain}" could not be found, please add Poker Planner to your Slack team again`,
             response_type: 'ephemeral',
             replace_original: false
         };
@@ -237,8 +246,13 @@ async function createTopic(cmd) {
             });
 
         } catch (err) {
-            logger.error(`Could not created topic, ${err}`, cmd);
-            await Topic.rejectPPCommand(cmd, `Internal server error, please try again later`);
+            const errorId = shortid.generate();
+            logger.error(`(${errorId}) Could not created topic`, cmd, err);
+            await Topic.rejectPPCommand(
+                cmd,
+                `Internal server error, please try again later\n` +
+                    `ST_INIT_FAIL (${errorId})`
+            );
         }
     }, 0);
 
