@@ -19,8 +19,46 @@ module.exports = async (request, reply) => {
     const firstWord = cmd.text.trim().split(' ')[0];
     switch (firstWord) {
         case 'help': {
-            // TODO: Write a help text
-            return 'help';
+            return {
+                text: ``,
+                response_type: 'ephemeral',
+                replace_original: false,
+                attachments: [
+                    {
+                        color: '#3AA3E3',
+                        text: '`/pp some topic text`\n' +
+                            'Starts a poker planning session on specified, ' +
+                            'topic, or simply anything you typed after `/pp`. ' +
+                            'This command will automatically find active (online ' +
+                            'and not-away) users in the current channel/group and ' +
+                            'add them as participants to poker planning session.'
+                    },
+                    {
+                        color: '#3AA3E3',
+                        text: '`/pp some topic text @user1 @user2`\n' +
+                            'This command works exactly like above, however ' +
+                            'specifically mentioned users will be added to the ' +
+                            'session, even if they are offline. Mentions must ' +
+                            'come after the topic text.'
+                    },
+                    {
+                        color: '#3AA3E3',
+                        text: '`/pp config value1 value2 ...`\n' +
+                            'This command lets you customize poker values just ' +
+                            'for your team. After this, all the voting sessions ' +
+                            'will have just these options, until you configure ' +
+                            'Poker Planner again with `/pp config` command.\n\n' +
+                            'At least 2 values must be provided, seperated with ' +
+                            'space character. Each value cannot be more than 20 ' +
+                            'characters, and maximum 25 poker values are supported.'
+                    },
+                    {
+                        color: '#3AA3E3',
+                        text: '`/pp config reset`\n' +
+                            'This command resets the poker values back to default settings.'
+                    },
+                ]
+            }
         }
 
         case 'config': {
