@@ -38,11 +38,42 @@ async function remove(topic) {
 
 function createFromPPCommand(ppCommand) {
     const id = uuidV4();
-    const title = ppCommand.text.split('<')[0].trim();
-    const mentions = utils.matchAll(ppCommand.text, /<@(.*?)>/g).map(str => ({
-        id: str.split('|')[0],
-        name: str.split('|')[1]
-    }));
+
+    let mentions = [];
+    // User mentions
+    utils.matchAll(ppCommand.text, /<@(.*?)>/g).forEach((str) => {
+        mentions.push({ type: 'user', id: str.split('|')[0] });
+    });
+    // Group mentions
+    utils.matchAll(ppCommand.text, /<!(.*?)>/g).forEach((str) => {
+        const specialMentions = ['everyone', 'channel', 'here'];
+        if (specialMentions.indexOf(str) > -1) {
+            mentions.push({ type: 'special', id: str });
+        } else {
+            // Custom user group mentions
+            mentions.push({
+                type: 'user-group',
+                id: str.split('^')[1],
+                name: str.split('^')[0]
+            });
+        }
+    });
+
+    // Remove duplicate mentions
+    mentions = _.uniqBy(mentions, mention => `${mention.type}-${mention.id}`);
+
+    // If there is no mention, must be work like @here
+    if (mentions.length == 0) {
+        mentions.push({ type: 'special', id: 'here' });
+    }
+
+    // Get topic text
+    const title = ppCommand.text
+        .replace(/<@(.*?)>/g, '')
+        .replace(/<!(.*?)>/g, '')
+        .replace(/\s\s+/g, ' ')
+        .trim();
+
     const participants = [];
     const votes = {};
     const isRevealed = false;
@@ -73,30 +104,43 @@ async function init(topic, team) {
 
 async function decideParticipants(topic, team) {
     const slackWebClient = new WebClient(team.access_token);
+    let participantIds = [ topic.ppCommand.user_id ]; // Creator must be participated
 
-    // Custom mentioned participants
-    if (topic.mentions.length > 0) {
-        const mentionsIncludingSelf = topic.mentions.concat([{
-            id: topic.ppCommand.user_id,
-            name: topic.ppCommand.user_name
-        }]);
-        const participants = _.uniq(mentionsIncludingSelf, 'name');
-        return participants;
+    // If @here or @channel mention is used, we need to fetch current channel members
+    let channelMemberIds;
+    const shouldFetchChannelMembers = _.some(topic.mentions, (mention) => {
+        return mention.type == 'special' && ['channel', 'here'].indexOf(mention.id) > -1;
+    });
+
+    if (shouldFetchChannelMembers) {
+        const apiNamespace = topic.ppCommand.channel_name == 'privategroup' ? 'groups' : 'channels';
+        const info = await slackWebClient[apiNamespace].info({ channel: topic.ppCommand.channel_id });
+        channelMemberIds = (info.channel || info.group).members;
     }
 
-    // No mentions, get active users of current channel/group
-    const apiNamespace = topic.ppCommand.channel_name == 'privategroup' ? 'groups' : 'channels';
-    const info = await slackWebClient[apiNamespace].info({ channel: topic.ppCommand.channel_id });
-    const channelUserIds = (info.channel || info.group).members;
-    const presenceTasks = channelUserIds.map(id => slackWebClient.users.getPresence({ user: id }));
-    const presences = await Promise.all(presenceTasks);
-    const onlineUserIds = channelUserIds.filter((id, index) => presences[index].presence == 'active')
-    const infoTasks = onlineUserIds.map(id => slackWebClient.users.info({ user: id }));
-    const infos = await Promise.all(infoTasks);
-    return infos.map(response => ({
-        id: response.user.id,
-        name: response.user.name
-    }));
+    // For each mention
+    for (let mention of topic.mentions) {
+        if (mention.type == 'special') {
+            // @channel mention
+            if (mention.id == 'channel') {
+                participantIds.push(...channelMemberIds);
+            } else if (mention.id == 'here') {
+                // @here mention
+                const presenceTasks = channelMemberIds.map(id => slackWebClient.users.getPresence({ user: id }));
+                const presences = await Promise.all(presenceTasks);
+                const channelActiveMemberIds = channelMemberIds.filter((id, index) => presences[index].presence == 'active');
+                participantIds.push(...channelActiveMemberIds);
+            }
+        } else if (mention.type == 'user') {
+            // @user mentions
+            participantIds.push(mention.id);
+        }
+    }
+
+    // Remove duplicates
+    participantIds = _.uniq(participantIds);
+
+    return participantIds;
 }
 
 
@@ -105,7 +149,7 @@ async function postTopicMessage(topic, team) {
     topic.topicMessage = await slackWebClient.chat.postMessage({
         channel: topic.ppCommand.channel_id,
         text: `Please vote the topic: *"${topic.title}"* \nParticipants: ` +
-            `${topic.participants.map(user => `<@${user.id}>`).join(' ')}`,
+            `${topic.participants.map(userId => `<@${userId}>`).join(' ')}`,
         attachments: buildTopicMessageAttachments(topic)
     });
 }
@@ -132,7 +176,7 @@ async function refreshTopicMessage(topic, team) {
             ts: topic.topicMessage.ts,
             channel: topic.topicMessage.channel,
             text: `Votes for topic *"${topic.title}"*: \n` +
-                (_.map(topic.votes, (vote) => `<@${vote.user.id}|${vote.user.name}>: *${vote.point}*\n`).join('').trim() || 'No votes'),
+                (_.map(topic.votes, (point, userId) => `<@${userId}>: *${point}*\n`).join('').trim() || 'No votes'),
             attachments: []
         });
     } else if (topic.isCancelled) {
@@ -147,9 +191,10 @@ async function refreshTopicMessage(topic, team) {
             ts: topic.topicMessage.ts,
             channel: topic.topicMessage.channel,
             text: `Please vote the topic: *"${topic.title}"* \nParticipants: ` +
-                `${topic.participants.map(user => {
-                    const s = didVote(topic, user.name) ? '~' : '';
-                    return `${s}<@${user.id}|${user.name}>${s}`;
+                `${topic.participants.map(userId => {
+                    // Strikethrough voted participants
+                    const s = didVote(topic, userId) ? '~' : '';
+                    return `${s}<@${userId}>${s}`;
                 }).join(' ')}`,
             attachments: buildTopicMessageAttachments(topic)
         });
@@ -164,7 +209,7 @@ async function revealTopicMessage(topic, team) {
         ts: topic.topicMessage.ts,
         channel: topic.topicMessage.channel,
         text: `Votes for topic *"${topic.title}"*: \n` +
-            (_.map(topic.votes, (vote) => `<@${vote.user.id}|${vote.user.name}>: *${vote.point}*\n`).join('').trim() || 'No votes'),
+            (_.map(topic.votes, (point, userId) => `<@${userId}>: *${point}*\n`).join('').trim() || 'No votes'),
         attachments: []
     });
     await remove(topic);
@@ -184,14 +229,13 @@ async function cancelTopicMessage(topic, team) {
 }
 
 
-function getParticipant(topic, username) {
-    return _.find(topic.participants, user => user.name == username);
+function isParticipant(topic, userId) {
+    return _.find(topic.participants, userId_ => userId == userId_);
 }
 
 
-async function vote(topic, team, username, point) {
-    const user = getParticipant(topic, username);
-    topic.votes[username] = {point, user};
+async function vote(topic, team, userId, point) {
+    topic.votes[userId] = point;
 
     if (Object.keys(topic.votes).length == topic.participants.length) {
         await revealTopicMessage(topic, team);
@@ -207,8 +251,8 @@ async function vote(topic, team, username, point) {
 }
 
 
-function didVote(topic, username) {
-    return !!topic.votes[username];
+function didVote(topic, userId) {
+    return topic.votes.hasOwnProperty(userId);
 }
 
 
@@ -263,8 +307,7 @@ module.exports = {
     save,
     createFromPPCommand,
     postTopicMessage,
-    decideParticipants,
-    getParticipant,
+    isParticipant,
     init,
     rejectPPCommand,
     revealTopicMessage,

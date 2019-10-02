@@ -158,7 +158,7 @@ module.exports = async (request, reply) => {
                 };
             }
 
-            if (!Topic.getParticipant(topic, payload.user.name)) {
+            if (!Topic.isParticipant(topic, payload.user.id)) {
                 return {
                     text: `You are not a participant of that topic`,
                     response_type: 'ephemeral',
@@ -169,7 +169,7 @@ module.exports = async (request, reply) => {
             try {
                 logger.info(`[${team.name}(${team.id})] ${username}(${payload.user.id}) voting ` +
                     `${payload.actions[0].value} points for "${topic.title}" w/ id: ${topic.id}`);
-                await Topic.vote(topic, team, payload.user.name, payload.actions[0].value);
+                await Topic.vote(topic, team, payload.user.id, payload.actions[0].value);
 
                 process.env.COUNTLY_APP_KEY && Countly.add_event({
                     'key': 'topic_voted',
