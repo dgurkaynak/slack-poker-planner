@@ -105,7 +105,7 @@ async function postTopicMessage(topic, team) {
     topic.topicMessage = await slackWebClient.chat.postMessage({
         channel: topic.ppCommand.channel_id,
         text: `Please vote the topic: *"${topic.title}"* \nParticipants: ` +
-            `${topic.participants.map(user => `<@${user.id}|${user.name}>`).join(' ')}`,
+            `${topic.participants.map(user => `<@${user.id}>`).join(' ')}`,
         attachments: buildTopicMessageAttachments(topic)
     });
 }
