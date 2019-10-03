@@ -30,7 +30,10 @@ module.exports = async (request, reply) => {
             });
 
             logger.info(`Added to team "${team.name}" (${team.id}) by user ${team.user_id}`);
-            return 'Success';
+            return reply.view('oauth-success', {
+                SLACK_APP_ID: process.env.SLACK_APP_ID,
+                TEAM_NAME: team.name
+            });
         } catch (err) {
             logger.error(`Could not oauth, slack-side error - ${err}`);
             return 'Internal server error, please try again later';
