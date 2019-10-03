@@ -199,27 +199,30 @@ async function refreshTopicMessage(topic, team) {
 }
 
 
-async function revealTopicMessage(topic, team) {
+async function revealTopicMessage(topic, team, userId) {
     const slackWebClient = new WebClient(team.access_token);
     topic.isRevealed = true;
+
+    const votesText = _.map(topic.votes, (point, userId) => `<@${userId}>: *${point}*\n`).join('').trim() || 'No votes';
     await slackWebClient.chat.update({
         ts: topic.topicMessage.ts,
         channel: topic.topicMessage.channel,
-        text: `Votes for topic *"${topic.title}"*: \n` +
-            (_.map(topic.votes, (point, userId) => `<@${userId}>: *${point}*\n`).join('').trim() || 'No votes'),
+        text: userId ?
+            `Votes for the topic *"${topic.title}"*: (revealed by <@${userId}>)\n${votesText}` :
+            `Votes for topic *"${topic.title}"*: \n${votesText}`,
         attachments: []
     });
     await remove(topic);
 }
 
 
-async function cancelTopicMessage(topic, team) {
+async function cancelTopicMessage(topic, team, userId) {
     const slackWebClient = new WebClient(team.access_token);
     topic.isCancelled = true;
     await slackWebClient.chat.update({
         ts: topic.topicMessage.ts,
         channel: topic.topicMessage.channel,
-        text: `Cancelled topic *"${topic.title}"*`,
+        text: `Cancelled topic *"${topic.title}"* by <@${userId}>`,
         attachments: []
     });
     await remove(topic);

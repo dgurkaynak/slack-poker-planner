@@ -81,7 +81,7 @@ module.exports = async (request, reply) => {
                 try {
                     logger.info(`[${team.name}(${team.id})] ${username}(${payload.user.id}) revealing votes ` +
                         `for "${topic.title}" w/ id: ${topic.id}`);
-                    await Topic.revealTopicMessage(topic, team);
+                    await Topic.revealTopicMessage(topic, team, payload.user.id);
 
                     process.env.COUNTLY_APP_KEY && Countly.add_event({
                         'key': 'topic_revealed',
@@ -107,7 +107,7 @@ module.exports = async (request, reply) => {
                 try {
                     logger.info(`[${team.name}(${team.id})] ${username}(${payload.user.id}) cancelling topic ` +
                         `"${topic.title}" w/ id: ${topic.id}`);
-                    await Topic.cancelTopicMessage(topic, team);
+                    await Topic.cancelTopicMessage(topic, team, payload.user.id);
 
                     process.env.COUNTLY_APP_KEY && Countly.add_event({
                         'key': 'topic_cancelled',
