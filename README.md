@@ -25,7 +25,7 @@ to poker planning sessions
 
 For detailed usage documentation, please visit [website](https://deniz.co/slack-poker-planner/#usage).
 
-## Setup
+## Self-hosting
 
 If you want to host your own app, follow this steps:
 
