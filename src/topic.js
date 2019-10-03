@@ -62,11 +62,6 @@ function createFromPPCommand(ppCommand) {
     // Remove duplicate mentions
     mentions = _.uniqBy(mentions, mention => `${mention.type}-${mention.id}`);
 
-    // If there is no mention, must be work like @here
-    if (mentions.length == 0) {
-        mentions.push({ type: 'special', id: 'here' });
-    }
-
     // Get topic text
     const title = ppCommand.text
         .replace(/<@(.*?)>/g, '')
@@ -104,11 +99,13 @@ async function init(topic, team) {
 
 async function decideParticipants(topic, team) {
     const slackWebClient = new WebClient(team.access_token);
+    // If there is no mention, must be work like @here
+    const mentions = topic.mentions.length > 0 ? topic.mentions : [{ type: 'special', id: 'here' }];
     let participantIds = [ topic.ppCommand.user_id ]; // Creator must be participated
 
     // If @here or @channel mention is used, we need to fetch current channel members
     let channelMemberIds;
-    const shouldFetchChannelMembers = _.some(topic.mentions, (mention) => {
+    const shouldFetchChannelMembers = _.some(mentions, (mention) => {
         return mention.type == 'special' && ['channel', 'here'].indexOf(mention.id) > -1;
     });
 
@@ -119,7 +116,7 @@ async function decideParticipants(topic, team) {
     }
 
     // For each mention
-    for (let mention of topic.mentions) {
+    for (let mention of mentions) {
         if (mention.type == 'special') {
             // @channel mention
             if (mention.id == 'channel') {

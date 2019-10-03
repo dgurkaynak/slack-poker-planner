@@ -241,13 +241,14 @@ async function createTopic(cmd) {
                 'key': 'topic_created',
                 'count': 1,
                 'segmentation': {
-                    'mentions': topic.mentions.length
+                    'mentions': topic.mentions.length,
+                    'participants': topic.participants.length,
                 }
             });
 
         } catch (err) {
             const errorId = shortid.generate();
-            logger.error(`(${errorId}) Could not created topic`, cmd, err);
+            logger.error(`(${errorId}) Could not created topic`, cmd, err, topic);
             await Topic.rejectPPCommand(
                 cmd,
                 `Internal server error, please try again later\n` +
