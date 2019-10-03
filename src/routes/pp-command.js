@@ -248,12 +248,23 @@ async function createTopic(cmd) {
 
         } catch (err) {
             const errorId = shortid.generate();
-            logger.error(`(${errorId}) Could not created topic`, cmd, err, topic);
-            await Topic.rejectPPCommand(
-                cmd,
-                `Internal server error, please try again later\n` +
-                    `ST_INIT_FAIL (${errorId})`
-            );
+            let logLevel = 'error';
+            let errorMessage = `Internal server error, please try again later\nST_INIT_FAIL (${errorId})`;
+
+            // Handle `channel_not_found` error
+            if (err.code == 'slackclient_platform_error' && err.data && err.data.error == 'channel_not_found') {
+                logLevel = 'info';
+                errorMessage = `Oops, this channel couldn't be found by Slack API. ` +
+                    `This can happen when Poker Planner is installed to your Slack team by a user ` +
+                    `(<@${team.user_id}>) which does not have permission to access this channel/group. ` +
+                    `To fix this issue, you (or someone else who has access) can install the app again on ` +
+                    `<https://deniz.co/slack-poker-planner>\n\n` +
+                    `If you still having a problem, you can open an issue on <https://github.com/dgurkaynak/slack-poker-planner/issues> ` +
+                    `with this error id: ${errorId}`;
+            }
+
+            logger[logLevel](`(${errorId}) Could not created topic`, cmd, err, topic);
+            await Topic.rejectPPCommand(cmd, errorMessage);
         }
     }, 0);
 
