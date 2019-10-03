@@ -77,6 +77,15 @@ function initRoutes(server) {
             }
         }
     });
+
+    server.route({
+        method: 'GET',
+        path: path.join(process.env.BASE_PATH, 'slack/direct-install'),
+        handler: (request, reply) => {
+            const url = `https://slack.com/oauth/authorize?scope=${process.env.SLACK_SCOPE}&client_id=${process.env.SLACK_CLIENT_ID}`;
+            return reply.redirect(url).code(302);
+        }
+    });
 }
 
 
