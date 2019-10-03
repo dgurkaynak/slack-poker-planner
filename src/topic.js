@@ -110,9 +110,11 @@ async function decideParticipants(topic, team) {
     });
 
     if (shouldFetchChannelMembers) {
-        const apiNamespace = topic.ppCommand.channel_name == 'privategroup' ? 'groups' : 'channels';
-        const info = await slackWebClient[apiNamespace].info({ channel: topic.ppCommand.channel_id });
-        channelMemberIds = (info.channel || info.group).members;
+        const res = await slackWebClient.conversations.members({
+            channel: topic.ppCommand.channel_id,
+            limit: 100
+        });
+        channelMemberIds = res.members;
     }
 
     // For each mention
