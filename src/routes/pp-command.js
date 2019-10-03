@@ -3,6 +3,7 @@ const Team = require('../team');
 const Topic = require('../topic');
 const Countly = require('countly-sdk-nodejs');
 const shortid = require('shortid');
+const _ = require('lodash');
 
 
 module.exports = async (request, reply) => {
@@ -12,6 +13,15 @@ module.exports = async (request, reply) => {
         logger.error(`Could not created topic, slack verification token is invalid`, cmd);
         return {
             text: `Invalid slack verification token, please get in touch with the maintainer`,
+            response_type: 'ephemeral',
+            replace_original: false
+        };
+    }
+
+    if (!_.isString(cmd.text)) {
+        logger.error(`Could not created topic, command.text not string`, cmd);
+        return {
+            text: `Topic cannot be empty`,
             response_type: 'ephemeral',
             replace_original: false
         };
