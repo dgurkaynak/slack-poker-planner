@@ -1,14 +1,33 @@
-# slack-poker-planner
+# Poker Planner for Slack
 
-Poker planning app for Slack. You can directly add it to your slack team from:
+This project lets you make estimations with planning poker (or scrum poker) directly in Slack, without any need of external software.
+It can be a useful tool for agile remote teams.
 
-[https://deniz.co/slack-poker-planner](https://deniz.co/slack-poker-planner/)
+[![Demonstration](./demo.gif)](https://deniz.co/slack-poker-planner/)
 
-![Demonstration](demo.gif)
+## Features
+
+- Automatically adds active (online) users of current channel as participants
+to poker planning sessions
+- You can also explicitly set the participants with `@user`, `@channel` and
+`@here` mentions
+- Once all the participants are voted, the votes are automatically revealed
+- Customizable poker values for your team
+
+## Installation
+
+- Visit the website: [https://deniz.co/slack-poker-planner/](https://deniz.co/slack-poker-planner/)
+- Click **"Add to Slack"** button
+- Select the team you want to install Poker Planner from the dropdown top right
+- Click **Allow** button
+
+## Usage
+
+For detailed usage documentation, please visit [website](https://deniz.co/slack-poker-planner/#usage).
 
 ## Setup
 
-For any reason, if you want to host your own app, follow this steps.
+If you want to host your own app, follow this steps:
 
 ### Creating slack app
 
@@ -23,7 +42,7 @@ For any reason, if you want to host your own app, follow this steps.
 ### Running
 
 - Clone this repo
-- Install dependencies with `npm i` or `yarn`
+- Install dependencies with `npm i`
 - Start the app with `npm start`
 
 **Environment variables:**
@@ -32,3 +51,4 @@ For any reason, if you want to host your own app, follow this steps.
 - **`SLACK_CLIENT_ID`**: Slack client id, default null
 - **`SLACK_CLIENT_SECRET`**: Slack client secret, default null
 - **`SLACK_VERIFICATION_TOKEN`**: Slack verification token, default null
+- **`SLACK_APP_ID`**: Slack app id, default null
