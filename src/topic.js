@@ -115,6 +115,12 @@ async function decideParticipants(topic, team) {
             limit: 100
         });
         channelMemberIds = res.members;
+
+        if (channelMemberIds.length >= 100) {
+            const err = new Error('Channel is too crowded');
+            err.code = 'channel_too_crowded';
+            throw err;
+        }
     }
 
     // For each mention
@@ -125,6 +131,13 @@ async function decideParticipants(topic, team) {
                 participantIds.push(...channelMemberIds);
             } else if (mention.id == 'here') {
                 // @here mention
+
+                if (channelMemberIds.length > 25) {
+                    const err = new Error('Channel is too crowded for @here mention');
+                    err.code = 'channel_too_crowded_for_here_mention';
+                    throw err;
+                }
+
                 const presenceTasks = channelMemberIds.map(id => slackWebClient.users.getPresence({ user: id }));
                 const presences = await Promise.all(presenceTasks);
                 const channelActiveMemberIds = channelMemberIds.filter((id, index) => presences[index].presence == 'active');
@@ -138,6 +151,12 @@ async function decideParticipants(topic, team) {
 
     // Remove duplicates
     participantIds = _.uniq(participantIds);
+
+    if (participantIds.length > 50) {
+        const err = new Error('Too many participants');
+        err.code = 'too_many_participants';
+        throw err;
+    }
 
     return participantIds;
 }

@@ -232,7 +232,7 @@ async function createTopic(cmd) {
     // WTF HAPI???
     setTimeout(async () => {
         try {
-            logger.info(`[${team.name}(${team.id})] ${cmd.user_name}(${cmd.user_id}) creating ` +
+            logger.info(`[${team.name}(${team.id})] ${cmd.user_name}(${cmd.user_id}) trying to create ` +
                 `a topic with title "${topic.title}" on #${cmd.channel_name}(${cmd.channel_id}) ` +
                 `w/ ${topic.mentions.length} mention(s), id: ${topic.id}`);
             await Topic.init(topic, team);
@@ -248,6 +248,7 @@ async function createTopic(cmd) {
 
         } catch (err) {
             const errorId = shortid.generate();
+            let shouldLog = true;
             let logLevel = 'error';
             let errorMessage = `Internal server error, please try again later\nST_INIT_FAIL (${errorId})`;
 
@@ -262,8 +263,27 @@ async function createTopic(cmd) {
                     `If you still having a problem, you can open an issue on <https://github.com/dgurkaynak/slack-poker-planner/issues> ` +
                     `with this error id: ${errorId}`;
             }
+            // Handle `channel_too_crowded`
+            else if (err.code == 'channel_too_crowded') {
+                shouldLog = false;
+                errorMessage = `Poker Planner cannot be used in channels/groups which has more than 100 members. ` +
+                    `You should use it in a smaller channel/group.`;
+            }
+            // Handle `channel_too_crowded_for_here_mention`
+            else if (err.code == 'channel_too_crowded_for_here_mention') {
+                shouldLog = false;
+                errorMessage = 'Automatically inferring participants or `@here` mentions are not supported in ' +
+                    'channels/groups which has more than 25 members. ' +
+                    `You can explicitly mention users to add them as participants up to 50 people, ` +
+                    `or you may want to use it in a smaller channel/group.`;
+            }
+            // Handle `too_many_participants`
+            else if (err.code == 'too_many_participants') {
+                shouldLog = false;
+                errorMessage = `Maximum supported number of participants is 50.`;
+            }
 
-            logger[logLevel](`(${errorId}) Could not created topic`, cmd, err, topic);
+            shouldLog && logger[logLevel](`(${errorId}) Could not created topic`, cmd, err, topic);
             await Topic.rejectPPCommand(cmd, errorMessage);
         }
     }, 0);
