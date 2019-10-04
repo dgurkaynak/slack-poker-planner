@@ -273,6 +273,11 @@ async function createTopic(cmd) {
                     `If you still having a problem, you can open an issue on <https://github.com/dgurkaynak/slack-poker-planner/issues> ` +
                     `with this error id: ${errorId}`;
             }
+            // Handle `missing_scope` error
+            else if (err.code == 'slackclient_platform_error' && err.data && err.data.error == 'missing_scope' && err.data.needed == 'mpim:read') {
+                logLevel = 'info';
+                errorMessage = `Poker Planner does not work in multi-party direct messages.`;
+            }
             // Handle `channel_too_crowded`
             else if (err.code == 'channel_too_crowded') {
                 shouldLog = false;
