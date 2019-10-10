@@ -1,6 +1,6 @@
 const logger = require('./logger');
 const rp = require('request-promise');
-const uuidV4 = require('uuid/v4');
+const shortid = require('shortid');
 const _ = require('lodash');
 const WebClient = require('@slack/client').WebClient;
 const utils = require('./utils');
@@ -11,11 +11,11 @@ const topics = {};
 
 // Summary of active topics in every minute
 setInterval(() => {
-    const shortIds = Object.keys(topics).map(id => id.split('-')[0]);
+    const ids = Object.keys(topics);
     logger.info(
-        shortIds.length == 0 ?
+        ids.length == 0 ?
         `There is no active topics` :
-        `There are ${shortIds.length} active topic(s): ${shortIds.join(', ')}`
+        `There are ${ids.length} active topic(s): ${ids.join(', ')}`
     );
 }, 60000);
 
@@ -37,7 +37,7 @@ async function remove(topic) {
 
 
 function createFromPPCommand(ppCommand) {
-    const id = uuidV4();
+    const id = shortid.generate();
 
     let mentions = [];
     // User mentions
