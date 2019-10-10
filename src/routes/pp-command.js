@@ -273,6 +273,18 @@ async function createTopic(cmd) {
                     `If you still having a problem, you can open an issue on <https://github.com/dgurkaynak/slack-poker-planner/issues> ` +
                     `with this error id: ${errorId}`;
             }
+            // Handle `token_revoked` error
+            else if (err.code == 'slackclient_platform_error' && err.data && err.data.error == 'token_revoked') {
+                logLevel = 'info';
+                errorMessage = `Poker Planner's access has been revoked for this workspace. ` +
+                    `In order to use it, you need to install the app again on ` +
+                    `<https://deniz.co/slack-poker-planner>`;
+            }
+            // Handle `method_not_supported_for_channel_type` error
+            else if (err.code == 'slackclient_platform_error' && err.data && err.data.error == 'method_not_supported_for_channel_type') {
+                logLevel = 'info';
+                errorMessage = `Poker Planner cannot be used in this type of conversations.`;
+            }
             // Handle `missing_scope` error
             else if (err.code == 'slackclient_platform_error' && err.data && err.data.error == 'missing_scope' && err.data.needed == 'mpim:read') {
                 logLevel = 'info';
