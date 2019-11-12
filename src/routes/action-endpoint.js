@@ -7,7 +7,7 @@ const shortid = require('shortid');
 
 module.exports = async (request, reply) => {
     const payload = JSON.parse(request.payload.payload);
-    const parts = payload.callback_id.split('_');
+    const parts = payload.callback_id.split(':');
 
     if (payload.token != process.env.SLACK_VERIFICATION_TOKEN) {
         logger.error(`Could not process action, invalid verification token`, payload);

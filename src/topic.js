@@ -282,7 +282,7 @@ function buildTopicMessageAttachments(topic) {
         return {
             text: '',
             fallback: 'You are unable to vote',
-            callback_id: `vote_${topic.id}`,
+            callback_id: `vote:${topic.id}`,
             color: '#3AA3E3',
             attachment_type: 'default',
             actions: points.map(point => ({
@@ -299,7 +299,7 @@ function buildTopicMessageAttachments(topic) {
         {
             text: 'Actions',
             fallback: 'You are unable to send action',
-            callback_id: `action_${topic.id}`,
+            callback_id: `action:${topic.id}`,
             color: '#3AA3E3',
             attachment_type: 'default',
             actions: [
