@@ -286,9 +286,14 @@ async function createTopic(cmd) {
                 errorMessage = `Poker Planner cannot be used in this type of conversations.`;
             }
             // Handle `missing_scope` error
-            else if (err.code == 'slackclient_platform_error' && err.data && err.data.error == 'missing_scope' && err.data.needed == 'mpim:read') {
+            else if (err.code == 'slackclient_platform_error' && err.data && err.data.error == 'missing_scope') {
                 logLevel = 'info';
-                errorMessage = `Poker Planner does not work in multi-party direct messages.`;
+
+                if (err.data.needed == 'mpim:read') {
+                    errorMessage = `Poker Planner does not work in multi-party direct messages.`;
+                } else if (err.data.needed == 'usergroups:read') {
+                    errorMessage = `Please reinstall Poker Planner to enable user group mentions.`;
+                }
             }
             // Handle `channel_too_crowded`
             else if (err.code == 'channel_too_crowded') {

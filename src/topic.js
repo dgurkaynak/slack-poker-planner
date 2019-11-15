@@ -14,8 +14,8 @@ setInterval(() => {
     const ids = Object.keys(topics);
     logger.info(
         ids.length == 0 ?
-        `There is no active topics` :
-        `There are ${ids.length} active topic(s): ${ids.join(', ')}`
+            `There is no active topics` :
+            `There are ${ids.length} active topic(s): ${ids.join(', ')}`
     );
 }, 60000);
 
@@ -44,17 +44,22 @@ function createFromPPCommand(ppCommand) {
     utils.matchAll(ppCommand.text, /<@(.*?)>/g).forEach((str) => {
         mentions.push({ type: 'user', id: str.split('|')[0] });
     });
+
     // Group mentions
     utils.matchAll(ppCommand.text, /<!(.*?)>/g).forEach((str) => {
         const specialMentions = ['everyone', 'channel', 'here'];
         if (specialMentions.indexOf(str) > -1) {
             mentions.push({ type: 'special', id: str });
-        } else {
+        } else if (str.includes('subteam')) {
             // Custom user group mentions
+            const [id, name] = str
+                .replace('subteam^', '')
+                .split('|');
+
             mentions.push({
                 type: 'user-group',
-                id: str.split('^')[1],
-                name: str.split('^')[0]
+                id,
+                name
             });
         }
     });
@@ -75,7 +80,7 @@ function createFromPPCommand(ppCommand) {
     const isCancelled = false;
     const topicMessage = null;
 
-    return {id, title, ppCommand, mentions, participants, votes, isRevealed, isCancelled, topicMessage};
+    return { id, title, ppCommand, mentions, participants, votes, isRevealed, isCancelled, topicMessage };
 }
 
 
@@ -96,12 +101,11 @@ async function init(topic, team) {
     ]);
 }
 
-
 async function decideParticipants(topic, team) {
     const slackWebClient = new WebClient(team.access_token);
     // If there is no mention, must be work like @here
     const mentions = topic.mentions.length > 0 ? topic.mentions : [{ type: 'special', id: 'here' }];
-    let participantIds = [ topic.ppCommand.user_id ]; // Creator must be participated
+    let participantIds = [topic.ppCommand.user_id]; // Creator must be participated
 
     // If @here or @channel mention is used, we need to fetch current channel members
     let channelMemberIds;
@@ -146,6 +150,12 @@ async function decideParticipants(topic, team) {
         } else if (mention.type == 'user') {
             // @user mentions
             participantIds.push(mention.id);
+        } else if (mention.type == 'user-group') {
+            const res = await slackWebClient.usergroups.users.list({
+                usergroup: mention.id
+            });
+
+            participantIds.push(...res.users);
         }
     }
 
