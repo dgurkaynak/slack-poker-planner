@@ -9,8 +9,7 @@ It can be a useful tool for agile remote teams.
 
 - Automatically adds active (online) users of current channel as participants
 to poker planning sessions
-- You can also explicitly set the participants with `@user`, `@channel` and
-`@here` mentions
+- You can also explicitly set the participants with `@user`, `@channel`, `@here` and group mentions
 - Once all the participants are voted, the votes are automatically revealed
 - Customizable poker values for your team
 
