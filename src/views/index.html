@@ -89,10 +89,10 @@
             <p>
                 <h5><code>/pp some topic text @user1 @user2 ...</code></h5>
                 This command works exactly like above, however specifically mentioned
-                users will be added to the session, even if they are offline.
-                <code>@channel</code>, <code>@here</code> mentions are also supported.
-                As described above, if there is no mention, Poker Planner will work as
-                <code>@here</code> mentioned.
+                users will be added to the session, <strong>even if they are offline</strong>.
+                <code>@usergroup</code> handles are also supported, as well as <code>@channel</code>,
+                <code>@here</code> mentions. As described above, if there is no mentions, Poker Planner
+                will work as <code>@here</code> mentioned.
             </p>
 
             <p>
@@ -157,6 +157,15 @@
                         </li>
                     </ul>
                 </li>
+                <li>
+                    <code>usergroups:read</code> - View user groups in the workspace
+                    <ul>
+                        <li>
+                            When <code>/pp</code> command is used with <code>@usergroup</code> mentions,
+                            we need to get members of that group.
+                        </li>
+                    </ul>
+                </li>
             </ul>
 
             <h4 id="support">Support</h4>
@@ -171,7 +180,7 @@
         <div class="row" style="text-align: center;">
             <h6 style="font-size: 1.25rem;">
                 <a href="./privacy">Privacy Policy</a> |
-                Copyright © 2017-2019 Deniz Gurkaynak
+                Copyright © 2017-2020 Deniz Gurkaynak
             </h6>
         </div>
     </div>
