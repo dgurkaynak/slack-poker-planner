@@ -1,5 +1,5 @@
 const logger = require('../logger');
-const WebClient = require('@slack/client').WebClient;
+const WebClient = require('@slack/web-api').WebClient;
 const Team = require('../team');
 const Countly = require('countly-sdk-nodejs');
 

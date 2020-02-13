@@ -2,7 +2,7 @@ const logger = require('./logger');
 const rp = require('request-promise');
 const shortid = require('shortid');
 const _ = require('lodash');
-const WebClient = require('@slack/client').WebClient;
+const WebClient = require('@slack/web-api').WebClient;
 const utils = require('./utils');
 
 
