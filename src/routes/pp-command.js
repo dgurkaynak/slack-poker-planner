@@ -292,7 +292,8 @@ async function createTopic(cmd) {
                 if (err.data.needed == 'mpim:read') {
                     errorMessage = `Poker Planner does not work in multi-party direct messages.`;
                 } else if (err.data.needed == 'usergroups:read') {
-                    errorMessage = `Please reinstall Poker Planner to enable user group mentions.`;
+                    errorMessage = `You need to reinstall Poker Planner to enable user group mentions.`
+                        + ` Please visit <https://deniz.co/slack-poker-planner> and click "Add to Slack" button.`;
                 }
             }
             // Handle `channel_too_crowded`

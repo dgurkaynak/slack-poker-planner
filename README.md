@@ -9,7 +9,7 @@ It can be a useful tool for agile remote teams.
 
 - Automatically adds active (online) users of current channel as participants
 to poker planning sessions
-- You can also explicitly set the participants with `@user`, `@channel`, `@here` and group mentions
+- You can also explicitly set the participants with `@user`, `@channel`, `@here` and `@group` mentions
 - Once all the participants are voted, the votes are automatically revealed
 - Customizable poker values for your team
 
@@ -35,7 +35,7 @@ If you want to host your own app, follow this steps:
     - Make sure that "Escape channels, users, and links sent to your app" option is turned on
 - Activate Interactive Messages with request url `http://my.awesome.project.url/slack/action-endpoint`, options load url is not used, you can leave it blank.
 - Add a new OAuth Redirect URL: `http://my.awesome.project.url/oauth`
-- Required permission scopes: `commands`, `channels:read`, `chat:write:bot`, `groups:read`, `users:read`
+- Required permission scopes: `commands`, `channels:read`, `chat:write:bot`, `groups:read`, `users:read`, `usergroups:read`
 
 
 ### Running
