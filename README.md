@@ -35,7 +35,8 @@ If you want to host your own app, follow this steps:
     - Make sure that "Escape channels, users, and links sent to your app" option is turned on
 - Activate Interactive Messages with request url `http://my.awesome.project.url/slack/action-endpoint`, options load url is not used, you can leave it blank.
 - Add a new OAuth Redirect URL: `http://my.awesome.project.url/oauth`
-- Required permission scopes: `commands`, `channels:read`, `chat:write:bot`, `groups:read`, `users:read`, `usergroups:read`
+- Required bot permission scopes: `commands`, `channels:read`, `chat:write`, `mpim:read`, `groups:read`, `users:read`, `usergroups:read`
+- Required user permission scopes: None
 
 
 ### Running

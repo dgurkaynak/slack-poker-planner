@@ -290,8 +290,9 @@ async function createTopic(cmd) {
                 logLevel = 'info';
                 errorMessage = `Oops, we couldn't find this channel. ` +
                     `Are you sure that Poker Planner app is added to this channel/conversation? ` +
-                    `You can simply add by mentioning it, like "*@poker_planner*". ` +
-                    `Please try again after adding it.\n\n` +
+                    `You can simply add the app by mentioning it, like "*@poker_planner*". ` +
+                    `However this may not work in Group DMs, you need to explicitly add it as a ` +
+                    `member from conversation details menu. Please try again after adding it.\n\n` +
                     `If you still have a problem, you can open an issue on <https://github.com/dgurkaynak/slack-poker-planner/issues> ` +
                     `with this error id: ${errorId}`;
             }
@@ -306,13 +307,16 @@ async function createTopic(cmd) {
                 errorMessage = `Poker Planner cannot be used in this type of conversations.`;
             }
             else if (slackErrorCode == 'missing_scope') {
-                logLevel = 'info';
-
                 if (err.data.needed == 'mpim:read') {
-                    errorMessage = `Poker Planner does not work in multi-party direct messages.`;
+                    logLevel = 'info';
+                    errorMessage = `Poker Planner now supports Group DMs! However it requires ` +
+                        `additional permissions that we didn't obtained previously. You need to visit ` +
+                        `<https://deniz.co/slack-poker-planner> and reinstall the app to enable this feature.`;
                 } else if (err.data.needed == 'usergroups:read') {
-                    errorMessage = `You need to reinstall Poker Planner to enable user group mentions.`
-                        + ` Please visit <https://deniz.co/slack-poker-planner> and click "Add to Slack" button.`;
+                    logLevel = 'info';
+                    errorMessage = `Poker Planner now supports @usergroup mentions! However it requires ` +
+                        `additional permissions that we didn't obtained previously. You need to visit ` +
+                        `<https://deniz.co/slack-poker-planner> and reinstall the app to enable this feature.`;
                 }
             }
             /**
