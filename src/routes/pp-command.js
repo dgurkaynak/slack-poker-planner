@@ -280,7 +280,13 @@ async function createTopic(cmd) {
             /**
              * Slack API platform errors
              */
-            if (slackErrorCode == 'channel_not_found') {
+            if (slackErrorCode == 'not_in_channel') {
+                shouldLog = false;
+                errorMessage = `Poker Planner app is not added to this channel. ` +
+                    `Please try again after adding it. ` +
+                    `You can simply add the app just by mentioning it, like "*@poker_planner*".`;
+            }
+            else if (slackErrorCode == 'channel_not_found') {
                 logLevel = 'info';
                 errorMessage = `Oops, we couldn't find this channel. ` +
                     `Are you sure that Poker Planner app is added to this channel/conversation? ` +
