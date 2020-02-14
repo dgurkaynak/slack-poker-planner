@@ -45,7 +45,8 @@ module.exports = async (request, reply) => {
         logger.error(`(${errorId}) Could not get team or topic`, payload, err);
         return {
             text: `Internal server error, please try again later\n` +
-                `A_GET_FAIL (${errorId})`,
+                `A_GET_FAIL (${errorId})\n\n` +
+                `If this problem is persistent, you can open an issue on <https://github.com/dgurkaynak/slack-poker-planner/issues>`,
             response_type: 'ephemeral',
             replace_original: false
         };
@@ -94,8 +95,9 @@ module.exports = async (request, reply) => {
                     const errorId = shortid.generate();
                     logger.error(`(${errorId}) Could not reveal topic`, err);
                     return {
-                        text: `Could not reveal the topic. Internal server error, please try again later\n` +
-                            `A_REVEAL_FAIL (${errorId})`,
+                        text: `Internal server error, please try again later\n` +
+                            `A_REVEAL_FAIL (${errorId})\n\n` +
+                            `If this problem is persistent, you can open an issue on <https://github.com/dgurkaynak/slack-poker-planner/issues>`,
                         response_type: 'ephemeral',
                         replace_original: false
                     };
@@ -120,8 +122,9 @@ module.exports = async (request, reply) => {
                     const errorId = shortid.generate();
                     logger.error(`(${errorId}) Could not cancel topic`, err);
                     return {
-                        text: `Could not cancel the topic. Internal server error, please try again later\n` +
-                            `A_CANCEL_FAIL (${errorId})`,
+                        text: `Internal server error, please try again later\n` +
+                            `A_CANCEL_FAIL (${errorId})\n\n` +
+                            `If this problem is persistent, you can open an issue on <https://github.com/dgurkaynak/slack-poker-planner/issues>`,
                         response_type: 'ephemeral',
                         replace_original: false
                     };
@@ -131,7 +134,8 @@ module.exports = async (request, reply) => {
                 logger.error(`(${errorId}) Unknown topic action "${topicAction}"`, payload);
                 return {
                     text: `Internal server error, please try again later\n`
-                        `A_UNKNOWN_ACTION (${errorId})`,
+                        `A_UNKNOWN_ACTION (${errorId})\n\n` +
+                        `If this problem is persistent, you can open an issue on <https://github.com/dgurkaynak/slack-poker-planner/issues>`,
                     response_type: 'ephemeral',
                     replace_original: false
                 };
@@ -188,8 +192,9 @@ module.exports = async (request, reply) => {
                 const errorId = shortid.generate();
                 logger.error(`(${errorId}) Could not vote`, err);
                 return {
-                    text: `Could not vote. Internal server error, please try again later\n`
-                        `A_VOTE_FAIL (${errorId})`,
+                    text: `Internal server error, please try again later\n`
+                        `A_VOTE_FAIL (${errorId})\n\n` +
+                        `If this problem is persistent, you can open an issue on <https://github.com/dgurkaynak/slack-poker-planner/issues>`,
                     response_type: 'ephemeral',
                     replace_original: false
                 };

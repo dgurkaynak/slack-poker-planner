@@ -93,7 +93,8 @@ async function configure(cmd) {
         logger.error(`(${errorId}) Could not created topic, could not get the team from db`, cmd, err);
         return {
             text: `Internal server error, please try again later\n` +
-                `SC_TEAM_GET_FAIL (${errorId})`,
+                `SC_TEAM_GET_FAIL (${errorId})\n\n` +
+                `If this problem is persistent, you can open an issue on <https://github.com/dgurkaynak/slack-poker-planner/issues>`,
             response_type: 'ephemeral',
             replace_original: false
         };
@@ -136,7 +137,8 @@ async function configure(cmd) {
             logger.error(`(${errorId}) Could not reset custom points, db error`, cmd, err);
             return {
                 text: `Internal server error, please try again later\n` +
-                    `SC_RESET_FAIL (${errorId})`,
+                    `SC_RESET_FAIL (${errorId})\n\n` +
+                    `If this problem is persistent, you can open an issue on <https://github.com/dgurkaynak/slack-poker-planner/issues>`,
                 response_type: 'ephemeral',
                 replace_original: false
             };
@@ -190,7 +192,8 @@ async function configure(cmd) {
         logger.error(`(${errorId}) Could not set custom points, db error`, cmd, err);
         return {
             text: `Internal server error, please try again later\n` +
-                `SC_SET_FAIL (${errorId})`,
+                `SC_SET_FAIL (${errorId})\n\n` +
+                `If this problem is persistent, you can open an issue on <https://github.com/dgurkaynak/slack-poker-planner/issues>`,
             response_type: 'ephemeral',
             replace_original: false
         };
@@ -225,7 +228,8 @@ async function createTopic(cmd) {
         logger.error(`(${errorId}) Could not created topic, could not get the team from db`, cmd, err);
         return {
             text: `Internal server error, please try again later\n` +
-                `ST_TEAM_GET_FAIL (${errorId})`,
+                `ST_TEAM_GET_FAIL (${errorId})\n\n` +
+                `If this problem is persistent, you can open an issue on <https://github.com/dgurkaynak/slack-poker-planner/issues>`,
             response_type: 'ephemeral',
             replace_original: false
         };
@@ -262,7 +266,9 @@ async function createTopic(cmd) {
             const errorId = shortid.generate();
             let shouldLog = true;
             let logLevel = 'error';
-            let errorMessage = `Internal server error, please try again later\nST_INIT_FAIL (${errorId})`;
+            let errorMessage = `Internal server error, please try again later\n` +
+                `ST_INIT_FAIL (${errorId})\n\n` +
+                `If this problem is persistent, you can open an issue on <https://github.com/dgurkaynak/slack-poker-planner/issues>`;
 
             /**
              * Slack API platform errors
