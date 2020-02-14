@@ -282,12 +282,11 @@ async function createTopic(cmd) {
              */
             if (slackErrorCode == 'channel_not_found') {
                 logLevel = 'info';
-                errorMessage = `Oops, this channel couldn't be found by Slack API. ` +
-                    `This can happen when Poker Planner is installed to your Slack team by a user ` +
-                    `(<@${team.user_id}>) which does not have permission to access this channel/group. ` +
-                    `To fix this issue, you (or someone else who has access) can install the app again on ` +
-                    `<https://deniz.co/slack-poker-planner>\n\n` +
-                    `If you still having a problem, you can open an issue on <https://github.com/dgurkaynak/slack-poker-planner/issues> ` +
+                errorMessage = `Oops, we couldn't find this channel. ` +
+                    `Are you sure that Poker Planner app is added to this channel/conversation? ` +
+                    `You can simply add by mentioning it, like "*@poker_planner*". ` +
+                    `Please try again after adding it.\n\n` +
+                    `If you still have a problem, you can open an issue on <https://github.com/dgurkaynak/slack-poker-planner/issues> ` +
                     `with this error id: ${errorId}`;
             }
             else if (slackErrorCode == 'token_revoked') {
