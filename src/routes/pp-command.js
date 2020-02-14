@@ -102,7 +102,8 @@ async function configure(cmd) {
     if (!team) {
         logger.error(`Could not created topic, team could not be found`, cmd);
         return {
-            text: `Your slack team "${cmd.team_domain}" could not be found, please add Poker Planner to your Slack team again`,
+            text: `Your slack team "${cmd.team_domain}" could not be found, please add Poker Planner to ` +
+                `your Slack team again on <https://deniz.co/slack-poker-planner>`,
             response_type: 'ephemeral',
             replace_original: false
         };
@@ -233,7 +234,8 @@ async function createTopic(cmd) {
     if (!team) {
         logger.error(`Could not created topic, team could not be found`, cmd);
         return {
-            text: `Your slack team "${cmd.team_domain}" could not be found, please add Poker Planner to your Slack team again`,
+            text: `Your slack team "${cmd.team_domain}" could not be found, please reinstall Poker Planner `
+                `on <https://deniz.co/slack-poker-planner>`,
             response_type: 'ephemeral',
             replace_original: false
         };
