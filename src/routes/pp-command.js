@@ -264,8 +264,10 @@ async function createTopic(cmd) {
             let logLevel = 'error';
             let errorMessage = `Internal server error, please try again later\nST_INIT_FAIL (${errorId})`;
 
-            // Handle `channel_not_found` error
-            if (err.code == 'slackclient_platform_error' && err.data && err.data.error == 'channel_not_found') {
+            /**
+             * Slack API platform errors
+             */
+            if (err.data && err.data.error == 'channel_not_found') {
                 logLevel = 'info';
                 errorMessage = `Oops, this channel couldn't be found by Slack API. ` +
                     `This can happen when Poker Planner is installed to your Slack team by a user ` +
@@ -275,20 +277,17 @@ async function createTopic(cmd) {
                     `If you still having a problem, you can open an issue on <https://github.com/dgurkaynak/slack-poker-planner/issues> ` +
                     `with this error id: ${errorId}`;
             }
-            // Handle `token_revoked` error
-            else if (err.code == 'slackclient_platform_error' && err.data && err.data.error == 'token_revoked') {
+            else if (err.data && err.data.error == 'token_revoked') {
                 logLevel = 'info';
                 errorMessage = `Poker Planner's access has been revoked for this workspace. ` +
                     `In order to use it, you need to install the app again on ` +
                     `<https://deniz.co/slack-poker-planner>`;
             }
-            // Handle `method_not_supported_for_channel_type` error
-            else if (err.code == 'slackclient_platform_error' && err.data && err.data.error == 'method_not_supported_for_channel_type') {
+            else if (err.data && err.data.error == 'method_not_supported_for_channel_type') {
                 logLevel = 'info';
                 errorMessage = `Poker Planner cannot be used in this type of conversations.`;
             }
-            // Handle `missing_scope` error
-            else if (err.code == 'slackclient_platform_error' && err.data && err.data.error == 'missing_scope') {
+            else if (err.data && err.data.error == 'missing_scope') {
                 logLevel = 'info';
 
                 if (err.data.needed == 'mpim:read') {
@@ -298,13 +297,14 @@ async function createTopic(cmd) {
                         + ` Please visit <https://deniz.co/slack-poker-planner> and click "Add to Slack" button.`;
                 }
             }
-            // Handle `channel_too_crowded`
+            /**
+             * Internal errors
+             */
             else if (err.code == 'channel_too_crowded') {
                 shouldLog = false;
                 errorMessage = `Poker Planner cannot be used in channels/groups which has more than 100 members. ` +
                     `You should use it in a smaller channel/group.`;
             }
-            // Handle `channel_too_crowded_for_here_mention`
             else if (err.code == 'channel_too_crowded_for_here_mention') {
                 shouldLog = false;
                 errorMessage = 'Automatically inferring participants or `@here` mentions are not supported in ' +
@@ -312,7 +312,6 @@ async function createTopic(cmd) {
                     `You can explicitly mention users to add them as participants up to 50 people, ` +
                     `or you may want to use it in a smaller channel/group.`;
             }
-            // Handle `too_many_participants`
             else if (err.code == 'too_many_participants') {
                 shouldLog = false;
                 errorMessage = `Maximum supported number of participants is 50.`;
