@@ -270,10 +270,17 @@ async function createTopic(cmd) {
                 `ST_INIT_FAIL (${errorId})\n\n` +
                 `If this problem is persistent, you can open an issue on <https://github.com/dgurkaynak/slack-poker-planner/issues>`;
 
+            const slackErrorCode = err.data && err.data.error;
+            if (slackErrorCode) {
+                errorMessage = `Unexpected Slack API Error: "*${slackErrorCode}*"\n\n` +
+                    `If you think this is an issue, please report to <https://github.com/dgurkaynak/slack-poker-planner/issues> ` +
+                    `with this error id: ${errorId}`;
+            }
+
             /**
              * Slack API platform errors
              */
-            if (err.data && err.data.error == 'channel_not_found') {
+            if (slackErrorCode == 'channel_not_found') {
                 logLevel = 'info';
                 errorMessage = `Oops, this channel couldn't be found by Slack API. ` +
                     `This can happen when Poker Planner is installed to your Slack team by a user ` +
@@ -283,17 +290,17 @@ async function createTopic(cmd) {
                     `If you still having a problem, you can open an issue on <https://github.com/dgurkaynak/slack-poker-planner/issues> ` +
                     `with this error id: ${errorId}`;
             }
-            else if (err.data && err.data.error == 'token_revoked') {
+            else if (slackErrorCode == 'token_revoked') {
                 logLevel = 'info';
                 errorMessage = `Poker Planner's access has been revoked for this workspace. ` +
                     `In order to use it, you need to install the app again on ` +
                     `<https://deniz.co/slack-poker-planner>`;
             }
-            else if (err.data && err.data.error == 'method_not_supported_for_channel_type') {
+            else if (slackErrorCode == 'method_not_supported_for_channel_type') {
                 logLevel = 'info';
                 errorMessage = `Poker Planner cannot be used in this type of conversations.`;
             }
-            else if (err.data && err.data.error == 'missing_scope') {
+            else if (slackErrorCode == 'missing_scope') {
                 logLevel = 'info';
 
                 if (err.data.needed == 'mpim:read') {
