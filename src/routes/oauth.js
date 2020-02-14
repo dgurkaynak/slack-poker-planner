@@ -9,18 +9,18 @@ module.exports = async (request, reply) => {
         // Installed!
         try {
             const slackWebClient = new WebClient();
-            const accessResponse = await slackWebClient.oauth.access({
+            const accessResponse = await slackWebClient.oauth.v2.access({
                 client_id: process.env.SLACK_CLIENT_ID,
                 client_secret: process.env.SLACK_CLIENT_SECRET,
                 code: request.query.code
             });
 
             const team = await Team.createOrUpdate({
-                id: accessResponse.team_id,
-                name: accessResponse.team_name,
+                id: accessResponse.team.id,
+                name: accessResponse.team.name,
                 access_token: accessResponse.access_token,
                 scope: accessResponse.scope,
-                user_id: accessResponse.user_id
+                user_id: accessResponse.authed_user.id
             });
 
             process.env.COUNTLY_APP_KEY && Countly.add_event({

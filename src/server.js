@@ -82,7 +82,7 @@ function initRoutes(server) {
         method: 'GET',
         path: path.join(process.env.BASE_PATH, 'slack/direct-install'),
         handler: (request, reply) => {
-            const url = `https://slack.com/oauth/authorize?scope=${process.env.SLACK_SCOPE}&client_id=${process.env.SLACK_CLIENT_ID}`;
+            const url = `https://slack.com/oauth/v2/authorize?client_id=${process.env.SLACK_CLIENT_ID}&scope=${process.env.SLACK_SCOPE}`;
             return reply.redirect(url).code(302);
         }
     });
