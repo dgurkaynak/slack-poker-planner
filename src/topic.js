@@ -10,13 +10,17 @@ const utils = require('./utils');
 const topics = {};
 
 // Summary of active topics in every minute
+let lastActiveTopicsHash;
 setInterval(() => {
     const ids = Object.keys(topics);
+    const hash = ids.sort().join(',');
+    if (hash == lastActiveTopicsHash) return;
     logger.info(
         ids.length == 0 ?
             `There is no active topics` :
             `There are ${ids.length} active topic(s): ${ids.join(', ')}`
     );
+    lastActiveTopicsHash = hash;
 }, 60000);
 
 
