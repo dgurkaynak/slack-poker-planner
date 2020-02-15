@@ -62,33 +62,34 @@
             <h4 id="usage">Usage</h4>
             <p>
                 After successful installation, <code>/pp</code>
-                slash command will be avaliable in your team workspace.
+                slash command will be avaliable in your team workspace. It works in: <br />
+
+                <ul>
+                    <li>Public channels</li>
+                    <li>Private channels</li>
+                    <li>Group direct messages</li>
+                </ul>
+
+                <strong>Poker Planner app must be added to channel/conversation before usage.</strong>
+                You can add it from channel/conversation details menu, or just simply mention the app,
+                like <code>@poker_planner</code>.
             </p>
 
             <p>
                 <h5><code>/pp some topic text</code></h5>
                 This command starts a poker planning session on specified topic,
-                or simply anything you typed after <code>/pp</code>. It
-                works in: <br /><br />
-
-                <ul>
-                    <li>Public channels</li>
-                    <li>Private channels</li>
-                    <li>Conversations between multiple people (they are basically private channels)</li>
-                </ul>
-
-                This command will automatically find active (online and not-away) users in the current
-                channel/group and add them as participants to poker planning session.
-                Therefore <code>/pp</code> command does not work in direct messages.<br /><br />
+                or simply anything you typed after <code>/pp</code>. When used without any mentions,
+                Poker Planner will automatically find active (online and not-away) users in the current
+                channel/group and add them as participants to poker planning session. <br /><br />
 
                 <strong>WARNING:</strong> Topic text cannot start with "<strong>config</strong>" and
                 "<strong>help</strong>" (case-sensitive). They have another functionalities
-                which will be described below.
+                which is described below.
             </p>
 
             <p>
                 <h5><code>/pp some topic text @user1 @user2 ...</code></h5>
-                This command works exactly like above, however specifically mentioned
+                This command works exactly like above, however explicitly mentioned
                 users will be added to the session, <strong>even if they are offline</strong>.
                 <code>@usergroup</code> handles are also supported, as well as <code>@channel</code>,
                 <code>@here</code> mentions. As described above, if there is no mentions, Poker Planner
