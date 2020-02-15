@@ -120,7 +120,7 @@
             <h4 id="slack-permissions">Required Slack Permissions</h4>
             <ul>
                 <li>
-                    <code>commands</code> - Add slash commands and add actions to messages (and view related content)
+                    <code>commands</code> - Add actions and/or slash commands that people can use
                     <ul>
                         <li>
                             We will add <code>/pp</code> slash command
@@ -128,10 +128,10 @@
                     </ul>
                 </li>
                 <li>
-                    <code>chat:write:bot</code> - Send messages as Poker Planner
+                    <code>chat:write</code> - Send messages as Poker Planner
                 </li>
                 <li>
-                    <code>channels:read</code> - Access information about user’s public channels
+                    <code>channels:read</code> - View basic information about public channels in the workspace
                     <ul>
                         <li>
                             When <code>/pp</code> command is used in a public channel, we will
@@ -141,16 +141,23 @@
                     </ul>
                 </li>
                 <li>
-                    <code>groups:read</code> - Access information about user’s private channels
+                    <code>groups:read</code> - View basic information about private channels that Poker Planner has been added to
                     <ul>
                         <li>
-                            Same as <code>channels:read</code> permission, but for private channels and conversations
-                            with multiple people.
+                            Same as <code>channels:read</code> permission, but for private channels.
                         </li>
                     </ul>
                 </li>
                 <li>
-                    <code>users:read</code> - Access your workspace’s profile information
+                    <code>mpim:read</code> - View basic information about group direct messages that Poker Planner has been added to
+                    <ul>
+                        <li>
+                            Same as <code>channels:read</code> permission, but for group direct messages.
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <code>users:read</code> - View people in the workspace
                     <ul>
                         <li>
                             In order to detect active users, we need to check user presence.
