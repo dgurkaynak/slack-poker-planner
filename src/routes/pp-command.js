@@ -245,6 +245,24 @@ async function createTopic(cmd) {
         };
     }
 
+    // If permissions are old, show migration message
+    if (team.scope == 'identify,commands,channels:read,groups:read,users:read,chat:write:bot') {
+        logger.info(`[${team.name}(${team.id})] ${cmd.user_name}(${cmd.user_id}) sees migration message`);
+        return {
+            text: 'Poker Planner has migrated to ' +
+                '<https://slackhq.com/introducing-a-dramatically-upgraded-slack-app-toolkit|Slack\'s new app toolkit> ' +
+                'which adds granular permissions for better security. We now depend on bot permissions instead of ' +
+                'user permissions. So that you can explicitly manage which channels/conversations Poker Planner can ' +
+                'access. However, this requires a couple of changes:\n\n• In order to obtain new bot permissions ' +
+                'and drop user ones, *you need to reinstall Poker Planner* to your workspace on ' +
+                '<https://deniz.co/slack-poker-planner>\n• Before using `/pp` command, *Poker Planner app must be ' +
+                'added to that channel/conversation*. You can simply add or invite it by just mentioning the app like ' +
+                '`@poker_planner`. You can also do that from channel/converstion details menu.',
+            response_type: 'ephemeral',
+            replace_original: false
+        };
+    }
+
     // WTF HAPI???
     setTimeout(async () => {
         try {
