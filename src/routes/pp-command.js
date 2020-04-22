@@ -356,6 +356,10 @@ async function createTopic(cmd) {
                 shouldLog = false;
                 errorMessage = `Maximum supported number of participants is 50.`;
             }
+            else if (err.code == 'no_participants') {
+                shouldLog = false;
+                errorMessage = `There are no available participants detected.`;
+            }
 
             shouldLog && logger[logLevel](`(${errorId}) Could not created topic`, cmd, err, topic);
             await Topic.rejectPPCommand(cmd, errorMessage);

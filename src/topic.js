@@ -172,6 +172,12 @@ async function decideParticipants(topic, team) {
         throw err;
     }
 
+    if (participantIds.length == 0) {
+        const err = new Error('No participants');
+        err.code = 'no_participants';
+        throw err;
+    }
+
     return participantIds;
 }
 
