@@ -109,7 +109,7 @@ async function decideParticipants(topic, team) {
     const slackWebClient = new WebClient(team.access_token);
     // If there is no mention, must be work like @here
     const mentions = topic.mentions.length > 0 ? topic.mentions : [{ type: 'special', id: 'here' }];
-    let participantIds = [topic.ppCommand.user_id]; // Creator must be participated
+    let participantIds = [];
 
     // If @here or @channel mention is used, we need to fetch current channel members
     let channelMemberIds;
