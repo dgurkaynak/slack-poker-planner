@@ -1,8 +1,13 @@
 const db = require('sqlite');
+const logger = require('./logger');
 
 
 async function get(id) {
     return db.get('SELECT * FROM team WHERE id = ?', id);
+}
+
+async function getTeamParticipants(id, room) {
+    return db.get('SELECT members FROM participants WHERE id = ? AND room = ?', id, room);
 }
 
 
@@ -74,5 +79,64 @@ async function updateCustomPoints(teamId, customPoints) {
     );
 }
 
+async function participantCreateOrUpdate(id, room, members) {
+    const roomMembers = await getTeamParticipants(id, room, members);
+    if (!roomMembers)
+        await addParticipants(id, room, members);
+    else
+        await updateParticipants(id, room, members);
+    return getTeamParticipants(id, room);
+}
 
-module.exports = {get, create, update, createOrUpdate, updateCustomPoints};
+async function addParticipants(teamId, room, participants) {
+    const participantsArr = participants;
+    logger.info(`add participants in db: ${participantsArr}`);
+    return db.run(
+        `INSERT INTO participants
+            (id,room,members)
+        VALUES
+            ($id,$room,$participants)`,
+        {
+            $id: teamId,
+            $room: room,
+            $participants: participantsArr
+        }
+    );
+}
+
+async function updateParticipants(teamId, room, participants) {
+    logger.info(`update participants in db: ${participants}`);
+    return db.run(
+        `UPDATE
+            participants
+        SET
+            members = $participants
+        WHERE
+            id = $id
+        AND
+            room = $room`,
+        {
+            $id: teamId,
+            $room: room,
+            $participants: participants
+        }
+    );
+}
+
+async function deleteParticipants(teamId, room) {
+    logger.info(`deleting permanent participants in ${room}`);
+    return db.run(
+        `DELETE FROM
+            participants
+        WHERE
+            id = $id
+        AND
+            room = $room`,
+        {
+            $id: teamId,
+            $room: room
+        }
+    );
+}
+
+module.exports = {get, getTeamParticipants, deleteParticipants, create, update, createOrUpdate, updateCustomPoints, participantCreateOrUpdate, addParticipants, updateParticipants};

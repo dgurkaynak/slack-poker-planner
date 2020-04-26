@@ -3,6 +3,7 @@ const Team = require('../team');
 const Topic = require('../topic');
 const Countly = require('countly-sdk-nodejs');
 const shortid = require('shortid');
+const utils = require('../utils');
 const _ = require('lodash');
 
 
@@ -62,6 +63,16 @@ module.exports = async (request, reply) => {
                             'At least 2 values must be provided, seperated with ' +
                             'space character. Each value cannot be more than 20 ' +
                             'characters, and maximum 25 poker values are supported.'
+                    },
+                    {
+                        color: '#3AA3E3',
+                        text: '`/pp config participants @user1 @user2`\n' +
+                            'This command lets you set persistent participants ' +
+                            'for planning sessions in a room. Once set, ' +
+                            '`/pp some topic text` will use pre-configured ' +
+                            'participants instead of @here. `/pp config reset` ' +
+                            'will remove the persistent participants and default ' +
+                            'back to @here.'
                     },
                     {
                         color: '#3AA3E3',
@@ -125,6 +136,13 @@ async function configure(cmd) {
             await Team.updateCustomPoints(team.id, '');
             logger.info(`[${team.name}(${team.id})] ${cmd.user_name}(${cmd.user_id}) reset custom points`);
 
+            // deleting permanent participants
+            permanent_participants = await Team.getTeamParticipants(team.id, cmd.channel_id);
+            if (!!permanent_participants) {
+              await Team.deleteParticipants(team.id, cmd.channel_id)
+              logger.error(`deleting permanent_participants ${permanent_participants}`);
+            }
+
             process.env.COUNTLY_APP_KEY && Countly.add_event({
                 'key': 'reset_custom_points',
                 'count': 1,
@@ -143,6 +161,33 @@ async function configure(cmd) {
                 replace_original: false
             };
         }
+    }
+    if (text.includes('participants')) {
+      const participants = cmd.text.replace('config participants', '');
+      try {
+          await Team.participantCreateOrUpdate(team.id, cmd.channel_id, participants);
+          logger.info(`[${team.name}(${team.id})] ${cmd.user_name}(${cmd.user_id}) configured permanent participants: ${participants}`);
+
+          process.env.COUNTLY_APP_KEY && Countly.add_event({
+              'key': 'set_participants',
+              'count': 1,
+              'segmentation': {
+                  'values': 1
+              }
+          });
+
+          return `Poker planner will use ${participants} permanent participants from now on.`;
+      } catch (err) {
+          const errorId = shortid.generate();
+          logger.error(`(${errorId}) Could not set permanent participants, db error`, cmd, err);
+          return {
+              text: `Internal server error, please try again later\n` +
+                  `SC_SET_FAIL (${errorId})\n\n` +
+                  `If this problem is persistent, you can open an issue on <https://github.com/dgurkaynak/slack-poker-planner/issues>`,
+              response_type: 'ephemeral',
+              replace_original: false
+          };
+      }
     }
 
     const customPointsArr = text.match(/\S+/g) || [];
@@ -202,7 +247,8 @@ async function configure(cmd) {
 
 
 async function createTopic(cmd) {
-    const topic = Topic.createFromPPCommand(cmd);
+    participantsFromDB = await Team.getTeamParticipants(cmd.team_id, cmd.channel_id);
+    const topic = Topic.createFromPPCommand(cmd, participantsFromDB);
 
     if (!topic.title) {
         return {
@@ -355,10 +401,6 @@ async function createTopic(cmd) {
             else if (err.code == 'too_many_participants') {
                 shouldLog = false;
                 errorMessage = `Maximum supported number of participants is 50.`;
-            }
-            else if (err.code == 'no_participants') {
-                shouldLog = false;
-                errorMessage = `There are no available participants detected.`;
             }
 
             shouldLog && logger[logLevel](`(${errorId}) Could not created topic`, cmd, err, topic);

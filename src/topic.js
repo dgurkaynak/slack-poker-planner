@@ -40,7 +40,7 @@ async function remove(topic) {
 }
 
 
-function createFromPPCommand(ppCommand) {
+function createFromPPCommand(ppCommand, dbParticipants) {
     const id = shortid.generate();
 
     let mentions = [];
@@ -67,6 +67,13 @@ function createFromPPCommand(ppCommand) {
             });
         }
     });
+
+    if (!!dbParticipants) {
+      logger.info(`participants from DB ${Object.values(dbParticipants)}`);
+      utils.matchAll(Object.values(dbParticipants), /<@(.*?)>/g).forEach((str) => {
+          mentions.push({ type: 'user', id: str.split('|')[0] });
+      });
+    }
 
     // Remove duplicate mentions
     mentions = _.uniqBy(mentions, mention => `${mention.type}-${mention.id}`);
@@ -109,7 +116,7 @@ async function decideParticipants(topic, team) {
     const slackWebClient = new WebClient(team.access_token);
     // If there is no mention, must be work like @here
     const mentions = topic.mentions.length > 0 ? topic.mentions : [{ type: 'special', id: 'here' }];
-    let participantIds = [];
+    let participantIds = [topic.ppCommand.user_id]; // Creator must be participated
 
     // If @here or @channel mention is used, we need to fetch current channel members
     let channelMemberIds;
@@ -169,12 +176,6 @@ async function decideParticipants(topic, team) {
     if (participantIds.length > 50) {
         const err = new Error('Too many participants');
         err.code = 'too_many_participants';
-        throw err;
-    }
-
-    if (participantIds.length == 0) {
-        const err = new Error('No participants');
-        err.code = 'no_participants';
         throw err;
     }
 
