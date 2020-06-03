@@ -2,10 +2,12 @@
   "name": "slack-poker-planner",
   "version": "0.4.1",
   "description": "Poker planning app for slack",
-  "main": "src/app.js",
+  "main": "dist/app.js",
   "scripts": {
+    "build": "webpack --mode production",
+    "build:watch": "webpack --mode development --watch",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node src/app.js"
+    "start": "node dist/app.js"
   },
   "repository": {
     "type": "git",
@@ -13,29 +15,24 @@
   },
   "keywords": [
     "slack",
-    "poker planning",
+    "slack bot",
+    "planning poker",
     "poker planner",
-    "bot"
+    "scrum poker"
   ],
   "author": "Deniz Gurkaynak <dgurkaynak@gmail.com>",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/dgurkaynak/slack-poker-planner/issues"
   },
   "homepage": "https://github.com/dgurkaynak/slack-poker-planner#readme",
-  "dependencies": {
-    "@slack/web-api": "5.7.0",
-    "boom": "7.2.0",
-    "countly-sdk-nodejs": "19.8.0",
-    "dotenv": "6.0.0",
-    "handlebars": "4.3.4",
-    "hapi": "17.5.3",
-    "inert": "5.1.0",
-    "lodash": "4.17.15",
-    "request": "2.88.0",
-    "request-promise": "4.2.2",
-    "shortid": "^2.2.15",
-    "sqlite": "2.9.2",
-    "vision": "5.3.3"
+  "dependencies": {},
+  "devDependencies": {
+    "prettier": "2.0.5",
+    "ts-loader": "^7.0.5",
+    "typescript": "^3.9.3",
+    "webpack": "^4.43.0",
+    "webpack-cli": "^3.3.11",
+    "webpack-node-externals": "^1.7.2"
   }
 }
