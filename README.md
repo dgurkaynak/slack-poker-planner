@@ -3,7 +3,7 @@
 This project lets you make estimations with planning poker (or scrum poker) directly in Slack, without any need of external software.
 It can be a useful tool for agile remote teams.
 
-[![Demonstration](./demo.gif)](https://deniz.co/slack-poker-planner/)
+[![Demonstration](./assets/demo.gif)](https://deniz.co/slack-poker-planner/)
 
 ## Features
 
