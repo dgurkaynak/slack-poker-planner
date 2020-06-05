@@ -27,10 +27,8 @@ export const DEFAULT_POINTS = [
 ];
 
 export enum SessionControllerErrorCode {
-  CHANNEL_TOO_CROWDED_TO_FETCH_MEMBER_LIST = 'channel_too_crowded_to_fetch_member_list',
-  CHANNEL_TOO_CROWDED_FOR_USER_PRESENCE_CHECK = 'channel_too_crowded_for_user_presence_check',
-  TOO_MANY_PARTICIPANTS = 'too_many_participants',
   NO_PARTICIPANTS = 'no_participants',
+  TITLE_REQUIRED = 'title_required',
   SESSION_NOT_ACTIVE = 'session_not_active',
   ONLY_PARTICIPANTS_CAN_VOTE = 'only_participants_can_vote',
 }
@@ -48,9 +46,90 @@ export class SessionController {
     ).join('\n');
 
     return slackWebClient.chat.postMessage({
-      channel: session.rawCommand.channel_id,
+      channel: session.channelId,
       text: `Title: *${session.title}*\n\nVotes:\n${votesText}`,
       attachments: buildMessageAttachments(session) as any,
+    });
+  }
+
+  /**
+   * Opens a `new session` modal
+   */
+  static async openNewSessionModal({
+    triggerId,
+    team,
+    channelId,
+    title,
+    participants,
+  }: {
+    triggerId: string;
+    team: ITeam;
+    channelId: string;
+    title: string;
+    participants: string[];
+  }) {
+    const slackWebClient = new WebClient(team.access_token);
+    await slackWebClient.views.open({
+      trigger_id: triggerId,
+      view: {
+        callback_id: `newSessionModal:submit`,
+        private_metadata: JSON.stringify({ channelId }),
+        type: 'modal',
+        title: {
+          type: 'plain_text',
+          text: 'Poker Planner',
+          emoji: true,
+        },
+        submit: {
+          type: 'plain_text',
+          text: 'Start New Session',
+          emoji: true,
+        },
+        close: {
+          type: 'plain_text',
+          text: 'Cancel',
+          emoji: true,
+        },
+        blocks: [
+          {
+            type: 'input',
+            block_id: 'title',
+            element: {
+              type: 'plain_text_input',
+              placeholder: {
+                type: 'plain_text',
+                text: 'Write a topic for this voting session',
+                emoji: true,
+              },
+              initial_value: title || '',
+            },
+            label: {
+              type: 'plain_text',
+              text: 'Session Title',
+              emoji: true,
+            },
+          },
+          {
+            type: 'input',
+            block_id: 'participants',
+            element: {
+              type: 'multi_users_select',
+              placeholder: {
+                type: 'plain_text',
+                text: 'Add users',
+                emoji: true,
+              },
+              initial_users: participants,
+              // max_selected_items: 25,
+            },
+            label: {
+              type: 'plain_text',
+              text: 'Participants',
+              emoji: true,
+            },
+          },
+        ],
+      },
     });
   }
 
@@ -188,98 +267,6 @@ export class SessionController {
         attachments: buildMessageAttachments(session) as any,
       });
     }
-  }
-
-  /**
-   * Resolves all the mentions like `@here @channel @user1 @user @usergroup `
-   * into actual user ids.
-   */
-  static async resolveParticipants(session: ISession, team: ITeam) {
-    let participantIds: string[] = [];
-    const slackWebClient = new WebClient(team.access_token);
-
-    // If there is no mention, must be work like @here
-    const mentions =
-      session.mentions.length > 0
-        ? session.mentions
-        : [{ type: 'special', id: 'here' }];
-
-    // If @here or @channel mention is used, we need to fetch current channel members
-    let channelMemberIds: string[] = [];
-    const shouldFetchChannelMembers = some(mentions, (mention) => {
-      return (
-        mention.type == 'special' &&
-        ['channel', 'here'].indexOf(mention.id) > -1
-      );
-    });
-
-    if (shouldFetchChannelMembers) {
-      const res = await slackWebClient.conversations.members({
-        channel: session.rawCommand.channel_id,
-        limit: 100,
-      });
-      channelMemberIds = res.members as string[];
-
-      if (channelMemberIds.length >= 100 || res.response_metadata.next_cursor) {
-        throw new Error(
-          SessionControllerErrorCode.CHANNEL_TOO_CROWDED_TO_FETCH_MEMBER_LIST
-        );
-      }
-    }
-
-    // For each mention
-    for (let mention of mentions) {
-      if (mention.type == 'special') {
-        // @channel mention
-        if (mention.id == 'channel') {
-          participantIds.push(...channelMemberIds);
-        } else if (mention.id == 'here') {
-          // @here mention
-
-          if (channelMemberIds.length > 25) {
-            const err = new Error(
-              SessionControllerErrorCode.CHANNEL_TOO_CROWDED_FOR_USER_PRESENCE_CHECK
-            );
-            throw err;
-          }
-
-          // Gracefully check user presence
-          const presenceTasks = channelMemberIds.map((id) =>
-            slackWebClient.users.getPresence({ user: id }).catch(() => {})
-          );
-          const presences = await Promise.all(presenceTasks);
-          const channelActiveMemberIds = channelMemberIds.filter(
-            (id, index) => {
-              if (!presences[index]) return false;
-              return (presences[index] as any).presence == 'active';
-            }
-          );
-          participantIds.push(...channelActiveMemberIds);
-        }
-      } else if (mention.type == 'user') {
-        // @user mentions
-        participantIds.push(mention.id);
-      } else if (mention.type == 'user-group') {
-        const res: any = await slackWebClient.usergroups.users.list({
-          usergroup: mention.id,
-        });
-
-        participantIds.push(...res.users);
-      }
-    }
-
-    // Remove duplicates
-    participantIds = uniq(participantIds);
-
-    if (participantIds.length > 50) {
-      throw new Error(SessionControllerErrorCode.TOO_MANY_PARTICIPANTS);
-    }
-
-    if (participantIds.length == 0) {
-      throw new Error(SessionControllerErrorCode.NO_PARTICIPANTS);
-    }
-
-    return participantIds;
   }
 
   /**

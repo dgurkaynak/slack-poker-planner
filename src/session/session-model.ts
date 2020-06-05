@@ -19,16 +19,9 @@ export interface ISession {
    */
   title: string;
   /**
-   * Raw command body that slack sends us when a session is created,
-   * like `/pp some text`.
+   * Slack Channel ID.
    */
-  rawCommand: ISlackCommandRequestBody;
-  /**
-   * The mentions that user types explicitly, like
-   * `/pp some task name @user1 @user2 @devteam` or
-   * `/pp some task name @here`
-   */
-  mentions: ISessionMention[];
+  channelId: string;
   /**
    * Poker point values.
    */

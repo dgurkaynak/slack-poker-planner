@@ -78,15 +78,6 @@ export class PPCommandRoute {
       });
     }
 
-    const sessionTitle = SessionController.stripMentions(cmd.text);
-    if (!sessionTitle) {
-      return res.json({
-        text: `Session title cannot be empty`,
-        response_type: 'ephemeral',
-        replace_original: false,
-      });
-    }
-
     const [teamGetErr, team] = await to(TeamStore.findById(cmd.team_id));
     if (teamGetErr) {
       const errorId = generateId();
@@ -160,170 +151,34 @@ export class PPCommandRoute {
      * After that, it's best to move on to new messages and new interactions.
      */
 
-    // Send acknowledgement back to API -- HTTP 200
-    res.send('');
-
-    // Create session struct
-    const session: ISession = {
-      id: generateId(),
-      title: sessionTitle,
-      points: team.custom_points
-        ? team.custom_points.split(' ')
-        : DEFAULT_POINTS,
-      mentions: SessionController.exractMentions(cmd.text),
-      votes: {},
-      state: 'active',
-      rawCommand: cmd,
-      participants: undefined,
-      rawPostMessageResponse: undefined,
-    };
-
     try {
-      logger.info(
-        `[${team.name}(${team.id})] ${cmd.user_name}(${cmd.user_id}) trying to create ` +
-          `a topic with title "${session.title}" on #${cmd.channel_name}(${cmd.channel_id}) ` +
-          `w/ ${session.mentions.length} mention(s), id: ${session.id}`
-      );
+      await SessionController.openNewSessionModal({
+        triggerId: cmd.trigger_id,
+        team,
+        channelId: cmd.channel_id,
+        title: SessionController.stripMentions(cmd.text).trim(),
+        participants: [],
+      });
 
-      const participants = await SessionController.resolveParticipants(
-        session,
-        team
-      );
-      session.participants = participants;
-
-      const postMessageResponse = await SessionController.postMessage(
-        session,
-        team
-      );
-      session.rawPostMessageResponse = postMessageResponse as any;
-
-      await SessionStore.upsert(session);
+      // Send acknowledgement back to API -- HTTP 200
+      res.send('');
 
       if (process.env.COUNTLY_APP_KEY) {
         Countly.add_event({
-          key: 'topic_created',
+          key: 'new_session_modal_opened',
           count: 1,
-          segmentation: {
-            mentions: session.mentions.length,
-            participants: session.participants.length,
-          },
+          segmentation: {},
         });
       }
     } catch (err) {
       const errorId = generateId();
-      let shouldLog = true;
-      let logLevel: 'info' | 'warn' | 'error' = 'error';
-      let errorMessage =
-        `Internal server error, please try again later\n` +
-        `ST_INIT_FAIL (${errorId})\n\n` +
-        `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`;
-
-      const slackErrorCode = err.data && err.data.error;
-      if (slackErrorCode) {
-        errorMessage =
-          `Unexpected Slack API Error: "*${slackErrorCode}*"\n\n` +
-          `If you think this is an issue, please report to <${process.env.ISSUES_LINK}> ` +
-          `with this error id: ${errorId}`;
-      }
-
-      /**
-       * Slack API platform errors
-       */
-      if (slackErrorCode == 'not_in_channel') {
-        shouldLog = false;
-        errorMessage =
-          `Poker Planner app is not added to this channel. ` +
-          `Please try again after adding it. ` +
-          `You can simply add the app just by mentioning it, like "*@poker_planner*".`;
-      } else if (slackErrorCode == 'channel_not_found') {
-        logLevel = 'info';
-        errorMessage =
-          `Oops, we couldn't find this channel. ` +
-          `Are you sure that Poker Planner app is added to this channel/conversation? ` +
-          `You can simply add the app by mentioning it, like "*@poker_planner*". ` +
-          `However this may not work in Group DMs, you need to explicitly add it as a ` +
-          `member from conversation details menu. Please try again after adding it.\n\n` +
-          `If you still have a problem, you can open an issue on <${process.env.ISSUES_LINK}> ` +
-          `with this error id: ${errorId}`;
-      } else if (slackErrorCode == 'token_revoked') {
-        logLevel = 'info';
-        errorMessage =
-          `Poker Planner's access has been revoked for this workspace. ` +
-          `In order to use it, you need to install the app again on ` +
-          `<${process.env.APP_INSTALL_LINK}>`;
-      } else if (slackErrorCode == 'method_not_supported_for_channel_type') {
-        logLevel = 'info';
-        errorMessage = `Poker Planner cannot be used in this type of conversations.`;
-      } else if (slackErrorCode == 'missing_scope') {
-        if (err.data.needed == 'mpim:read') {
-          logLevel = 'info';
-          errorMessage =
-            `Poker Planner now supports Group DMs! However it requires ` +
-            `additional permissions that we didn't obtained previously. You need to visit ` +
-            `<${process.env.APP_INSTALL_LINK}> and reinstall the app to enable this feature.`;
-        } else if (err.data.needed == 'usergroups:read') {
-          logLevel = 'info';
-          errorMessage =
-            `Poker Planner now supports @usergroup mentions! However it requires ` +
-            `additional permissions that we didn't obtained previously. You need to visit ` +
-            `<${process.env.APP_INSTALL_LINK}> and reinstall the app to enable this feature.`;
-        }
-      } else if (
-        /**
-         * Internal errors
-         */
-        err.message ==
-        SessionControllerErrorCode.CHANNEL_TOO_CROWDED_TO_FETCH_MEMBER_LIST
-      ) {
-        shouldLog = false;
-        errorMessage =
-          `Poker Planner cannot be used in channels/groups which has more than 100 members. ` +
-          `You should use it in a smaller channel/group.`;
-      } else if (
-        err.message ==
-        SessionControllerErrorCode.CHANNEL_TOO_CROWDED_FOR_USER_PRESENCE_CHECK
-      ) {
-        shouldLog = false;
-        errorMessage =
-          'Automatically inferring participants or `@here` mentions are not supported in ' +
-          'channels/groups which has more than 25 members. ' +
-          `You can explicitly mention users to add them as participants up to 50 people, ` +
-          `or you may want to use it in a smaller channel/group.`;
-      } else if (
-        err.message == SessionControllerErrorCode.TOO_MANY_PARTICIPANTS
-      ) {
-        shouldLog = false;
-        errorMessage = `Maximum supported number of participants is 50.`;
-      } else if (err.message == SessionControllerErrorCode.NO_PARTICIPANTS) {
-        shouldLog = false;
-        errorMessage = `There are no available participants detected.`;
-      }
-
-      if (shouldLog) {
-        logger[logLevel](
-          `(${errorId}) Could not created topic`,
-          cmd,
-          err,
-          session
-        );
-      }
-      // Async reject the slash-command
-      const res = await fetch(cmd.response_url, {
-        method: 'post',
-        body: JSON.stringify({
-          text: errorMessage,
-          response_type: 'ephemeral',
-        }),
-        headers: { 'Content-Type': 'application/json' },
+      logger.error(`(${errorId}) Could not open modal`, cmd, err);
+      return res.json({
+        text: `Could not open modal (${errorId})`,
+        response_type: 'ephemeral',
+        replace_original: false,
       });
-
-      if (!res.ok) {
-        logger.error(
-          `Cannot async reject a slash command: ${res.status} - ${res.statusText}`,
-          session
-        );
-      }
-    } // end of the mega catch block
+    }
   }
 
   /**

@@ -8,8 +8,10 @@ import { SessionStore, ISession } from '../session/session-model';
 import {
   SessionController,
   SessionControllerErrorCode,
+  DEFAULT_POINTS,
 } from '../session/session-controller';
 import Countly from 'countly-sdk-nodejs';
+import isEmpty from 'lodash/isEmpty';
 
 export class ActionRoute {
   /**
@@ -43,6 +45,39 @@ export class ActionRoute {
       });
     }
 
+    switch (payload.type) {
+      case 'interactive_message': {
+        await ActionRoute.interactiveMessage({ payload, res });
+        return;
+      }
+
+      case 'view_submission': {
+        await ActionRoute.viewSubmission({ payload, res });
+        return;
+      }
+
+      default: {
+        const errorId = generateId();
+        logger.error(`(${errorId}) Unexpected action type: "${payload.type}"`);
+        return res.json({
+          text: `Unexpected action type: "${payload.type}" (${errorId})`,
+          response_type: 'ephemeral',
+          replace_original: false,
+        });
+      }
+    }
+  }
+
+  /**
+   * A user clicks on a button on message
+   */
+  static async interactiveMessage({
+    payload, // action request payload
+    res,
+  }: {
+    payload: any;
+    res: express.Response;
+  }) {
     const parts = payload.callback_id.split(':');
 
     if (parts.length != 2) {
@@ -159,6 +194,252 @@ export class ActionRoute {
           replace_original: false,
         });
       }
+    }
+  }
+
+  /**
+   * A user clicks a submit button a view
+   */
+  static async viewSubmission({
+    payload, // action request payload
+    res,
+  }: {
+    payload: any;
+    res: express.Response;
+  }) {
+    const [teamGetErr, team] = await to(TeamStore.findById(payload.team.id));
+    if (teamGetErr) {
+      const errorId = generateId();
+      logger.error(
+        `(${errorId}) Could not created topic, could not get the team from db`,
+        payload,
+        teamGetErr
+      );
+      return res.json({
+        text:
+          `Internal server error, please try again later\n` +
+          `ST_TEAM_GET_FAIL (${errorId})\n\n` +
+          `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
+        response_type: 'ephemeral',
+        replace_original: false,
+      });
+    }
+
+    if (!team) {
+      logger.error(`Could not created topic, team could not be found`, payload);
+      return res.json({
+        text: `Your slack team "${payload.team.domain}" could not be found, please reinstall Poker Planner on <${process.env.APP_INSTALL_LINK}>`,
+        response_type: 'ephemeral',
+        replace_original: false,
+      });
+    }
+
+    const callbackId = payload.view.callback_id;
+
+    switch (callbackId) {
+      case 'newSessionModal:submit': {
+        return ActionRoute.createSession({ payload, team, res });
+      }
+
+      default: {
+        const errorId = generateId();
+        logger.error(
+          `(${errorId}) Unexpected view-submission action callbackId: "${callbackId}"`
+        );
+        return res.json({
+          text: `Unexpected callback-id: "${callbackId}" (${errorId})`,
+          response_type: 'ephemeral',
+          replace_original: false,
+        });
+      }
+    }
+  }
+
+  /**
+   * A user submits the `new session` modal.
+   */
+  static async createSession({
+    payload, // action request payload
+    team,
+    res,
+  }: {
+    payload: any;
+    team: ITeam;
+    res: express.Response;
+  }) {
+    try {
+      const privateMetadata = JSON.parse(payload.view.private_metadata);
+      const titleInputState = payload.view.state.values.title;
+      const title = titleInputState[Object.keys(titleInputState)[0]].value;
+
+      if (!title || title.trim().length == 0) {
+        throw new Error(SessionControllerErrorCode.TITLE_REQUIRED);
+      }
+
+      const participantsInputState = payload.view.state.values.participants;
+      const participants =
+        participantsInputState[Object.keys(participantsInputState)[0]]
+          .selected_users;
+
+      if (participants.length == 0) {
+        throw new Error(SessionControllerErrorCode.NO_PARTICIPANTS);
+      }
+
+      // Create session struct
+      const session: ISession = {
+        id: generateId(),
+        title: title,
+        points: team.custom_points
+          ? team.custom_points.split(' ')
+          : DEFAULT_POINTS,
+        votes: {},
+        state: 'active',
+        channelId: privateMetadata.channelId,
+        participants,
+        rawPostMessageResponse: undefined,
+      };
+
+      logger.info(
+        `[${team.name}(${team.id})] ${payload.user.username}(${payload.user.id}) trying to create ` +
+          `a session on #${privateMetadata.channelId} sessionId: ${session.id}`
+      );
+
+      const postMessageResponse = await SessionController.postMessage(
+        session,
+        team
+      );
+      session.rawPostMessageResponse = postMessageResponse as any;
+
+      await SessionStore.upsert(session);
+
+      res.send('');
+
+      if (process.env.COUNTLY_APP_KEY) {
+        Countly.add_event({
+          key: 'topic_created',
+          count: 1,
+          segmentation: {
+            participants: session.participants.length,
+          },
+        });
+      }
+    } catch (err) {
+      const errorId = generateId();
+      let shouldLog = true;
+      let logLevel: 'info' | 'warn' | 'error' = 'error';
+      let errorMessage =
+        `Internal server error, please try again later\n` +
+        `ST_INIT_FAIL (${errorId})\n\n` +
+        `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`;
+      let modalErrors: { [key: string]: string } = {};
+
+      const slackErrorCode = err.data && err.data.error;
+      if (slackErrorCode) {
+        errorMessage =
+          `Unexpected Slack API Error: "*${slackErrorCode}*"\n\n` +
+          `If you think this is an issue, please report to <${process.env.ISSUES_LINK}> ` +
+          `with this error id: ${errorId}`;
+      }
+
+      /**
+       * Slack API platform errors
+       */
+      if (slackErrorCode == 'not_in_channel') {
+        shouldLog = false;
+        errorMessage =
+          `Poker Planner app is not added to this channel. ` +
+          `Please try again after adding it. ` +
+          `You can simply add the app just by mentioning it, like "*@poker_planner*".`;
+      } else if (slackErrorCode == 'channel_not_found') {
+        logLevel = 'info';
+        errorMessage =
+          `Oops, we couldn't find this channel. ` +
+          `Are you sure that Poker Planner app is added to this channel/conversation? ` +
+          `You can simply add the app by mentioning it, like "*@poker_planner*". ` +
+          `However this may not work in Group DMs, you need to explicitly add it as a ` +
+          `member from conversation details menu. Please try again after adding it.\n\n` +
+          `If you still have a problem, you can open an issue on <${process.env.ISSUES_LINK}> ` +
+          `with this error id: ${errorId}`;
+      } else if (slackErrorCode == 'token_revoked') {
+        logLevel = 'info';
+        errorMessage =
+          `Poker Planner's access has been revoked for this workspace. ` +
+          `In order to use it, you need to install the app again on ` +
+          `<${process.env.APP_INSTALL_LINK}>`;
+      } else if (slackErrorCode == 'method_not_supported_for_channel_type') {
+        logLevel = 'info';
+        errorMessage = `Poker Planner cannot be used in this type of conversations.`;
+      } else if (slackErrorCode == 'missing_scope') {
+        if (err.data.needed == 'mpim:read') {
+          logLevel = 'info';
+          errorMessage =
+            `Poker Planner now supports Group DMs! However it requires ` +
+            `additional permissions that we didn't obtained previously. You need to visit ` +
+            `<${process.env.APP_INSTALL_LINK}> and reinstall the app to enable this feature.`;
+        } else if (err.data.needed == 'usergroups:read') {
+          logLevel = 'info';
+          errorMessage =
+            `Poker Planner now supports @usergroup mentions! However it requires ` +
+            `additional permissions that we didn't obtained previously. You need to visit ` +
+            `<${process.env.APP_INSTALL_LINK}> and reinstall the app to enable this feature.`;
+        }
+      } else if (
+        /**
+         * Internal errors
+         */
+        err.message == SessionControllerErrorCode.NO_PARTICIPANTS
+      ) {
+        shouldLog = false;
+        errorMessage = `You must add at least 1 person.`;
+        modalErrors = {
+          participants: errorMessage,
+        };
+      } else if (err.message == SessionControllerErrorCode.TITLE_REQUIRED) {
+        shouldLog = false;
+        errorMessage = `Title is required`;
+        modalErrors = {
+          title: errorMessage,
+        };
+      }
+
+      if (shouldLog) {
+        logger[logLevel](`(${errorId}) Could not created topic`, payload, err);
+      }
+
+      // Show the generic errors on a new modal
+      if (isEmpty(modalErrors)) {
+        return res.json({
+          response_action: 'push',
+          view: {
+            type: 'modal',
+            title: {
+              type: 'plain_text',
+              text: 'Poker Planner',
+              emoji: true,
+            },
+            close: {
+              type: 'plain_text',
+              text: 'Close',
+              emoji: true,
+            },
+            blocks: [
+              {
+                type: 'section',
+                text: {
+                  type: 'mrkdwn',
+                  text: `:x: ${errorMessage}`,
+                },
+              },
+            ],
+          },
+        });
+      }
+
+      // Show error on form elements
+      return res.json({
+        response_action: 'errors',
+        errors: modalErrors,
+      });
     }
   }
 
