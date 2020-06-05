@@ -12,6 +12,10 @@ import {
 } from '../session/session-controller';
 import Countly from 'countly-sdk-nodejs';
 import isEmpty from 'lodash/isEmpty';
+import {
+  IInteractiveMessageActionPayload,
+  IViewSubmissionActionPayload,
+} from '../vendor/slack-api-interfaces';
 
 export class ActionRoute {
   /**
@@ -19,7 +23,9 @@ export class ActionRoute {
    * https://api.slack.com/interactivity/handling#payloads
    */
   static async handle(req: express.Request, res: express.Response) {
-    let payload: any;
+    let payload:
+      | IInteractiveMessageActionPayload
+      | IViewSubmissionActionPayload;
 
     try {
       payload = JSON.parse(req.body.payload);
@@ -58,9 +64,13 @@ export class ActionRoute {
 
       default: {
         const errorId = generateId();
-        logger.error(`(${errorId}) Unexpected action type: "${payload.type}"`);
+        logger.error(
+          `(${errorId}) Unexpected action type: "${(payload as any).type}"`
+        );
         return res.json({
-          text: `Unexpected action type: "${payload.type}" (${errorId})`,
+          text: `Unexpected action type: "${
+            (payload as any).type
+          }" (${errorId})`,
           response_type: 'ephemeral',
           replace_original: false,
         });
@@ -75,7 +85,7 @@ export class ActionRoute {
     payload, // action request payload
     res,
   }: {
-    payload: any;
+    payload: IInteractiveMessageActionPayload;
     res: express.Response;
   }) {
     const parts = payload.callback_id.split(':');
@@ -204,7 +214,7 @@ export class ActionRoute {
     payload, // action request payload
     res,
   }: {
-    payload: any;
+    payload: IViewSubmissionActionPayload;
     res: express.Response;
   }) {
     const [teamGetErr, team] = await to(TeamStore.findById(payload.team.id));
@@ -263,20 +273,21 @@ export class ActionRoute {
     team,
     res,
   }: {
-    payload: any;
+    payload: IViewSubmissionActionPayload;
     team: ITeam;
     res: express.Response;
   }) {
     try {
       const privateMetadata = JSON.parse(payload.view.private_metadata);
-      const titleInputState = payload.view.state.values.title;
+      const titleInputState = payload.view.state.values.title as any;
       const title = titleInputState[Object.keys(titleInputState)[0]].value;
 
       if (!title || title.trim().length == 0) {
         throw new Error(SessionControllerErrorCode.TITLE_REQUIRED);
       }
 
-      const participantsInputState = payload.view.state.values.participants;
+      const participantsInputState = payload.view.state.values
+        .participants as any;
       const participants =
         participantsInputState[Object.keys(participantsInputState)[0]]
           .selected_users;
@@ -300,7 +311,7 @@ export class ActionRoute {
       };
 
       logger.info(
-        `[${team.name}(${team.id})] ${payload.user.username}(${payload.user.id}) trying to create ` +
+        `[${team.name}(${team.id})] ${payload.user.name}(${payload.user.id}) trying to create ` +
           `a session on #${privateMetadata.channelId} sessionId: ${session.id}`
       );
 
@@ -452,7 +463,7 @@ export class ActionRoute {
     session,
     res,
   }: {
-    payload: any;
+    payload: IInteractiveMessageActionPayload;
     team: ITeam;
     session: ISession;
     res: express.Response;
@@ -527,7 +538,7 @@ export class ActionRoute {
     session,
     res,
   }: {
-    payload: any;
+    payload: IInteractiveMessageActionPayload;
     team: ITeam;
     session: ISession;
     res: express.Response;
@@ -573,7 +584,7 @@ export class ActionRoute {
     session,
     res,
   }: {
-    payload: any;
+    payload: IInteractiveMessageActionPayload;
     team: ITeam;
     session: ISession;
     res: express.Response;
