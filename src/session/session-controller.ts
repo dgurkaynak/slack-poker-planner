@@ -41,11 +41,14 @@ export class SessionController {
    */
   static async postMessage(session: ISession, team: ITeam) {
     const slackWebClient = new WebClient(team.access_token);
+    const votesText = map(
+      session.participants.sort(),
+      (userId) => `<@${userId}>: awaiting`
+    ).join('\n');
+
     return slackWebClient.chat.postMessage({
       channel: session.rawCommand.channel_id,
-      text:
-        `Please vote the topic: *"${session.title}"* \nParticipants: ` +
-        `${session.participants.map((userId) => `<@${userId}>`).join(' ')}`,
+      text: `Title: *${session.title}*\n\nVotes:\n${votesText}`,
       attachments: buildMessageAttachments(session) as any,
     });
   }
@@ -102,7 +105,8 @@ export class SessionController {
         : 'active';
 
     if (session.state == 'revealed') {
-      await SessionController.revealAndUpdateMessage(session, team, userId);
+      await SessionController.updateMessage(session, team); // do not send userId
+      await SessionStore.delete(session.id);
       logger.info(
         `[${team.name}(${team.id})] Auto revealing votes ` +
           `for "${session.title}" w/ id: ${session.id}`
@@ -123,24 +127,24 @@ export class SessionController {
   /**
    * Updates session message according to session state.
    */
-  static async updateMessage(
-    session: ISession,
-    team: ITeam,
-    userId?: string
-  ) {
+  static async updateMessage(session: ISession, team: ITeam, userId?: string) {
     const slackWebClient = new WebClient(team.access_token);
 
     if (session.state == 'revealed') {
-      const votesText = map(session.votes, (point, userId) => `<@${userId}>: *${point}*\n`)
-        .join('')
-        .trim() || 'No votes';
+      const votesText = map(session.participants.sort(), (userId) => {
+        if (session.votes.hasOwnProperty(userId)) {
+          return `<@${userId}>: *${session.votes[userId]}*`;
+        }
+
+        return `<@${userId}>: not voted`;
+      }).join('\n');
 
       await slackWebClient.chat.update({
         ts: session.rawPostMessageResponse.ts,
         channel: session.rawPostMessageResponse.channel,
         text: userId
-          ? `Votes for the topic *"${session.title}"*: (revealed by <@${userId}>)\n${votesText}`
-          : `Votes for topic *"${session.title}"*: \n${votesText}`,
+          ? `Title: *${session.title}* (revealed by <@${userId}>)\n\nVotes:\n${votesText}`
+          : `Title: *${session.title}*\n\nVotes:\n${votesText}`,
         attachments: [],
       });
     } else if (session.state == 'cancelled') {
@@ -148,23 +152,23 @@ export class SessionController {
         ts: session.rawPostMessageResponse.ts,
         channel: session.rawPostMessageResponse.channel,
         text: userId
-          ? `Cancelled topic *"${session.title}"* by <@${userId}>`
-          : `Cancelled topic *"${session.title}"*`,
+          ? `Title: *${session.title}* (cancelled by <@${userId}>)`
+          : `Title: *${session.title}* (cancelled)`,
         attachments: [],
       });
     } else {
+      const votesText = map(session.participants.sort(), (userId) => {
+        if (session.votes.hasOwnProperty(userId)) {
+          return `<@${userId}>: :white_check_mark:`;
+        }
+
+        return `<@${userId}>: awaiting`;
+      }).join('\n');
+
       await slackWebClient.chat.update({
         ts: session.rawPostMessageResponse.ts,
         channel: session.rawPostMessageResponse.channel,
-        text:
-          `Please vote the topic: *"${session.title}"* \nParticipants: ` +
-          `${session.participants
-            .map((userId) => {
-              // Strikethrough voted participants
-              const s = session.votes.hasOwnProperty(userId) ? '~' : '';
-              return `${s}<@${userId}>${s}`;
-            })
-            .join(' ')}`,
+        text: `title: *${session.title}*\n\nVotes:\n${votesText}`,
         attachments: buildMessageAttachments(session) as any,
       });
     }
