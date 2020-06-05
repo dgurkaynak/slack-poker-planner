@@ -3,7 +3,7 @@ import { WebClient } from '@slack/web-api';
 import * as logger from '../lib/logger';
 import { generate as generateId } from 'shortid';
 import { to } from '../lib/to';
-import { TeamStore, ITeam } from '../team/team-model';
+import { TeamStore, ITeam, ChannelSettingKey } from '../team/team-model';
 import { SessionStore, ISession } from '../session/session-model';
 import {
   SessionController,
@@ -324,6 +324,17 @@ export class ActionRoute {
       await SessionStore.upsert(session);
 
       res.send('');
+
+      const [upsertSettingErr] = await to(TeamStore.upsertSettings(team.id, session.channelId, {
+        [ChannelSettingKey.PARTICIPANTS]: session.participants.join(' '),
+      }));
+      if (upsertSettingErr) {
+        logger.error(
+          `Could not upsert settings after creating new session`,
+          session,
+          upsertSettingErr
+        );
+      }
 
       if (process.env.COUNTLY_APP_KEY) {
         Countly.add_event({

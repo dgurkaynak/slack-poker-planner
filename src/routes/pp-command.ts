@@ -2,7 +2,7 @@ import * as express from 'express';
 import { WebClient } from '@slack/web-api';
 import * as logger from '../lib/logger';
 import Countly from 'countly-sdk-nodejs';
-import { TeamStore, ITeam } from '../team/team-model';
+import { TeamStore, ChannelSettingKey } from '../team/team-model';
 import { generate as generateId } from 'shortid';
 import { to } from '../lib/to';
 import isString from 'lodash/isString';
@@ -152,12 +152,25 @@ export class PPCommandRoute {
      */
 
     try {
+      // Prepare settings (participants, points...)
+      const [settingsFetchErr, channelSettings] = await to(
+        TeamStore.fetchSettings(team.id, cmd.channel_id)
+      );
+      const settings = {
+        [ChannelSettingKey.PARTICIPANTS]: [] as string[],
+      };
+      if (channelSettings?.[ChannelSettingKey.PARTICIPANTS]) {
+        settings[ChannelSettingKey.PARTICIPANTS] = channelSettings[
+          ChannelSettingKey.PARTICIPANTS
+        ].split(' ');
+      }
+
       await SessionController.openNewSessionModal({
         triggerId: cmd.trigger_id,
         team,
         channelId: cmd.channel_id,
         title: SessionController.stripMentions(cmd.text).trim(),
-        participants: [],
+        participants: settings[ChannelSettingKey.PARTICIPANTS],
       });
 
       // Send acknowledgement back to API -- HTTP 200
