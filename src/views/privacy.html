@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <title>Privacy Policy | Poker Planner for Slack</title>
     <meta name="author" content="Deniz Gurkaynak">
-    <meta name="slack-app-id" content="{{SLACK_APP_ID}}">
+    <meta name="slack-app-id" content="{{@SLACK_APP_ID}}">
     <meta name="robots" content="noindex, nofollow" />
 
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -131,8 +131,8 @@
         Countly.q = Countly.q || [];
 
         //provide countly initialization parameters
-        Countly.app_key = '{{COUNTLY_APP_KEY}}';
-        Countly.url = '{{COUNTLY_URL}}';
+        Countly.app_key = '{{@COUNTLY_APP_KEY}}';
+        Countly.url = '{{@COUNTLY_URL}}';
 
         Countly.q.push(['track_sessions']);
         Countly.q.push(['track_pageview']);

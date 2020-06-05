@@ -6,6 +6,9 @@ import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import * as path from 'path';
 import * as exphbs from 'express-handlebars';
+import { OAuthRoute } from './routes/oauth';
+import { PPCommandRoute } from './routes/pp-command';
+import { ActionRoute } from './routes/action';
 
 async function main() {
   // Start sqlite
@@ -35,9 +38,9 @@ async function initServer() {
   server.engine('html', exphbs({ extname: '.html' }));
   server.set('view engine', 'html');
   server.set('views', 'src/views'); // relative to process.cwd
-  server.set('view cache', true);
 
-  // Parse json body
+  // Parse body
+  server.use(bodyParser.urlencoded({ extended: false }))
   server.use(bodyParser.json());
 
   // Serve static files
@@ -80,6 +83,15 @@ function initRoutes(server: express.Express) {
         COUNTLY_APP_KEY: process.env.COUNTLY_APP_KEY
       },
     });
+  });
+
+  router.get('/oauth', OAuthRoute.handle);
+  router.post('/slack/pp-command', PPCommandRoute.handle);
+  router.post('/slack/action-endpoint', ActionRoute.handle);
+
+  router.get('/slack/direct-install', (req, res, next) => {
+    const url = `https://slack.com/oauth/v2/authorize?client_id=${process.env.SLACK_CLIENT_ID}&scope=${process.env.SLACK_SCOPE}`;
+    res.status(302).redirect(url);
   });
 
   // Serve under specified base path
