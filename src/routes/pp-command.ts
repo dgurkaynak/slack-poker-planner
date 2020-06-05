@@ -171,6 +171,7 @@ export class PPCommandRoute {
         channelId: cmd.channel_id,
         title: SessionController.stripMentions(cmd.text).trim(),
         participants: settings[ChannelSettingKey.PARTICIPANTS],
+        points: (team.custom_points || '').split(' ')
       });
 
       // Send acknowledgement back to API -- HTTP 200

@@ -61,12 +61,14 @@ export class SessionController {
     channelId,
     title,
     participants,
+    points,
   }: {
     triggerId: string;
     team: ITeam;
     channelId: string;
     title: string;
     participants: string[];
+    points: string[];
   }) {
     const slackWebClient = new WebClient(team.access_token);
     await slackWebClient.views.open({
@@ -125,6 +127,29 @@ export class SessionController {
             label: {
               type: 'plain_text',
               text: 'Participants',
+              emoji: true,
+            },
+          },
+          {
+            type: 'input',
+            block_id: 'points',
+            element: {
+              type: 'plain_text_input',
+              placeholder: {
+                type: 'plain_text',
+                text: 'Change poker points',
+                emoji: true,
+              },
+              initial_value: points.join(' ') || DEFAULT_POINTS.join(' '),
+            },
+            hint: {
+              type: 'plain_text',
+              text: 'Enter points seperated by space',
+              emoji: true,
+            },
+            label: {
+              type: 'plain_text',
+              text: 'Points',
               emoji: true,
             },
           },
