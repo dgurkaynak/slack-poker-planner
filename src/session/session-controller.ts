@@ -1,8 +1,6 @@
 import { matchAll } from '../lib/string-match-all';
 import { ISession, ISessionMention, SessionStore } from './session-model';
-import some from 'lodash/some';
 import uniqBy from 'lodash/uniqBy';
-import uniq from 'lodash/uniq';
 import chunk from 'lodash/chunk';
 import map from 'lodash/map';
 import groupBy from 'lodash/groupBy';

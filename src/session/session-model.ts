@@ -1,5 +1,4 @@
 import {
-  ISlackCommandRequestBody,
   ISlackChatPostMessageResponse,
 } from '../vendor/slack-api-interfaces';
 import * as logger from '../lib/logger';

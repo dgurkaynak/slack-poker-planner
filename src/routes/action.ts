@@ -1,5 +1,4 @@
 import * as express from 'express';
-import { WebClient } from '@slack/web-api';
 import * as logger from '../lib/logger';
 import { generate as generateId } from 'shortid';
 import { to } from '../lib/to';

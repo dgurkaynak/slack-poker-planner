@@ -1,5 +1,4 @@
 import * as express from 'express';
-import { WebClient } from '@slack/web-api';
 import * as logger from '../lib/logger';
 import Countly from 'countly-sdk-nodejs';
 import { TeamStore, ChannelSettingKey } from '../team/team-model';
@@ -8,16 +7,9 @@ import { to } from '../lib/to';
 import isString from 'lodash/isString';
 import { ISlackCommandRequestBody } from '../vendor/slack-api-interfaces';
 import {
-  SessionStore,
-  ISession,
-  ISessionMention,
-} from '../session/session-model';
-import {
   SessionController,
   DEFAULT_POINTS,
-  SessionControllerErrorCode,
 } from '../session/session-controller';
-import fetch from 'node-fetch';
 
 export class PPCommandRoute {
   /**
