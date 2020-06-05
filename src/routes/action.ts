@@ -300,7 +300,11 @@ export class ActionRoute {
       const pointsInputState = payload.view.state.values.points as any;
       const pointsStr =
         pointsInputState[Object.keys(pointsInputState)[0]].value || '';
-      const points: string[] = uniq(pointsStr.match(/\S+/g)) || [];
+      let points: string[] = uniq(pointsStr.match(/\S+/g)) || [];
+
+      if (points.length == 1 && points[0] == 'reset') {
+        points = DEFAULT_POINTS;
+      }
 
       if (points.length < 2 || points.length > 25) {
         throw new Error(SessionControllerErrorCode.INVALID_POINTS);
