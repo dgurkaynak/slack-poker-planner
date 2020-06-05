@@ -99,7 +99,7 @@ export class PPCommandRoute {
         text:
           `Internal server error, please try again later\n` +
           `ST_TEAM_GET_FAIL (${errorId})\n\n` +
-          `If this problem is persistent, you can open an issue on <https://github.com/dgurkaynak/slack-poker-planner/issues>`,
+          `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
         response_type: 'ephemeral',
         replace_original: false,
       });
@@ -108,7 +108,7 @@ export class PPCommandRoute {
     if (!team) {
       logger.error(`Could not created topic, team could not be found`, cmd);
       return res.json({
-        text: `Your slack team "${cmd.team_domain}" could not be found, please reinstall Poker Planner on <https://deniz.co/slack-poker-planner>`,
+        text: `Your slack team "${cmd.team_domain}" could not be found, please reinstall Poker Planner on <${process.env.APP_INSTALL_LINK}>`,
         response_type: 'ephemeral',
         replace_original: false,
       });
@@ -130,7 +130,7 @@ export class PPCommandRoute {
           'user permissions. So that you can explicitly manage which channels/conversations Poker Planner can ' +
           'access. However, this requires a couple of changes:\n\n• In order to obtain new bot permissions ' +
           'and drop user ones, *you need to reinstall Poker Planner* to your workspace on ' +
-          '<https://deniz.co/slack-poker-planner>\n• Before using `/pp` command, *Poker Planner app must be ' +
+          `<${process.env.APP_INSTALL_LINK}>\n• Before using \`/pp\` command, *Poker Planner app must be ` +
           'added to that channel/conversation*. You can simply add or invite it by just mentioning the app like ' +
           '`@poker_planner`. You can also do that from channel/converstion details menu.',
         response_type: 'ephemeral',
@@ -216,13 +216,13 @@ export class PPCommandRoute {
       let errorMessage =
         `Internal server error, please try again later\n` +
         `ST_INIT_FAIL (${errorId})\n\n` +
-        `If this problem is persistent, you can open an issue on <https://github.com/dgurkaynak/slack-poker-planner/issues>`;
+        `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`;
 
       const slackErrorCode = err.data && err.data.error;
       if (slackErrorCode) {
         errorMessage =
           `Unexpected Slack API Error: "*${slackErrorCode}*"\n\n` +
-          `If you think this is an issue, please report to <https://github.com/dgurkaynak/slack-poker-planner/issues> ` +
+          `If you think this is an issue, please report to <${process.env.ISSUES_LINK}> ` +
           `with this error id: ${errorId}`;
       }
 
@@ -243,14 +243,14 @@ export class PPCommandRoute {
           `You can simply add the app by mentioning it, like "*@poker_planner*". ` +
           `However this may not work in Group DMs, you need to explicitly add it as a ` +
           `member from conversation details menu. Please try again after adding it.\n\n` +
-          `If you still have a problem, you can open an issue on <https://github.com/dgurkaynak/slack-poker-planner/issues> ` +
+          `If you still have a problem, you can open an issue on <${process.env.ISSUES_LINK}> ` +
           `with this error id: ${errorId}`;
       } else if (slackErrorCode == 'token_revoked') {
         logLevel = 'info';
         errorMessage =
           `Poker Planner's access has been revoked for this workspace. ` +
           `In order to use it, you need to install the app again on ` +
-          `<https://deniz.co/slack-poker-planner>`;
+          `<${process.env.APP_INSTALL_LINK}>`;
       } else if (slackErrorCode == 'method_not_supported_for_channel_type') {
         logLevel = 'info';
         errorMessage = `Poker Planner cannot be used in this type of conversations.`;
@@ -260,13 +260,13 @@ export class PPCommandRoute {
           errorMessage =
             `Poker Planner now supports Group DMs! However it requires ` +
             `additional permissions that we didn't obtained previously. You need to visit ` +
-            `<https://deniz.co/slack-poker-planner> and reinstall the app to enable this feature.`;
+            `<${process.env.APP_INSTALL_LINK}> and reinstall the app to enable this feature.`;
         } else if (err.data.needed == 'usergroups:read') {
           logLevel = 'info';
           errorMessage =
             `Poker Planner now supports @usergroup mentions! However it requires ` +
             `additional permissions that we didn't obtained previously. You need to visit ` +
-            `<https://deniz.co/slack-poker-planner> and reinstall the app to enable this feature.`;
+            `<${process.env.APP_INSTALL_LINK}> and reinstall the app to enable this feature.`;
         }
       } else if (
         /**
@@ -343,7 +343,7 @@ export class PPCommandRoute {
         text:
           `Internal server error, please try again later\n` +
           `SC_TEAM_GET_FAIL (${errorId})\n\n` +
-          `If this problem is persistent, you can open an issue on <https://github.com/dgurkaynak/slack-poker-planner/issues>`,
+          `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
         response_type: 'ephemeral',
         replace_original: false,
       });
@@ -354,7 +354,7 @@ export class PPCommandRoute {
       return res.json({
         text:
           `Your slack team "${cmd.team_domain}" could not be found, please add Poker Planner to ` +
-          `your Slack team again on <https://deniz.co/slack-poker-planner>`,
+          `your Slack team again on <${process.env.APP_INSTALL_LINK}>`,
         response_type: 'ephemeral',
         replace_original: false,
       });
@@ -399,7 +399,7 @@ export class PPCommandRoute {
         text:
           `Internal server error, please try again later\n` +
           `SC_RESET_FAIL (${errorId})\n\n` +
-          `If this problem is persistent, you can open an issue on <https://github.com/dgurkaynak/slack-poker-planner/issues>`,
+          `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
         response_type: 'ephemeral',
         replace_original: false,
       });
@@ -476,7 +476,7 @@ export class PPCommandRoute {
         text:
           `Internal server error, please try again later\n` +
           `SC_SET_FAIL (${errorId})\n\n` +
-          `If this problem is persistent, you can open an issue on <https://github.com/dgurkaynak/slack-poker-planner/issues>`,
+          `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
         response_type: 'ephemeral',
         replace_original: false,
       });

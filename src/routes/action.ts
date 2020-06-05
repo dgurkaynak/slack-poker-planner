@@ -70,7 +70,7 @@ export class ActionRoute {
         text:
           `Internal server error, please try again later\n` +
           `A_GET_FAIL (${errorId})\n\n` +
-          `If this problem is persistent, you can open an issue on <https://github.com/dgurkaynak/slack-poker-planner/issues>`,
+          `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
         response_type: 'ephemeral',
         replace_original: false,
       });
@@ -94,7 +94,7 @@ export class ActionRoute {
         text:
           `Internal server error, please try again later\n` +
           `A_GET_FAIL (${errorId})\n\n` +
-          `If this problem is persistent, you can open an issue on <https://github.com/dgurkaynak/slack-poker-planner/issues>`,
+          `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
         response_type: 'ephemeral',
         replace_original: false,
       });
@@ -130,7 +130,7 @@ export class ActionRoute {
           res.json({
             text:
               `Internal server error, please try again later\nA_UNKNOWN_ACTION (${errorId})\n\n` +
-              `If this problem is persistent, you can open an issue on <https://github.com/dgurkaynak/slack-poker-planner/issues>`,
+              `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
             response_type: 'ephemeral',
             replace_original: false,
           });
@@ -210,7 +210,7 @@ export class ActionRoute {
           return res.json({
             text:
               `Internal server error, please try again later\nA_VOTE_FAIL (${errorId})\n\n` +
-              `If this problem is persistent, you can open an issue on <https://github.com/dgurkaynak/slack-poker-planner/issues>`,
+              `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
             response_type: 'ephemeral',
             replace_original: false,
           });
@@ -266,7 +266,7 @@ export class ActionRoute {
         text:
           `Internal server error, please try again later\n` +
           `A_REVEAL_FAIL (${errorId})\n\n` +
-          `If this problem is persistent, you can open an issue on <https://github.com/dgurkaynak/slack-poker-planner/issues>`,
+          `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
         response_type: 'ephemeral',
         replace_original: false,
       });
@@ -312,7 +312,7 @@ export class ActionRoute {
         text:
           `Internal server error, please try again later\n` +
           `A_CANCEL_FAIL (${errorId})\n\n` +
-          `If this problem is persistent, you can open an issue on <https://github.com/dgurkaynak/slack-poker-planner/issues>`,
+          `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
         response_type: 'ephemeral',
         replace_original: false,
       });
