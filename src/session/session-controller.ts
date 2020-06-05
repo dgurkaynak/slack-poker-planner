@@ -5,6 +5,7 @@ import uniqBy from 'lodash/uniqBy';
 import uniq from 'lodash/uniq';
 import chunk from 'lodash/chunk';
 import map from 'lodash/map';
+import groupBy from 'lodash/groupBy';
 import { ITeam } from '../team/team-model';
 import { WebClient } from '@slack/web-api';
 import * as logger from '../lib/logger';
@@ -131,20 +132,35 @@ export class SessionController {
     const slackWebClient = new WebClient(team.access_token);
 
     if (session.state == 'revealed') {
-      const votesText = map(session.participants.sort(), (userId) => {
-        if (session.votes.hasOwnProperty(userId)) {
-          return `<@${userId}>: *${session.votes[userId]}*`;
-        }
+      const voteGroups = groupBy(
+        session.participants,
+        (userId) => session.votes[userId] || 'not-voted'
+      );
+      const votesText = Object.keys(voteGroups)
+        .sort()
+        .map((point) => {
+          const votes = voteGroups[point];
+          const peopleText =
+            votes.length == 1 ? `1 person` : `${votes.length} people`;
+          const userIds = votes
+            .sort()
+            .map((userId) => `<@${userId}>`)
+            .join(', ');
 
-        return `<@${userId}>: not voted`;
-      }).join('\n');
+          if (point == 'not-voted') {
+            return `${peopleText} *did not voted* (${userIds})`;
+          }
+
+          return `${peopleText} voted *${point}* (${userIds})`;
+        })
+        .join('\n');
 
       await slackWebClient.chat.update({
         ts: session.rawPostMessageResponse.ts,
         channel: session.rawPostMessageResponse.channel,
         text: userId
-          ? `Title: *${session.title}* (revealed by <@${userId}>)\n\nVotes:\n${votesText}`
-          : `Title: *${session.title}*\n\nVotes:\n${votesText}`,
+          ? `Title: *${session.title}* (revealed by <@${userId}>)\n\nResult:\n${votesText}`
+          : `Title: *${session.title}*\n\nResult:\n${votesText}`,
         attachments: [],
       });
     } else if (session.state == 'cancelled') {
