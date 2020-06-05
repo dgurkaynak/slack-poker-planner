@@ -17,6 +17,7 @@ import {
   IViewSubmissionActionPayload,
 } from '../vendor/slack-api-interfaces';
 import uniq from 'lodash/uniq';
+import find from 'lodash/find';
 
 export class ActionRoute {
   /**
@@ -310,6 +311,15 @@ export class ActionRoute {
         throw new Error(SessionControllerErrorCode.INVALID_POINTS);
       }
 
+      const otherCheckboxesState = payload.view.state.values.other as any;
+      const selectedOptions =
+        otherCheckboxesState[Object.keys(otherCheckboxesState)[0]]
+          .selected_options || [];
+      const isProtected = !!find(
+        selectedOptions,
+        (option) => option.value == 'protected'
+      );
+
       // Create session struct
       const session: ISession = {
         id: generateId(),
@@ -318,8 +328,10 @@ export class ActionRoute {
         votes: {},
         state: 'active',
         channelId: privateMetadata.channelId,
+        userId: payload.user.id,
         participants,
         rawPostMessageResponse: undefined,
+        protected: isProtected,
       };
 
       logger.info(
@@ -341,6 +353,7 @@ export class ActionRoute {
         TeamStore.upsertSettings(team.id, session.channelId, {
           [ChannelSettingKey.PARTICIPANTS]: session.participants.join(' '),
           [ChannelSettingKey.POINTS]: session.points.join(' '),
+          [ChannelSettingKey.PROTECTED]: JSON.stringify(session.protected),
         })
       );
       if (upsertSettingErr) {
@@ -575,6 +588,14 @@ export class ActionRoute {
     session: ISession;
     res: express.Response;
   }) {
+    if (session.protected && session.userId != payload.user.id) {
+      return res.json({
+        text: `This session is protected, only the creator can reveal it.`,
+        response_type: 'ephemeral',
+        replace_original: false,
+      });
+    }
+
     logger.info(
       `[${team.name}(${team.id})] ${payload.user.name}(${payload.user.id}) revealing votes ` +
         `for "${session.title}" w/ id: ${session.id}`
@@ -621,6 +642,14 @@ export class ActionRoute {
     session: ISession;
     res: express.Response;
   }) {
+    if (session.protected && session.userId != payload.user.id) {
+      return res.json({
+        text: `This session is protected, only the creator can cancel it.`,
+        response_type: 'ephemeral',
+        replace_original: false,
+      });
+    }
+
     logger.info(
       `[${team.name}(${team.id})] ${payload.user.name}(${payload.user.id}) cancelling topic ` +
         `"${session.title}" w/ id: ${session.id}`

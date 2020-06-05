@@ -63,6 +63,7 @@ export class SessionController {
     title,
     participants,
     points,
+    isProtected,
   }: {
     triggerId: string;
     team: ITeam;
@@ -70,8 +71,19 @@ export class SessionController {
     title: string;
     participants: string[];
     points: string[];
+    isProtected: boolean;
   }) {
     const slackWebClient = new WebClient(team.access_token);
+
+    const protectedCheckboxesOption = {
+      text: {
+        type: 'plain_text',
+        text: 'Protected (prevent others to cancel or reveal this session)',
+        emoji: true,
+      },
+      value: 'protected',
+    } as any;
+
     await slackWebClient.views.open({
       trigger_id: triggerId,
       view: {
@@ -151,6 +163,23 @@ export class SessionController {
             label: {
               type: 'plain_text',
               text: 'Points',
+              emoji: true,
+            },
+          },
+          {
+            type: 'input',
+            block_id: 'other',
+            optional: true,
+            element: {
+              type: 'checkboxes',
+              options: [protectedCheckboxesOption],
+              initial_options: isProtected
+                ? [protectedCheckboxesOption]
+                : undefined,
+            },
+            label: {
+              type: 'plain_text',
+              text: 'Other',
               emoji: true,
             },
           },

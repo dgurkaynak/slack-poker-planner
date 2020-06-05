@@ -308,7 +308,11 @@ export interface IViewSubmissionActionPayload {
             | {
                 type: 'multi_users_select';
                 selected_users: string[];
-              };
+              }
+            | {
+              type: 'checkboxes';
+              selected_options?: { value: string }[];
+            };
         };
       };
     };

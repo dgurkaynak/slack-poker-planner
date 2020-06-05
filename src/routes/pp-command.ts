@@ -159,6 +159,7 @@ export class PPCommandRoute {
       const settings = {
         [ChannelSettingKey.PARTICIPANTS]: [] as string[],
         [ChannelSettingKey.POINTS]: DEFAULT_POINTS,
+        [ChannelSettingKey.PROTECTED]: false,
       };
       if (channelSettings?.[ChannelSettingKey.PARTICIPANTS]) {
         settings[ChannelSettingKey.PARTICIPANTS] = channelSettings[
@@ -173,6 +174,11 @@ export class PPCommandRoute {
           ChannelSettingKey.POINTS
         ].split(' ');
       }
+      if (channelSettings?.[ChannelSettingKey.PROTECTED]) {
+        settings[ChannelSettingKey.PROTECTED] = JSON.parse(
+          channelSettings[ChannelSettingKey.PROTECTED]
+        );
+      }
 
       await SessionController.openNewSessionModal({
         triggerId: cmd.trigger_id,
@@ -180,7 +186,8 @@ export class PPCommandRoute {
         channelId: cmd.channel_id,
         title: SessionController.stripMentions(cmd.text).trim(),
         participants: settings[ChannelSettingKey.PARTICIPANTS],
-        points: settings[ChannelSettingKey.POINTS]
+        points: settings[ChannelSettingKey.POINTS],
+        isProtected: settings[ChannelSettingKey.PROTECTED],
       });
 
       // Send acknowledgement back to API -- HTTP 200

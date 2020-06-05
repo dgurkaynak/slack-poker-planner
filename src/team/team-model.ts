@@ -12,6 +12,7 @@ export interface ITeam {
 export enum ChannelSettingKey {
   PARTICIPANTS = 'participants',
   POINTS = 'points',
+  PROTECTED = 'proctected',
 }
 
 export interface IChannelSetting {

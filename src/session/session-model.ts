@@ -23,6 +23,10 @@ export interface ISession {
    */
   channelId: string;
   /**
+   * Slack User ID who starts this session.
+   */
+  userId: string;
+  /**
    * Poker point values.
    */
   points: string[];
@@ -43,6 +47,11 @@ export interface ISession {
    * the channel/conversation to /pp command used in.
    */
   rawPostMessageResponse: ISlackChatPostMessageResponse;
+  /**
+   * Whether this session is protected, which means only the owner
+   * can cancel and reveal session.
+   */
+  protected: boolean;
 }
 
 // In memory db for now
