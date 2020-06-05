@@ -35,6 +35,7 @@
     "express-handlebars": "^4.0.4",
     "lodash": "^4.17.15",
     "node-fetch": "^2.6.0",
+    "redis": "^3.0.2",
     "shortid": "^2.2.15",
     "sqlite": "^4.0.10",
     "sqlite3": "^4.2.0"
@@ -44,6 +45,7 @@
     "@types/express-handlebars": "^3.1.0",
     "@types/lodash": "^4.14.154",
     "@types/node-fetch": "^2.5.7",
+    "@types/redis": "^2.8.22",
     "@types/shortid": "0.0.29",
     "@types/sqlite3": "^3.1.6",
     "prettier": "2.0.5",

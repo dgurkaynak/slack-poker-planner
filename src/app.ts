@@ -1,6 +1,7 @@
 require('dotenv').config();
 import * as logger from './lib/logger';
 import * as sqlite from './lib/sqlite';
+import * as redis from './lib/redis';
 import Countly from 'countly-sdk-nodejs';
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
@@ -13,6 +14,9 @@ import { ActionRoute } from './routes/action';
 async function main() {
   // Start sqlite
   await sqlite.init();
+
+  // Start redis
+  await redis.init();
 
   // Start server
   await initServer();

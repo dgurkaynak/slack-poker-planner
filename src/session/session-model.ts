@@ -1,7 +1,7 @@
-import {
-  ISlackChatPostMessageResponse,
-} from '../vendor/slack-api-interfaces';
+import { ISlackChatPostMessageResponse } from '../vendor/slack-api-interfaces';
 import * as logger from '../lib/logger';
+import * as redis from '../lib/redis';
+import { promisify } from 'util';
 
 export interface ISessionMention {
   type: 'user' | 'special' | 'user-group';
@@ -53,34 +53,33 @@ export interface ISession {
   protected: boolean;
 }
 
-// In memory db for now
-const sessions: { [key: string]: ISession } = {};
-
-// Summary of active topics in every minute
-let activeSessionsHash: string;
-setInterval(() => {
-  const ids = Object.keys(sessions);
-  const hash = ids.sort().join(',');
-  if (hash == activeSessionsHash) return;
-  logger.info(
-    ids.length == 0
-      ? `There is no active session`
-      : `There are ${ids.length} active session(s): ${ids.join(', ')}`
-  );
-  activeSessionsHash = hash;
-}, 60000);
-
 export class SessionStore {
-  static async findById(id: string) {
-    return sessions[id];
+  static async findById(id: string): Promise<ISession> {
+    const client = redis.getSingleton();
+    const getAsync = promisify(client.get.bind(client));
+    const rawSession = await getAsync(buildRedisKey(id));
+    if (!rawSession) return;
+    return JSON.parse(rawSession);
   }
 
   static async upsert(session: ISession) {
-    sessions[session.id] = session;
-    return session;
+    const client = redis.getSingleton();
+    const setAsync = promisify(client.set.bind(client));
+    await setAsync(
+      buildRedisKey(session.id),
+      JSON.stringify(session),
+      'EX',
+      Number(process.env.SESSION_TTL)
+    );
   }
 
   static async delete(id: string) {
-    delete sessions[id];
+    const client = redis.getSingleton();
+    const delAsync = promisify(client.del.bind(client));
+    await delAsync(buildRedisKey(id));
   }
+}
+
+function buildRedisKey(sessionId: string) {
+  return `${process.env.REDIS_NAMESPACE}:session:${sessionId}`;
 }
