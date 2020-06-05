@@ -16,6 +16,7 @@ import {
   IInteractiveMessageActionPayload,
   IViewSubmissionActionPayload,
 } from '../vendor/slack-api-interfaces';
+import uniq from 'lodash/uniq';
 
 export class ActionRoute {
   /**
@@ -296,13 +297,20 @@ export class ActionRoute {
         throw new Error(SessionControllerErrorCode.NO_PARTICIPANTS);
       }
 
+      const pointsInputState = payload.view.state.values.points as any;
+      const pointsStr =
+        pointsInputState[Object.keys(pointsInputState)[0]].value || '';
+      const points: string[] = uniq(pointsStr.match(/\S+/g)) || [];
+
+      if (points.length < 2 || points.length > 25) {
+        throw new Error(SessionControllerErrorCode.INVALID_POINTS);
+      }
+
       // Create session struct
       const session: ISession = {
         id: generateId(),
         title: title,
-        points: team.custom_points
-          ? team.custom_points.split(' ')
-          : DEFAULT_POINTS,
+        points,
         votes: {},
         state: 'active',
         channelId: privateMetadata.channelId,
@@ -325,9 +333,11 @@ export class ActionRoute {
 
       res.send('');
 
-      const [upsertSettingErr] = await to(TeamStore.upsertSettings(team.id, session.channelId, {
-        [ChannelSettingKey.PARTICIPANTS]: session.participants.join(' '),
-      }));
+      const [upsertSettingErr] = await to(
+        TeamStore.upsertSettings(team.id, session.channelId, {
+          [ChannelSettingKey.PARTICIPANTS]: session.participants.join(' '),
+        })
+      );
       if (upsertSettingErr) {
         logger.error(
           `Could not upsert settings after creating new session`,
@@ -421,6 +431,12 @@ export class ActionRoute {
         errorMessage = `Title is required`;
         modalErrors = {
           title: errorMessage,
+        };
+      } else if (err.message == SessionControllerErrorCode.INVALID_POINTS) {
+        shouldLog = false;
+        errorMessage = `You must provide at least 2 poker points, the maximum is 25.`;
+        modalErrors = {
+          points: errorMessage,
         };
       }
 
