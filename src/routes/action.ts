@@ -336,6 +336,7 @@ export class ActionRoute {
       const [upsertSettingErr] = await to(
         TeamStore.upsertSettings(team.id, session.channelId, {
           [ChannelSettingKey.PARTICIPANTS]: session.participants.join(' '),
+          [ChannelSettingKey.POINTS]: session.points.join(' '),
         })
       );
       if (upsertSettingErr) {

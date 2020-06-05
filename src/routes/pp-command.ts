@@ -158,10 +158,19 @@ export class PPCommandRoute {
       );
       const settings = {
         [ChannelSettingKey.PARTICIPANTS]: [] as string[],
+        [ChannelSettingKey.POINTS]: DEFAULT_POINTS,
       };
       if (channelSettings?.[ChannelSettingKey.PARTICIPANTS]) {
         settings[ChannelSettingKey.PARTICIPANTS] = channelSettings[
           ChannelSettingKey.PARTICIPANTS
+        ].split(' ');
+      }
+      if (team.custom_points) {
+        settings[ChannelSettingKey.POINTS] = team.custom_points.split(' ');
+      }
+      if (channelSettings?.[ChannelSettingKey.POINTS]) {
+        settings[ChannelSettingKey.POINTS] = channelSettings[
+          ChannelSettingKey.POINTS
         ].split(' ');
       }
 
@@ -171,7 +180,7 @@ export class PPCommandRoute {
         channelId: cmd.channel_id,
         title: SessionController.stripMentions(cmd.text).trim(),
         participants: settings[ChannelSettingKey.PARTICIPANTS],
-        points: (team.custom_points || '').split(' ')
+        points: settings[ChannelSettingKey.POINTS]
       });
 
       // Send acknowledgement back to API -- HTTP 200
