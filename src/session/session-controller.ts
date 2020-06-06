@@ -241,8 +241,7 @@ export class SessionController {
       await SessionController.updateMessage(session, team); // do not send userId
       await SessionStore.delete(session.id);
       logger.info(
-        `[${team.name}(${team.id})] Auto revealing votes ` +
-          `w/ id: ${session.id}`
+        `[${team.name}(${team.id})] Auto revealing votes sessionId=${session.id}`
       );
       return;
     }
@@ -253,7 +252,7 @@ export class SessionController {
     try {
       await SessionController.updateMessage(session, team);
     } catch (err) {
-      logger.warn(`Could not refreshed topic after a vote, ${err}`);
+      logger.warn(`Could not refreshed session message after a vote, ${err}`);
     }
   }
 

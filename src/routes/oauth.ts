@@ -10,10 +10,7 @@ export class OAuthRoute {
   /**
    * GET /oauth
    */
-  static async handle(
-    req: express.Request,
-    res: express.Response
-  ) {
+  static async handle(req: express.Request, res: express.Response) {
     // Slack-side error, display error message
     if (req.query.error) {
       logger.error(`Could not oauth, req.query.error: ${req.query.error}`);
@@ -39,7 +36,10 @@ export class OAuthRoute {
         );
         return res
           .status(500)
-          .send(`Internal server error, please try again (${errorId})`);
+          .send(
+            `Internal server error, please try again (error code: ${errorId})\n\n` +
+              `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`
+          );
       }
 
       const [upsertErr, team] = await to(
@@ -60,7 +60,10 @@ export class OAuthRoute {
         );
         res
           .status(500)
-          .send(`Internal server error, please try again later (${errorId})`);
+          .send(
+            `Internal server error, please try again later (error code: ${errorId})\n\n` +
+              `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`
+          );
       }
 
       if (process.env.COUNTLY_APP_KEY) {
@@ -72,7 +75,7 @@ export class OAuthRoute {
       }
 
       logger.info(
-        `Added to team "${team.name}" (${team.id}) by user ${team.user_id}`
+        `Added to team "${team.name}"(${team.id}) by ${team.user_id}`
       );
 
       return res.render('oauth-success', {
@@ -87,6 +90,11 @@ export class OAuthRoute {
     // Unknown error
     const errorId = generateId();
     logger.error(`(${errorId}) Could not oauth, unknown error`, req.query);
-    return res.status(500).send(`Unknown error (${errorId})`);
+    return res
+      .status(500)
+      .send(
+        `Unknown error (error code: ${errorId})\n\n` +
+          `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`
+      );
   }
 }

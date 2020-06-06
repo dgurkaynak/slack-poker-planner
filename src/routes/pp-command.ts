@@ -20,7 +20,7 @@ export class PPCommandRoute {
 
     if (cmd.token != process.env.SLACK_VERIFICATION_TOKEN) {
       logger.error(
-        `Could not created topic, slack verification token is invalid`,
+        `Could not created session, slack verification token is invalid`,
         cmd
       );
       return res.json({
@@ -31,9 +31,15 @@ export class PPCommandRoute {
     }
 
     if (!isString(cmd.text)) {
-      logger.error(`Could not created topic, command.text not string`, cmd);
+      const errorId = generateId();
+      logger.error(
+        `(${errorId}) Could not created session, command.text not string`,
+        cmd
+      );
       return res.json({
-        text: `Topic cannot be empty`,
+        text:
+          `Unexpected command usage (error code: ${errorId})\n\n` +
+          `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
         response_type: 'ephemeral',
         replace_original: false,
       });
@@ -74,14 +80,13 @@ export class PPCommandRoute {
     if (teamGetErr) {
       const errorId = generateId();
       logger.error(
-        `(${errorId}) Could not created topic, could not get the team from db`,
+        `(${errorId}) Could not created session, could not get the team from db`,
         cmd,
         teamGetErr
       );
       return res.json({
         text:
-          `Internal server error, please try again later\n` +
-          `ST_TEAM_GET_FAIL (${errorId})\n\n` +
+          `Internal server error, please try again later (error code: ${errorId})\n\n` +
           `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
         response_type: 'ephemeral',
         replace_original: false,
@@ -89,9 +94,9 @@ export class PPCommandRoute {
     }
 
     if (!team) {
-      logger.error(`Could not created topic, team could not be found`, cmd);
+      logger.info(`Could not created session, team could not be found`, cmd);
       return res.json({
-        text: `Your slack team "${cmd.team_domain}" could not be found, please reinstall Poker Planner on <${process.env.APP_INSTALL_LINK}>`,
+        text: `Your Slack team (${cmd.team_domain}) could not be found, please reinstall Poker Planner on <${process.env.APP_INSTALL_LINK}>`,
         response_type: 'ephemeral',
         replace_original: false,
       });
@@ -196,7 +201,9 @@ export class PPCommandRoute {
       const errorId = generateId();
       logger.error(`(${errorId}) Could not open modal`, cmd, err);
       return res.json({
-        text: `Could not open modal (${errorId})`,
+        text:
+          `Could not open modal (error code: ${errorId})\n\n` +
+          `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
         response_type: 'ephemeral',
         replace_original: false,
       });
@@ -228,8 +235,7 @@ export class PPCommandRoute {
         {
           color: '#3AA3E3',
           text:
-            '`/pp`\n' +
-            'Opens a dialog to start a new poker planning session.',
+            '`/pp`\n' + 'Opens a dialog to start a new poker planning session.',
         },
         {
           color: '#3AA3E3',

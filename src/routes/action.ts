@@ -34,7 +34,9 @@ export class ActionRoute {
       const errorId = generateId();
       logger.error(`(${errorId}) Could not parse action payload`, req.body);
       return res.json({
-        text: `Unexpected slack action payload (${errorId})`,
+        text:
+          `Unexpected slack action payload (error code: ${errorId})\n\n` +
+          `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
         response_type: 'ephemeral',
         replace_original: false,
       });
@@ -66,12 +68,13 @@ export class ActionRoute {
       default: {
         const errorId = generateId();
         logger.error(
-          `(${errorId}) Unexpected action type: "${(payload as any).type}"`
+          `(${errorId}) Unexpected interactive-message action callbackId`,
+          payload
         );
         return res.json({
-          text: `Unexpected action type: "${
-            (payload as any).type
-          }" (${errorId})`,
+          text:
+            `Unexpected payload type (error code: ${errorId})\n\n` +
+            `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
           response_type: 'ephemeral',
           replace_original: false,
         });
@@ -94,11 +97,13 @@ export class ActionRoute {
     if (parts.length != 2) {
       const errorId = generateId();
       logger.error(
-        `(${errorId}) Could not process action, could not parse callback_id`,
+        `(${errorId}) Unexpected interactive message callback id`,
         payload
       );
       return res.json({
-        text: `Could not parse callback_id "${payload.callback_id}" (${errorId})`,
+        text:
+          `Unexpected interactive message callback id (error code: ${errorId})\n\n` +
+          `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
         response_type: 'ephemeral',
         replace_original: false,
       });
@@ -114,8 +119,7 @@ export class ActionRoute {
       logger.error(`(${errorId}) Could not get session`, payload, sessionErr);
       return res.json({
         text:
-          `Internal server error, please try again later\n` +
-          `A_GET_FAIL (${errorId})\n\n` +
+          `Internal server error, please try again later (error code: ${errorId})\n\n` +
           `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
         response_type: 'ephemeral',
         replace_original: false,
@@ -124,7 +128,7 @@ export class ActionRoute {
 
     if (!session) {
       return res.json({
-        text: `Ooops, could not find the session, it may be expired`,
+        text: `Ooops, could not find the session, it may be expired or cancelled`,
         response_type: 'ephemeral',
         replace_original: false,
       });
@@ -138,8 +142,7 @@ export class ActionRoute {
       logger.error(`(${errorId}) Could not get team`, payload, sessionErr);
       return res.json({
         text:
-          `Internal server error, please try again later\n` +
-          `A_GET_FAIL (${errorId})\n\n` +
+          `Internal server error, please try again later (error code: ${errorId})\n\n` +
           `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
         response_type: 'ephemeral',
         replace_original: false,
@@ -148,7 +151,7 @@ export class ActionRoute {
 
     if (!team) {
       return res.json({
-        text: `Your slack team with id "${payload.team.id}" could not be found. Please try to add Poker Planner to your Slack team again.`,
+        text: `Your Slack team (${payload.team.domain}) could not be found, please reinstall Poker Planner on <${process.env.APP_INSTALL_LINK}>`,
         response_type: 'ephemeral',
         replace_original: false,
       });
@@ -170,12 +173,12 @@ export class ActionRoute {
         } else {
           const errorId = generateId();
           logger.error(
-            `(${errorId}) Unknown topic action "${sessionAction}"`,
+            `(${errorId}) Unexpected action button clicked: "${sessionAction}"`,
             payload
           );
           res.json({
             text:
-              `Internal server error, please try again later\nA_UNKNOWN_ACTION (${errorId})\n\n` +
+              `Unexpected action button (error code: ${errorId})\n\n` +
               `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
             response_type: 'ephemeral',
             replace_original: false,
@@ -200,7 +203,9 @@ export class ActionRoute {
         const errorId = generateId();
         logger.error(`(${errorId}) Unexpected action: "${action}"`);
         return res.json({
-          text: `Unexpected action: "${action}" (${errorId})`,
+          text:
+            `Unexpected action (error code: ${errorId})\n\n` +
+            `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
           response_type: 'ephemeral',
           replace_original: false,
         });
@@ -222,14 +227,13 @@ export class ActionRoute {
     if (teamGetErr) {
       const errorId = generateId();
       logger.error(
-        `(${errorId}) Could not created topic, could not get the team from db`,
+        `(${errorId}) Could not create session, could not get the team from db`,
         payload,
         teamGetErr
       );
       return res.json({
         text:
-          `Internal server error, please try again later\n` +
-          `ST_TEAM_GET_FAIL (${errorId})\n\n` +
+          `Internal server error, please try again later (error code: ${errorId})\n\n` +
           `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
         response_type: 'ephemeral',
         replace_original: false,
@@ -237,9 +241,12 @@ export class ActionRoute {
     }
 
     if (!team) {
-      logger.error(`Could not created topic, team could not be found`, payload);
+      logger.info(
+        `Could not create session, team could not be found`,
+        payload
+      );
       return res.json({
-        text: `Your slack team "${payload.team.domain}" could not be found, please reinstall Poker Planner on <${process.env.APP_INSTALL_LINK}>`,
+        text: `Your Slack team (${payload.team.domain}) could not be found, please reinstall Poker Planner on <${process.env.APP_INSTALL_LINK}>`,
         response_type: 'ephemeral',
         replace_original: false,
       });
@@ -258,7 +265,9 @@ export class ActionRoute {
           `(${errorId}) Unexpected view-submission action callbackId: "${callbackId}"`
         );
         return res.json({
-          text: `Unexpected callback-id: "${callbackId}" (${errorId})`,
+          text:
+            `Unexpected view-submission callback id (error code: ${errorId})\n\n` +
+            `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
           response_type: 'ephemeral',
           replace_original: false,
         });
@@ -335,7 +344,7 @@ export class ActionRoute {
 
       logger.info(
         `[${team.name}(${team.id})] ${payload.user.name}(${payload.user.id}) trying to create ` +
-          `a session on #${privateMetadata.channelId} sessionId: ${session.id}`
+          `a session on #${privateMetadata.channelId} sessionId=${session.id}`
       );
 
       const postMessageResponse = await SessionController.postMessage(
@@ -458,7 +467,7 @@ export class ActionRoute {
       }
 
       if (shouldLog) {
-        logger[logLevel](`(${errorId}) Could not created topic`, payload, err);
+        logger[logLevel](`(${errorId}) Could not create session`, payload, err);
       }
 
       // Show the generic errors on a new modal
@@ -514,8 +523,7 @@ export class ActionRoute {
   }) {
     const point = payload.actions[0].value;
     logger.info(
-      `[${team.name}(${team.id})] ${payload.user.name}(${payload.user.id}) voting ` +
-        `${point} points w/ id: ${session.id}`
+      `[${team.name}(${team.id})] ${payload.user.name}(${payload.user.id}) voting ${point} points sessionId=${session.id}`
     );
     const [voteErr] = await to(
       SessionController.vote(session, team, payload.user.id, point)
@@ -525,7 +533,7 @@ export class ActionRoute {
       switch (voteErr.message) {
         case SessionControllerErrorCode.SESSION_NOT_ACTIVE: {
           return res.json({
-            text: `You cannot vote revealed or cancelled topic`,
+            text: `You cannot vote revealed or cancelled session`,
             response_type: 'ephemeral',
             replace_original: false,
           });
@@ -533,7 +541,7 @@ export class ActionRoute {
 
         case SessionControllerErrorCode.ONLY_PARTICIPANTS_CAN_VOTE: {
           return res.json({
-            text: `You are not a participant of that topic`,
+            text: `You are not a participant of that session`,
             response_type: 'ephemeral',
             replace_original: false,
           });
@@ -545,7 +553,7 @@ export class ActionRoute {
           logger.error(`(${errorId}) Could not vote`, voteErr);
           return res.json({
             text:
-              `Internal server error, please try again later\nA_VOTE_FAIL (${errorId})\n\n` +
+              `Internal server error, please try again later (error code: ${errorId})\n\n` +
               `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
             response_type: 'ephemeral',
             replace_original: false,
@@ -596,8 +604,7 @@ export class ActionRoute {
     }
 
     logger.info(
-      `[${team.name}(${team.id})] ${payload.user.name}(${payload.user.id}) revealing votes ` +
-        `w/ id: ${session.id}`
+      `[${team.name}(${team.id})] ${payload.user.name}(${payload.user.id}) revealing votes sessionId=${session.id}`
     );
     const [revealErr] = await to(
       SessionController.revealAndUpdateMessage(session, team, payload.user.id)
@@ -605,11 +612,10 @@ export class ActionRoute {
 
     if (revealErr) {
       const errorId = generateId();
-      logger.error(`(${errorId}) Could not reveal topic`, revealErr);
+      logger.error(`(${errorId}) Could not reveal session`, revealErr);
       return res.json({
         text:
-          `Internal server error, please try again later\n` +
-          `A_REVEAL_FAIL (${errorId})\n\n` +
+          `Internal server error, please try again later (error code: ${errorId})\n\n` +
           `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
         response_type: 'ephemeral',
         replace_original: false,
@@ -650,8 +656,7 @@ export class ActionRoute {
     }
 
     logger.info(
-      `[${team.name}(${team.id})] ${payload.user.name}(${payload.user.id}) cancelling topic ` +
-        `w/ id: ${session.id}`
+      `[${team.name}(${team.id})] ${payload.user.name}(${payload.user.id}) cancelling session sessionId=${session.id}`
     );
     const [cancelErr] = await to(
       SessionController.cancelAndUpdateMessage(session, team, payload.user.id)
@@ -659,11 +664,10 @@ export class ActionRoute {
 
     if (cancelErr) {
       const errorId = generateId();
-      logger.error(`(${errorId}) Could not cancel topic`, cancelErr);
+      logger.error(`(${errorId}) Could not cancel session`, cancelErr);
       return res.json({
         text:
-          `Internal server error, please try again later\n` +
-          `A_CANCEL_FAIL (${errorId})\n\n` +
+          `Internal server error, please try again later (error code: ${errorId})\n\n` +
           `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
         response_type: 'ephemeral',
         replace_original: false,
