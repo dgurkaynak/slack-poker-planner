@@ -242,7 +242,7 @@ export class SessionController {
       await SessionStore.delete(session.id);
       logger.info(
         `[${team.name}(${team.id})] Auto revealing votes ` +
-          `for "${session.title}" w/ id: ${session.id}`
+          `w/ id: ${session.id}`
       );
       return;
     }

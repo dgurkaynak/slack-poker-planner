@@ -515,7 +515,7 @@ export class ActionRoute {
     const point = payload.actions[0].value;
     logger.info(
       `[${team.name}(${team.id})] ${payload.user.name}(${payload.user.id}) voting ` +
-        `${point} points for "${session.title}" w/ id: ${session.id}`
+        `${point} points w/ id: ${session.id}`
     );
     const [voteErr] = await to(
       SessionController.vote(session, team, payload.user.id, point)
@@ -597,7 +597,7 @@ export class ActionRoute {
 
     logger.info(
       `[${team.name}(${team.id})] ${payload.user.name}(${payload.user.id}) revealing votes ` +
-        `for "${session.title}" w/ id: ${session.id}`
+        `w/ id: ${session.id}`
     );
     const [revealErr] = await to(
       SessionController.revealAndUpdateMessage(session, team, payload.user.id)
@@ -651,7 +651,7 @@ export class ActionRoute {
 
     logger.info(
       `[${team.name}(${team.id})] ${payload.user.name}(${payload.user.id}) cancelling topic ` +
-        `"${session.title}" w/ id: ${session.id}`
+        `w/ id: ${session.id}`
     );
     const [cancelErr] = await to(
       SessionController.cancelAndUpdateMessage(session, team, payload.user.id)
