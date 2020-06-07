@@ -1,4 +1,12 @@
 require('dotenv').config();
+import * as opentelemetry from '@opentelemetry/api';
+import {
+  BasicTracerProvider,
+  BatchSpanProcessor,
+} from '@opentelemetry/tracing';
+import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
+setupTracing();
+
 import * as logger from './lib/logger';
 import * as sqlite from './lib/sqlite';
 import * as redis from './lib/redis';
@@ -44,7 +52,7 @@ async function initServer() {
   server.set('views', 'src/views'); // relative to process.cwd
 
   // Parse body
-  server.use(bodyParser.urlencoded({ extended: false }))
+  server.use(bodyParser.urlencoded({ extended: false }));
   server.use(bodyParser.json());
 
   // Serve static files
@@ -84,7 +92,7 @@ function initRoutes(server: express.Express) {
       data: {
         SLACK_APP_ID: process.env.SLACK_APP_ID,
         COUNTLY_URL: process.env.COUNTLY_URL,
-        COUNTLY_APP_KEY: process.env.COUNTLY_APP_KEY
+        COUNTLY_APP_KEY: process.env.COUNTLY_APP_KEY,
       },
     });
   });
@@ -100,6 +108,27 @@ function initRoutes(server: express.Express) {
 
   // Serve under specified base path
   server.use(`${process.env.BASE_PATH}`, router);
+}
+
+async function setupTracing() {
+  const traceProvider = new BasicTracerProvider();
+  traceProvider.register();
+
+  if (!process.env.REPORT_TRACES) {
+    return;
+  }
+
+  const exporter = new JaegerExporter({
+    serviceName: 'slack-poker-planner',
+    tags: [],
+    host: process.env.JAEGER_HOST,
+    port: parseInt(process.env.JAEGER_PORT, 10),
+  });
+  traceProvider.addSpanProcessor(new BatchSpanProcessor(exporter));
+
+  logger.info(
+    `Traces will be reported to jaeger-agent on ${process.env.JAEGER_HOST}:${process.env.JAEGER_PORT}`
+  );
 }
 
 main().catch((err) => {

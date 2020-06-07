@@ -27,6 +27,9 @@
   },
   "homepage": "https://github.com/dgurkaynak/slack-poker-planner#readme",
   "dependencies": {
+    "@opentelemetry/api": "^0.8.3",
+    "@opentelemetry/exporter-jaeger": "^0.8.3",
+    "@opentelemetry/tracing": "^0.8.3",
     "@slack/web-api": "^5.9.0",
     "body-parser": "^1.19.0",
     "countly-sdk-nodejs": "^20.4.0",
