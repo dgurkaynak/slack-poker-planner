@@ -16,7 +16,7 @@ export function Trace(
     propertyDesciptor: TypedPropertyDescriptor<any>
   ) => {
     const originalMethod = propertyDesciptor.value;
-    const spanName = options.name || `${target.name}.${propertyName}`; // target.name only works with static methods
+    const spanName = options.name || propertyName;
 
     // Replace the method
     propertyDesciptor.value = function (...args: any[]) {
