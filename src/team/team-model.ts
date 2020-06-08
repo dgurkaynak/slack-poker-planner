@@ -24,7 +24,7 @@ export interface IChannelSetting {
 }
 
 export class TeamStore {
-  @Trace()
+  @Trace({ name: 'team.findById' })
   static async findById(id: string): Promise<ITeam> {
     const span = getSpan();
     span?.setAttribute('id', id);
@@ -32,7 +32,7 @@ export class TeamStore {
     return db.get('SELECT * FROM team WHERE id = ?', id);
   }
 
-  @Trace()
+  @Trace({ name: 'team.create' })
   static async create({
     id,
     name,
@@ -58,7 +58,7 @@ export class TeamStore {
     );
   }
 
-  @Trace()
+  @Trace({ name: 'team.update' })
   static async update({
     id,
     name,
@@ -89,7 +89,7 @@ export class TeamStore {
     );
   }
 
-  @Trace()
+  @Trace({ name: 'team.upsert' })
   static async upsert({
     id,
     name,

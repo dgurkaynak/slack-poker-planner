@@ -55,7 +55,7 @@ export interface ISession {
 }
 
 export class SessionStore {
-  @Trace()
+  @Trace({ name: 'session.findById' })
   static async findById(id: string): Promise<ISession> {
     const span = getSpan();
     span?.setAttribute('id', id);
@@ -66,7 +66,7 @@ export class SessionStore {
     return JSON.parse(rawSession);
   }
 
-  @Trace()
+  @Trace({ name: 'session.upsert' })
   static async upsert(session: ISession) {
     const span = getSpan();
     span?.setAttribute('id', session.id);
@@ -80,7 +80,7 @@ export class SessionStore {
     );
   }
 
-  @Trace()
+  @Trace({ name: 'session.delete' })
   static async delete(id: string) {
     const span = getSpan();
     span?.setAttribute('id', id);
