@@ -122,6 +122,16 @@ async function setupTracing() {
     tags: [],
     host: process.env.JAEGER_HOST,
     port: parseInt(process.env.JAEGER_PORT, 10),
+    logger: {
+      debug: (...args: any[]) =>
+        console.debug('[jaeger-exporter][debug]', ...args),
+      info: (...args: any[]) =>
+        console.info('[jaeger-exporter][info]', ...args),
+      warn: (...args: any[]) =>
+        console.warn('[jaeger-exporter][warn]', ...args),
+      error: (...args: any[]) =>
+        console.error('[jaeger-exporter][error]', ...args),
+    },
   });
   traceProvider.addSpanProcessor(new BatchSpanProcessor(exporter));
 
