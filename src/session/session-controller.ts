@@ -315,7 +315,7 @@ export class SessionController {
       await slackWebClient.chat.update({
         ts: session.rawPostMessageResponse.ts,
         channel: session.rawPostMessageResponse.channel,
-        text: `title: *${session.title}*\n\nVotes:\n${votesText}`,
+        text: `Title: *${session.title}*\n\nVotes:\n${votesText}`,
         attachments: buildMessageAttachments(session) as any,
       });
     }
