@@ -188,7 +188,7 @@ export class PPCommandRoute {
       });
 
       // Send acknowledgement back to API -- HTTP 200
-      res.send('');
+      res.send();
 
       if (process.env.COUNTLY_APP_KEY) {
         Countly.add_event({

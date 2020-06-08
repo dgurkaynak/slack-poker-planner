@@ -355,7 +355,7 @@ export class ActionRoute {
 
       await SessionStore.upsert(session);
 
-      res.send('');
+      res.send();
 
       const [upsertSettingErr] = await to(
         TeamStore.upsertSettings(team.id, session.channelId, {
@@ -574,11 +574,7 @@ export class ActionRoute {
       });
     }
 
-    return res.json({
-      text: `You voted ${point}`,
-      response_type: 'ephemeral',
-      replace_original: false,
-    });
+    return res.send();
   }
 
   /**
@@ -630,7 +626,7 @@ export class ActionRoute {
       });
     }
 
-    return res.send('');
+    return res.send();
   }
 
   /**
@@ -682,6 +678,6 @@ export class ActionRoute {
       });
     }
 
-    return res.send('');
+    return res.send();
   }
 }
