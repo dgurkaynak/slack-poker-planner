@@ -16,7 +16,7 @@ export function Trace(
     propertyDesciptor: TypedPropertyDescriptor<any>
   ) => {
     const originalMethod = propertyDesciptor.value;
-    const spanName = options.name || `${target.name}.${propertyName}`;
+    const spanName = options.name || `${target.name}.${propertyName}`; // target.name only works with static methods
 
     // Replace the method
     propertyDesciptor.value = function (...args: any[]) {
@@ -52,7 +52,6 @@ export function Trace(
               // https://github.com/opentracing/specification/blob/master/semantic_conventions.md
               span.addEvent('error', {
                 event: 'error',
-                error: err.message,
                 message: err.message,
                 stack: err.stack,
                 'error.kind': err.name,
@@ -74,7 +73,6 @@ export function Trace(
         // https://github.com/opentracing/specification/blob/master/semantic_conventions.md
         span.addEvent('error', {
           event: 'error',
-          error: err.message || err.name,
           message: err.message,
           stack: err.stack,
           'error.kind': err.name,

@@ -2,6 +2,7 @@ import { ISlackChatPostMessageResponse } from '../vendor/slack-api-interfaces';
 import * as logger from '../lib/logger';
 import * as redis from '../lib/redis';
 import { promisify } from 'util';
+import { Trace, getSpan } from '../lib/trace-decorator';
 
 export interface ISessionMention {
   type: 'user' | 'special' | 'user-group';
@@ -54,7 +55,10 @@ export interface ISession {
 }
 
 export class SessionStore {
+  @Trace()
   static async findById(id: string): Promise<ISession> {
+    const span = getSpan();
+    span?.setAttribute('id', id);
     const client = redis.getSingleton();
     const getAsync = promisify(client.get.bind(client));
     const rawSession = await getAsync(buildRedisKey(id));
@@ -62,7 +66,10 @@ export class SessionStore {
     return JSON.parse(rawSession);
   }
 
+  @Trace()
   static async upsert(session: ISession) {
+    const span = getSpan();
+    span?.setAttribute('id', session.id);
     const client = redis.getSingleton();
     const setAsync = promisify(client.set.bind(client));
     await setAsync(
@@ -73,7 +80,10 @@ export class SessionStore {
     );
   }
 
+  @Trace()
   static async delete(id: string) {
+    const span = getSpan();
+    span?.setAttribute('id', id);
     const client = redis.getSingleton();
     const delAsync = promisify(client.del.bind(client));
     await delAsync(buildRedisKey(id));

@@ -10,6 +10,8 @@ import {
   SessionController,
   DEFAULT_POINTS,
 } from '../session/session-controller';
+import * as opentelemetry from '@opentelemetry/api';
+import { Trace, getSpan } from '../lib/trace-decorator';
 
 export class PPCommandRoute {
   /**
@@ -56,7 +58,7 @@ export class PPCommandRoute {
       }
 
       default: {
-        return await PPCommandRoute.createSession(cmd, res);
+        return await PPCommandRoute.openNewSessionModal(cmd, res);
       }
     }
   }
@@ -64,10 +66,22 @@ export class PPCommandRoute {
   /**
    * `/pp some task name`
    */
-  static async createSession(
+  @Trace()
+  static async openNewSessionModal(
     cmd: ISlackCommandRequestBody,
     res: express.Response
   ) {
+    const span = getSpan();
+    span?.setAttributes({
+      teamId: cmd.team_id,
+      teamDomain: cmd.team_domain,
+      channelId: cmd.channel_id,
+      channelName: cmd.channel_name,
+      userId: cmd.user_id,
+      userName: cmd.user_name,
+      text: cmd.text,
+    });
+
     if (cmd.channel_name == 'directmessage') {
       return res.json({
         text: `Poker planning cannot be started in direct messages`,
@@ -84,6 +98,11 @@ export class PPCommandRoute {
         cmd,
         teamGetErr
       );
+      span?.setAttribute('error.id', errorId);
+      span?.setStatus({
+        code: opentelemetry.CanonicalCode.INTERNAL,
+        message: teamGetErr.message,
+      });
       return res.json({
         text:
           `Internal server error, please try again later (error code: ${errorId})\n\n` +
@@ -95,6 +114,10 @@ export class PPCommandRoute {
 
     if (!team) {
       logger.info(`Could not created session, team could not be found`, cmd);
+      span?.setStatus({
+        code: opentelemetry.CanonicalCode.NOT_FOUND,
+        message: 'Team not found',
+      });
       return res.json({
         text: `Your Slack team (${cmd.team_domain}) could not be found, please reinstall Poker Planner on <${process.env.APP_INSTALL_LINK}>`,
         response_type: 'ephemeral',
@@ -110,6 +133,7 @@ export class PPCommandRoute {
       logger.info(
         `[${team.name}(${team.id})] ${cmd.user_name}(${cmd.user_id}) sees migration message`
       );
+      span?.addEvent('show_migration_message');
       return res.json({
         text:
           'Poker Planner has migrated to ' +
@@ -153,6 +177,11 @@ export class PPCommandRoute {
       const [settingsFetchErr, channelSettings] = await to(
         TeamStore.fetchSettings(team.id, cmd.channel_id)
       );
+      if (settingsFetchErr) {
+        span?.addEvent('settings_fetch_error', {
+          error: settingsFetchErr.message,
+        });
+      }
       const settings = {
         [ChannelSettingKey.PARTICIPANTS]: [] as string[],
         [ChannelSettingKey.POINTS]: DEFAULT_POINTS,
@@ -177,7 +206,7 @@ export class PPCommandRoute {
         );
       }
 
-      await SessionController.openNewSessionModal({
+      await SessionController.openModal({
         triggerId: cmd.trigger_id,
         team,
         channelId: cmd.channel_id,
@@ -200,6 +229,11 @@ export class PPCommandRoute {
     } catch (err) {
       const errorId = generateId();
       logger.error(`(${errorId}) Could not open modal`, cmd, err);
+      span?.setAttribute('error.id', errorId);
+      span?.setStatus({
+        code: opentelemetry.CanonicalCode.INTERNAL,
+        message: err.message,
+      });
       return res.json({
         text:
           `Could not open modal (error code: ${errorId})\n\n` +

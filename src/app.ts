@@ -1,5 +1,4 @@
 require('dotenv').config();
-import * as opentelemetry from '@opentelemetry/api';
 import {
   BasicTracerProvider,
   BatchSpanProcessor,
@@ -119,7 +118,7 @@ async function setupTracing() {
   }
 
   const exporter = new JaegerExporter({
-    serviceName: 'slack-poker-planner',
+    serviceName: 'pp',
     tags: [],
     host: process.env.JAEGER_HOST,
     port: parseInt(process.env.JAEGER_PORT, 10),
