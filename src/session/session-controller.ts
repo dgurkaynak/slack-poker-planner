@@ -184,6 +184,14 @@ export class SessionController {
               emoji: true,
             },
           },
+          {
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text:
+                '> :bulb: These options will be *remembered* the next time you create a session *on this channel*.',
+            },
+          },
         ],
       },
     });
