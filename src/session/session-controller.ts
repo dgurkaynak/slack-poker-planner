@@ -121,7 +121,7 @@ export class SessionController {
             },
             label: {
               type: 'plain_text',
-              text: 'Session Title',
+              text: 'Title',
               emoji: true,
             },
           },
