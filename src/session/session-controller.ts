@@ -286,7 +286,7 @@ export class SessionController {
             .join(', ');
 
           if (point == 'not-voted') {
-            return `${peopleText} *did not voted* (${userIds})`;
+            return `${peopleText} *did not vote* (${userIds})`;
           }
 
           return `${peopleText} voted *${point}* (${userIds})`;
