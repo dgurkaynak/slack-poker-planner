@@ -244,7 +244,7 @@ export class ActionRoute {
        */
       default: {
         const errorId = generateId();
-        logger.error(`(${errorId}) Unexpected action: "${action}"`);
+        logger.error(`(${errorId}) Unexpected action: "${action}"`, payload);
         span?.setAttribute('error.id', errorId);
         span?.setStatus({
           code: opentelemetry.CanonicalCode.INVALID_ARGUMENT,
@@ -326,7 +326,8 @@ export class ActionRoute {
       default: {
         const errorId = generateId();
         logger.error(
-          `(${errorId}) Unexpected view-submission action callbackId: "${callbackId}"`
+          `(${errorId}) Unexpected view-submission action callbackId: "${callbackId}"`,
+          payload
         );
         span?.setAttribute('error.id', errorId);
         span?.setStatus({
@@ -622,7 +623,7 @@ export class ActionRoute {
     const point = payload.actions[0].value;
     span?.setAttributes({ point });
     logger.info(
-      `[${team.name}(${team.id})] ${payload.user.name}(${payload.user.id}) voting ${point} points sessionId=${session.id}`
+      `[${team.name}(${team.id})] ${payload.user.name}(${payload.user.id}) trying to vote ${point} points sessionId=${session.id}`
     );
     const [voteErr] = await to(
       SessionController.vote(session, team, payload.user.id, point)
@@ -649,7 +650,7 @@ export class ActionRoute {
         // Unknown error
         default: {
           const errorId = generateId();
-          logger.error(`(${errorId}) Could not vote`, voteErr);
+          logger.error(`(${errorId}) Could not vote`, payload, voteErr);
           span?.setAttributes({ 'error.id': errorId });
           span?.setStatus({
             code: opentelemetry.CanonicalCode.INVALID_ARGUMENT,
@@ -719,7 +720,7 @@ export class ActionRoute {
 
     if (revealErr) {
       const errorId = generateId();
-      logger.error(`(${errorId}) Could not reveal session`, revealErr);
+      logger.error(`(${errorId}) Could not reveal session`, payload, revealErr);
       span?.setAttributes({ 'error.id': errorId });
       span?.setStatus({
         code: opentelemetry.CanonicalCode.INTERNAL,
@@ -783,7 +784,7 @@ export class ActionRoute {
 
     if (cancelErr) {
       const errorId = generateId();
-      logger.error(`(${errorId}) Could not cancel session`, cancelErr);
+      logger.error(`(${errorId}) Could not cancel session`, payload, cancelErr);
       span?.setAttributes({ 'error.id': errorId });
       span?.setStatus({
         code: opentelemetry.CanonicalCode.INTERNAL,

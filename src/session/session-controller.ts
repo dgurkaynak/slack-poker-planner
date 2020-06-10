@@ -266,7 +266,11 @@ export class SessionController {
     try {
       await SessionController.updateMessage(session, team);
     } catch (err) {
-      logger.warn(`Could not refreshed session message after a vote, ${err}`);
+      logger.warn(
+        `Could not refreshed session message after a vote`,
+        { session, userId, point },
+        err
+      );
     }
   }
 

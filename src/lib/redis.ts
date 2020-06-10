@@ -19,7 +19,7 @@ export async function init() {
   });
 
   client.on('error', (err) => {
-    logger.error(`[redis] an error occured`, err);
+    logger.error(`Unexpected redis error`, err);
   });
 
   return client;
