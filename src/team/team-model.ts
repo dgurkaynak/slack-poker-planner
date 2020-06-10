@@ -182,24 +182,4 @@ export class TeamStore {
       }
     );
   }
-
-  static async updateCustomPoints(teamId: string, customPoints: string) {
-    const db = sqlite.getSingleton();
-    const customPointsArr = customPoints.match(/\S+/g) || [];
-    customPoints = customPointsArr.join(' ');
-    if (!customPoints) customPoints = null;
-
-    await db.run(
-      `UPDATE
-        team
-      SET
-        custom_points = $customPoints
-      WHERE
-        id = $id`,
-      {
-        $id: teamId,
-        $customPoints: customPoints,
-      }
-    );
-  }
 }
