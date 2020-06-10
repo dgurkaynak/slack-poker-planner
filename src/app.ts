@@ -23,7 +23,9 @@ async function main() {
   await sqlite.init();
 
   // Start redis
-  await redis.init();
+  if (process.env.USE_REDIS) {
+    await redis.init();
+  }
 
   // Start server
   await initServer();

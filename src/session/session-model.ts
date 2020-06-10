@@ -54,9 +54,16 @@ export interface ISession {
   protected: boolean;
 }
 
+// If `process.env.USE_REDIS` is falsy, in-memory db will be used
+const sessions: { [key: string]: ISession } = {};
+
 export class SessionStore {
   @Trace({ name: 'session.findById' })
   static async findById(id: string): Promise<ISession> {
+    if (!process.env.USE_REDIS) {
+      return sessions[id];
+    }
+
     const span = getSpan();
     span?.setAttribute('id', id);
     const client = redis.getSingleton();
@@ -68,6 +75,11 @@ export class SessionStore {
 
   @Trace({ name: 'session.upsert' })
   static async upsert(session: ISession) {
+    if (!process.env.USE_REDIS) {
+      sessions[session.id] = session;
+      return;
+    }
+
     const span = getSpan();
     span?.setAttribute('id', session.id);
     const client = redis.getSingleton();
@@ -82,6 +94,11 @@ export class SessionStore {
 
   @Trace({ name: 'session.delete' })
   static async delete(id: string) {
+    if (!process.env.USE_REDIS) {
+      delete sessions[id];
+      return;
+    }
+
     const span = getSpan();
     span?.setAttribute('id', id);
     const client = redis.getSingleton();
