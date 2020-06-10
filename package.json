@@ -27,7 +27,7 @@
   },
   "homepage": "https://github.com/dgurkaynak/slack-poker-planner#readme",
   "engines": {
-    "node" : ">=12.17.0"
+    "node": ">=12.17.0"
   },
   "dependencies": {
     "@opentelemetry/api": "^0.8.3",
@@ -44,7 +44,8 @@
     "redis": "^3.0.2",
     "shortid": "^2.2.15",
     "sqlite": "^4.0.10",
-    "sqlite3": "^4.2.0"
+    "sqlite3": "^4.2.0",
+    "winston": "^3.2.1"
   },
   "devDependencies": {
     "@types/express": "^4.17.6",
@@ -54,6 +55,7 @@
     "@types/redis": "^2.8.22",
     "@types/shortid": "0.0.29",
     "@types/sqlite3": "^3.1.6",
+    "@types/winston": "^2.4.4",
     "prettier": "2.0.5",
     "ts-loader": "^7.0.5",
     "typescript": "^3.9.3",

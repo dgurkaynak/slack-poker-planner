@@ -1,5 +1,5 @@
 import * as express from 'express';
-import * as logger from '../lib/logger';
+import logger from '../lib/logger';
 import { generate as generateId } from 'shortid';
 import { to } from '../lib/to';
 import { TeamStore, ITeam, ChannelSettingKey } from '../team/team-model';

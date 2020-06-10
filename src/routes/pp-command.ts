@@ -1,5 +1,5 @@
 import * as express from 'express';
-import * as logger from '../lib/logger';
+import logger from '../lib/logger';
 import Countly from 'countly-sdk-nodejs';
 import { TeamStore, ChannelSettingKey } from '../team/team-model';
 import { generate as generateId } from 'shortid';

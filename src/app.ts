@@ -6,7 +6,7 @@ import {
 import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 setupTracing();
 
-import * as logger from './lib/logger';
+import logger from './lib/logger';
 import * as sqlite from './lib/sqlite';
 import * as redis from './lib/redis';
 import Countly from 'countly-sdk-nodejs';

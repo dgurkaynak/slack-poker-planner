@@ -1,6 +1,6 @@
 import * as sqlite3 from 'sqlite3';
 import { open, Database } from 'sqlite';
-import * as logger from './logger';
+import logger from './logger';
 
 let db: Database<sqlite3.Database, sqlite3.Statement>;
 

@@ -6,7 +6,7 @@ import map from 'lodash/map';
 import groupBy from 'lodash/groupBy';
 import { ITeam } from '../team/team-model';
 import { WebClient } from '@slack/web-api';
-import * as logger from '../lib/logger';
+import logger from '../lib/logger';
 import { Trace, getSpan } from '../lib/trace-decorator';
 
 export const DEFAULT_POINTS = [

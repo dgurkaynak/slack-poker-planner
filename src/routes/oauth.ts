@@ -1,6 +1,6 @@
 import * as express from 'express';
 import { WebClient } from '@slack/web-api';
-import * as logger from '../lib/logger';
+import logger from '../lib/logger';
 import Countly from 'countly-sdk-nodejs';
 import { TeamStore } from '../team/team-model';
 import { generate as generateId } from 'shortid';
