@@ -1,17 +1,14 @@
-FROM node:8
+FROM mhart/alpine-node:12.18.1
+MAINTAINER Deniz Gurkaynak <dgurkaynak@gmail.com>
 
-# Create app directory
 WORKDIR /app
+ADD . .
 
-# Install app dependencies
-# A wildcard is used to ensure both package.json AND package-lock.json are copied
-# where available (npm@5+)
-COPY package*.json ./
+RUN npm i && \
+  npm run build && \
+  rm -rf node_modules && \
+  npm i --production
 
-RUN npm install
+ENV NODE_ENV production
 
-# Bundle app source
-COPY . .
-
-EXPOSE 3000
-CMD [ "npm", "start" ]
+CMD ["npm", "start"]
