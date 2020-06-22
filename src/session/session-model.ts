@@ -88,7 +88,7 @@ export class SessionStore {
       buildRedisKey(session.id),
       JSON.stringify(session),
       'EX',
-      Number(process.env.SESSION_TTL)
+      Number(process.env.REDIS_SESSION_TTL)
     );
   }
 
