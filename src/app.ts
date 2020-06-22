@@ -100,7 +100,9 @@ function initRoutes(server: express.Express) {
 
   router.get('/oauth', OAuthRoute.handle);
   router.post('/slack/pp-command', PPCommandRoute.handle);
+  router.post('/slack/pp-slash-command', PPCommandRoute.handle);
   router.post('/slack/action-endpoint', InteractivityRoute.handle);
+  router.post('/slack/interactivity', InteractivityRoute.handle);
 
   router.get('/slack/direct-install', (req, res, next) => {
     const url = `https://slack.com/oauth/v2/authorize?client_id=${process.env.SLACK_CLIENT_ID}&scope=${process.env.SLACK_SCOPE}`;

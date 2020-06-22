@@ -23,6 +23,7 @@ import { Trace, getSpan } from '../lib/trace-decorator';
 export class InteractivityRoute {
   /**
    * POST /slack/action-endpoint
+   * POST /slack/interactivity
    * https://api.slack.com/interactivity/handling#payloads
    */
   static async handle(req: express.Request, res: express.Response) {

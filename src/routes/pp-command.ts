@@ -16,6 +16,7 @@ import { Trace, getSpan } from '../lib/trace-decorator';
 export class PPCommandRoute {
   /**
    * POST /slack/pp-command
+   * POST /slack/pp-slash-command
    */
   static async handle(req: express.Request, res: express.Response) {
     const cmd = req.body as ISlackCommandRequestBody;
