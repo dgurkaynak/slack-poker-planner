@@ -20,7 +20,7 @@ import find from 'lodash/find';
 import * as opentelemetry from '@opentelemetry/api';
 import { Trace, getSpan } from '../lib/trace-decorator';
 
-export class ActionRoute {
+export class InteractivityRoute {
   /**
    * POST /slack/action-endpoint
    * https://api.slack.com/interactivity/handling#payloads
@@ -58,12 +58,12 @@ export class ActionRoute {
 
     switch (payload.type) {
       case 'interactive_message': {
-        await ActionRoute.interactiveMessage({ payload, res });
+        await InteractivityRoute.interactiveMessage({ payload, res });
         return;
       }
 
       case 'view_submission': {
-        await ActionRoute.viewSubmission({ payload, res });
+        await InteractivityRoute.viewSubmission({ payload, res });
         return;
       }
 
@@ -205,9 +205,9 @@ export class ActionRoute {
         span?.setAttributes({ sessionAction });
 
         if (sessionAction == 'reveal') {
-          await ActionRoute.revealSession({ payload, team, session, res });
+          await InteractivityRoute.revealSession({ payload, team, session, res });
         } else if (sessionAction == 'cancel') {
-          await ActionRoute.cancelSession({ payload, team, session, res });
+          await InteractivityRoute.cancelSession({ payload, team, session, res });
         } else {
           const errorId = generateId();
           logger.error(
@@ -235,7 +235,7 @@ export class ActionRoute {
        * A user clicked vote point button
        */
       case 'vote': {
-        await ActionRoute.vote({ payload, team, session, res });
+        await InteractivityRoute.vote({ payload, team, session, res });
         return;
       }
 
@@ -320,7 +320,7 @@ export class ActionRoute {
 
     switch (callbackId) {
       case 'newSessionModal:submit': {
-        return ActionRoute.createSession({ payload, team, res });
+        return InteractivityRoute.createSession({ payload, team, res });
       }
 
       default: {
