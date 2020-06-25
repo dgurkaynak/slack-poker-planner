@@ -32,16 +32,18 @@ async function main() {
 
   // If countly env variables exists, start countly stat reporting
   if (process.env.COUNTLY_APP_KEY && process.env.COUNTLY_URL) {
-    logger.info(
-      `Initing countly - ${process.env.COUNTLY_URL} with app key: ${process.env.COUNTLY_APP_KEY}`
-    );
+    logger.info({
+      msg: `Initing countly`,
+      url: process.env.COUNTLY_URL,
+      appKey: process.env.COUNTLY_APP_KEY,
+    });
     Countly.init({
       app_key: process.env.COUNTLY_APP_KEY,
       url: process.env.COUNTLY_URL,
     });
   }
 
-  logger.info('Boot successful!');
+  logger.info({ msg: 'Boot successful!' });
 }
 
 async function initServer() {
@@ -65,7 +67,7 @@ async function initServer() {
   return new Promise((resolve, reject) => {
     server.listen(process.env.PORT, (err) => {
       if (err) return reject(err);
-      logger.info(`Server running on ${process.env.PORT}`);
+      logger.info({ msg: `Server running`, port: process.env.PORT });
       resolve();
     });
   });
@@ -135,12 +137,16 @@ async function setupTracing() {
   });
   traceProvider.addSpanProcessor(new BatchSpanProcessor(exporter));
 
-  logger.info(
-    `Traces will be reported to jaeger-agent on ${process.env.JAEGER_HOST}:${process.env.JAEGER_PORT}`
-  );
+  logger.info({
+    msg: `Trace reporter started`,
+    jaegerAgent: {
+      host: process.env.JAEGER_HOST,
+      port: process.env.JAEGER_PORT,
+    },
+  });
 }
 
 main().catch((err) => {
-  logger.error('Could not boot', err);
+  logger.error({ msg: 'Could not boot', error: err });
   process.exit(1);
 });

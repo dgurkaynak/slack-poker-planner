@@ -6,17 +6,17 @@ let db: Database<sqlite3.Database, sqlite3.Statement>;
 
 export async function init() {
   if (db) {
-    logger.warn('Trying to init sqlite multiple times!');
+    logger.warn({ msg: `Trying to init sqlite multiple times!` });
     return db;
   }
 
-  logger.info('Opening sqlite...');
+  logger.info({ msg: `Opening sqlite...` });
   db = await open({
     filename: process.env.DB_FILE,
     driver: sqlite3.Database,
   });
 
-  logger.info('Migrating sqlite...');
+  logger.info({ msg: `Migrating sqlite...` });
   await db.migrate();
 
   return db;

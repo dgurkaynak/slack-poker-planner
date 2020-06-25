@@ -13,7 +13,10 @@ export class OAuthRoute {
   static async handle(req: express.Request, res: express.Response) {
     // Slack-side error, display error message
     if (req.query.error) {
-      logger.error(`Could not oauth, req.query.error: ${req.query.error}`);
+      logger.error({
+        msg: `Could not oauth`,
+        error: req.query.error,
+      });
       return res.status(500).send(req.query.error);
     }
 
@@ -30,10 +33,11 @@ export class OAuthRoute {
 
       if (oauthErr) {
         const errorId = generateId();
-        logger.error(
-          `(${errorId}) Could not oauth, slack api call failed`,
-          oauthErr
-        );
+        logger.error({
+          msg: `Could not oauth, slack api call failed`,
+          errorId,
+          error: oauthErr,
+        });
         return res
           .status(500)
           .send(
@@ -54,10 +58,11 @@ export class OAuthRoute {
 
       if (upsertErr) {
         const errorId = generateId();
-        logger.error(
-          `(${errorId}) Could not oauth, sqlite upsert failed - ${upsertErr.message}`,
-          upsertErr
-        );
+        logger.error({
+          msg: `Could not oauth, sqlite upsert failed`,
+          errorId,
+          error: upsertErr,
+        });
         res
           .status(500)
           .send(
@@ -74,9 +79,10 @@ export class OAuthRoute {
         });
       }
 
-      logger.info(
-        `Added to team "${team.name}"(${team.id}) by ${team.user_id}`
-      );
+      logger.info({
+        msg: `Added to team`,
+        team,
+      });
 
       return res.render('oauth-success', {
         layout: false,
@@ -89,7 +95,11 @@ export class OAuthRoute {
 
     // Unknown error
     const errorId = generateId();
-    logger.error(`(${errorId}) Could not oauth, unknown error`, req.query);
+    logger.error({
+      msg: `Could not oauth, unknown error`,
+      errorId,
+      query: req.query,
+    });
     return res
       .status(500)
       .send(

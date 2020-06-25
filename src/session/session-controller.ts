@@ -254,9 +254,14 @@ export class SessionController {
     if (session.state == 'revealed') {
       await SessionController.updateMessage(session, team); // do not send userId
       await SessionStore.delete(session.id);
-      logger.info(
-        `[${team.name}(${team.id})] Auto revealing votes sessionId=${session.id}`
-      );
+      logger.info({
+        msg: `Auto revealing votes`,
+        sessionId: session.id,
+        team: {
+          id: team.id,
+          name: team.name,
+        },
+      });
       return;
     }
 
@@ -266,11 +271,13 @@ export class SessionController {
     try {
       await SessionController.updateMessage(session, team);
     } catch (err) {
-      logger.warn(
-        `Could not refreshed session message after a vote`,
-        { session, userId, point },
-        err
-      );
+      logger.warn({
+        msg: `Could not refreshed session message after a vote`,
+        error: err,
+        session,
+        userId,
+        point,
+      });
     }
   }
 

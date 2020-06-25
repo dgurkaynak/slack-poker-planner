@@ -6,11 +6,11 @@ let client: redis.RedisClient;
 
 export async function init() {
   if (client) {
-    logger.warn('Trying to init redis multiple times!');
+    logger.warn({ msg: `Trying to init redis multiple times!` });
     return client;
   }
 
-  logger.info(`Creating redis client...`);
+  logger.info({ msg: `Creating redis client...` });
   client = redis.createClient();
 
   await new Promise((resolve, reject) => {
@@ -19,7 +19,10 @@ export async function init() {
   });
 
   client.on('error', (err) => {
-    logger.error(`Unexpected redis error`, err);
+    logger.error({
+      msg: `Unexpected redis error`,
+      error: err,
+    });
   });
 
   return client;

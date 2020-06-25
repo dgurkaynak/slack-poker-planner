@@ -35,7 +35,11 @@ export class InteractivityRoute {
       payload = JSON.parse(req.body.payload);
     } catch (err) {
       const errorId = generateId();
-      logger.error(`(${errorId}) Could not parse action payload`, req.body);
+      logger.error({
+        msg: `Could not parse action payload`,
+        errorId,
+        body: req.body,
+      });
       return res.json({
         text:
           `Unexpected slack action payload (error code: ${errorId})\n\n` +
@@ -46,10 +50,10 @@ export class InteractivityRoute {
     }
 
     if (payload.token != process.env.SLACK_VERIFICATION_TOKEN) {
-      logger.error(
-        `Could not process action, invalid verification token`,
-        payload
-      );
+      logger.error({
+        msg: `Could not process action, invalid verification token`,
+        payload,
+      });
       return res.json({
         text: `Invalid slack verification token, please get in touch with the maintainer`,
         response_type: 'ephemeral',
@@ -70,10 +74,11 @@ export class InteractivityRoute {
 
       default: {
         const errorId = generateId();
-        logger.error(
-          `(${errorId}) Unexpected interactive-message action callbackId`,
-          payload
-        );
+        logger.error({
+          msg: `Unexpected interactive-message action callbackId`,
+          errorId,
+          payload,
+        });
         return res.json({
           text:
             `Unexpected payload type (error code: ${errorId})\n\n` +
@@ -110,10 +115,11 @@ export class InteractivityRoute {
 
     if (parts.length != 2) {
       const errorId = generateId();
-      logger.error(
-        `(${errorId}) Unexpected interactive message callback id`,
-        payload
-      );
+      logger.error({
+        msg: `Unexpected interactive message callback id`,
+        errorId,
+        payload,
+      });
       span?.setAttribute('error.id', errorId);
       span?.setStatus({
         code: opentelemetry.CanonicalCode.INVALID_ARGUMENT,
@@ -136,7 +142,12 @@ export class InteractivityRoute {
 
     if (sessionErr) {
       const errorId = generateId();
-      logger.error(`(${errorId}) Could not get session`, payload, sessionErr);
+      logger.error({
+        msg: `Could not get session`,
+        errorId,
+        error: sessionErr,
+        payload,
+      });
       span?.setAttribute('error.id', errorId);
       span?.setStatus({
         code: opentelemetry.CanonicalCode.INTERNAL,
@@ -168,7 +179,12 @@ export class InteractivityRoute {
 
     if (teamErr) {
       const errorId = generateId();
-      logger.error(`(${errorId}) Could not get team`, payload, sessionErr);
+      logger.error({
+        msg: `Could not get team`,
+        errorId,
+        error: teamErr,
+        payload,
+      });
       span?.setAttribute('error.id', errorId);
       span?.setStatus({
         code: opentelemetry.CanonicalCode.INTERNAL,
@@ -206,15 +222,27 @@ export class InteractivityRoute {
         span?.setAttributes({ sessionAction });
 
         if (sessionAction == 'reveal') {
-          await InteractivityRoute.revealSession({ payload, team, session, res });
+          await InteractivityRoute.revealSession({
+            payload,
+            team,
+            session,
+            res,
+          });
         } else if (sessionAction == 'cancel') {
-          await InteractivityRoute.cancelSession({ payload, team, session, res });
+          await InteractivityRoute.cancelSession({
+            payload,
+            team,
+            session,
+            res,
+          });
         } else {
           const errorId = generateId();
-          logger.error(
-            `(${errorId}) Unexpected action button clicked: "${sessionAction}"`,
-            payload
-          );
+          logger.error({
+            msg: `Unexpected action button clicked`,
+            errorId,
+            sessionAction,
+            payload,
+          });
           span?.setAttribute('error.id', errorId);
           span?.setStatus({
             code: opentelemetry.CanonicalCode.INVALID_ARGUMENT,
@@ -245,7 +273,12 @@ export class InteractivityRoute {
        */
       default: {
         const errorId = generateId();
-        logger.error(`(${errorId}) Unexpected action: "${action}"`, payload);
+        logger.error({
+          msg: `Unexpected action`,
+          errorId,
+          action,
+          payload,
+        });
         span?.setAttribute('error.id', errorId);
         span?.setStatus({
           code: opentelemetry.CanonicalCode.INVALID_ARGUMENT,
@@ -284,11 +317,12 @@ export class InteractivityRoute {
     const [teamGetErr, team] = await to(TeamStore.findById(payload.team.id));
     if (teamGetErr) {
       const errorId = generateId();
-      logger.error(
-        `(${errorId}) Could not create session, could not get the team from db`,
+      logger.error({
+        msg: `Could not create session, could not get the team from db`,
+        errorId,
+        error: teamGetErr,
         payload,
-        teamGetErr
-      );
+      });
       span?.setAttribute('error.id', errorId);
       span?.setStatus({
         code: opentelemetry.CanonicalCode.INTERNAL,
@@ -304,7 +338,10 @@ export class InteractivityRoute {
     }
 
     if (!team) {
-      logger.info(`Could not create session, team could not be found`, payload);
+      logger.info({
+        msg: `Could not create session, team could not be found`,
+        payload,
+      });
       span?.setStatus({
         code: opentelemetry.CanonicalCode.NOT_FOUND,
         message: 'Team not found',
@@ -326,10 +363,12 @@ export class InteractivityRoute {
 
       default: {
         const errorId = generateId();
-        logger.error(
-          `(${errorId}) Unexpected view-submission action callbackId: "${callbackId}"`,
-          payload
-        );
+        logger.error({
+          msg: `Unexpected view-submission action callbackId`,
+          errorId,
+          callbackId,
+          payload,
+        });
         span?.setAttribute('error.id', errorId);
         span?.setStatus({
           code: opentelemetry.CanonicalCode.INVALID_ARGUMENT,
@@ -400,9 +439,10 @@ export class InteractivityRoute {
       }
 
       const otherCheckboxesState = payload.view.state.values.other as any;
-      const selectedOptions = otherCheckboxesState ?
-        otherCheckboxesState[Object.keys(otherCheckboxesState)[0]]
-          .selected_options : [];
+      const selectedOptions = otherCheckboxesState
+        ? otherCheckboxesState[Object.keys(otherCheckboxesState)[0]]
+            .selected_options
+        : [];
       const isProtected = !!find(
         selectedOptions,
         (option) => option.value == 'protected'
@@ -429,10 +469,19 @@ export class InteractivityRoute {
         userName: payload.user.name,
       });
 
-      logger.info(
-        `[${team.name}(${team.id})] ${payload.user.name}(${payload.user.id}) trying to create ` +
-          `a session on #${privateMetadata.channelId} sessionId=${session.id}`
-      );
+      logger.info({
+        msg: `Creating a new session`,
+        team: {
+          id: team.id,
+          name: team.name,
+        },
+        user: {
+          id: payload.user.id,
+          name: payload.user.name,
+        },
+        channelId: privateMetadata.channelId,
+        sessionId: session.id,
+      });
 
       const postMessageResponse = await SessionController.postMessage(
         session,
@@ -455,11 +504,11 @@ export class InteractivityRoute {
         span?.addEvent('upsert_settings_error', {
           message: upsertSettingErr.message,
         });
-        logger.error(
-          `Could not upsert settings after creating new session`,
+        logger.error({
+          msg: `Could not upsert settings after creating new session`,
           session,
-          upsertSettingErr
-        );
+          error: upsertSettingErr,
+        });
       }
 
       if (process.env.COUNTLY_APP_KEY) {
@@ -556,7 +605,12 @@ export class InteractivityRoute {
       }
 
       if (shouldLog) {
-        logger[logLevel](`(${errorId}) Could not create session`, payload, err);
+        logger[logLevel]({
+          msg: `Could not create session`,
+          errorId,
+          error: err,
+          payload,
+        });
       }
 
       span?.setAttributes({
@@ -623,9 +677,19 @@ export class InteractivityRoute {
     const span = getSpan();
     const point = payload.actions[0].value;
     span?.setAttributes({ point });
-    logger.info(
-      `[${team.name}(${team.id})] ${payload.user.name}(${payload.user.id}) trying to vote ${point} points sessionId=${session.id}`
-    );
+    logger.info({
+      msg: `Voting`,
+      point,
+      sessionId: session.id,
+      team: {
+        id: team.id,
+        name: team.name,
+      },
+      user: {
+        id: payload.user.id,
+        name: payload.user.name,
+      },
+    });
     const [voteErr] = await to(
       SessionController.vote(session, team, payload.user.id, point)
     );
@@ -651,7 +715,12 @@ export class InteractivityRoute {
         // Unknown error
         default: {
           const errorId = generateId();
-          logger.error(`(${errorId}) Could not vote`, payload, voteErr);
+          logger.error({
+            msg: `Could not vote`,
+            errorId,
+            error: voteErr,
+            payload,
+          });
           span?.setAttributes({ 'error.id': errorId });
           span?.setStatus({
             code: opentelemetry.CanonicalCode.INVALID_ARGUMENT,
@@ -712,16 +781,30 @@ export class InteractivityRoute {
       });
     }
 
-    logger.info(
-      `[${team.name}(${team.id})] ${payload.user.name}(${payload.user.id}) revealing votes sessionId=${session.id}`
-    );
+    logger.info({
+      msg: `Revealing votes`,
+      sessionId: session.id,
+      team: {
+        id: team.id,
+        name: team.name,
+      },
+      user: {
+        id: payload.user.id,
+        name: payload.user.name,
+      },
+    });
     const [revealErr] = await to(
       SessionController.revealAndUpdateMessage(session, team, payload.user.id)
     );
 
     if (revealErr) {
       const errorId = generateId();
-      logger.error(`(${errorId}) Could not reveal session`, payload, revealErr);
+      logger.error({
+        msg: `Could not reveal session`,
+        errorId,
+        error: revealErr,
+        payload,
+      });
       span?.setAttributes({ 'error.id': errorId });
       span?.setStatus({
         code: opentelemetry.CanonicalCode.INTERNAL,
@@ -776,16 +859,30 @@ export class InteractivityRoute {
       });
     }
 
-    logger.info(
-      `[${team.name}(${team.id})] ${payload.user.name}(${payload.user.id}) cancelling session sessionId=${session.id}`
-    );
+    logger.info({
+      msg: `Cancelling session`,
+      sessionId: session.id,
+      team: {
+        id: team.id,
+        name: team.name,
+      },
+      user: {
+        id: payload.user.id,
+        name: payload.user.name,
+      },
+    });
     const [cancelErr] = await to(
       SessionController.cancelAndUpdateMessage(session, team, payload.user.id)
     );
 
     if (cancelErr) {
       const errorId = generateId();
-      logger.error(`(${errorId}) Could not cancel session`, payload, cancelErr);
+      logger.error({
+        msg: `Could not cancel session`,
+        errorId,
+        error: cancelErr,
+        payload,
+      });
       span?.setAttributes({ 'error.id': errorId });
       span?.setStatus({
         code: opentelemetry.CanonicalCode.INTERNAL,

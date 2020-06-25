@@ -22,10 +22,10 @@ export class PPCommandRoute {
     const cmd = req.body as ISlackCommandRequestBody;
 
     if (cmd.token != process.env.SLACK_VERIFICATION_TOKEN) {
-      logger.error(
-        `Could not created session, slack verification token is invalid`,
-        cmd
-      );
+      logger.error({
+        msg: `Could not created session, slack verification token is invalid`,
+        cmd,
+      });
       return res.json({
         text: `Invalid slack verification token, please get in touch with the maintainer`,
         response_type: 'ephemeral',
@@ -35,10 +35,11 @@ export class PPCommandRoute {
 
     if (!isString(cmd.text)) {
       const errorId = generateId();
-      logger.error(
-        `(${errorId}) Could not created session, command.text not string`,
-        cmd
-      );
+      logger.error({
+        msg: `Could not created session, command.text not string`,
+        errorId,
+        cmd,
+      });
       return res.json({
         text:
           `Unexpected command usage (error code: ${errorId})\n\n` +
@@ -94,11 +95,12 @@ export class PPCommandRoute {
     const [teamGetErr, team] = await to(TeamStore.findById(cmd.team_id));
     if (teamGetErr) {
       const errorId = generateId();
-      logger.error(
-        `(${errorId}) Could not created session, could not get the team from db`,
+      logger.error({
+        msg: `Could not created session, could not get the team from db`,
+        errorId,
+        error: teamGetErr,
         cmd,
-        teamGetErr
-      );
+      });
       span?.setAttribute('error.id', errorId);
       span?.setStatus({
         code: opentelemetry.CanonicalCode.INTERNAL,
@@ -114,7 +116,10 @@ export class PPCommandRoute {
     }
 
     if (!team) {
-      logger.info(`Could not created session, team could not be found`, cmd);
+      logger.info({
+        msg: `Could not created session, team could not be found`,
+        cmd,
+      });
       span?.setStatus({
         code: opentelemetry.CanonicalCode.NOT_FOUND,
         message: 'Team not found',
@@ -131,9 +136,17 @@ export class PPCommandRoute {
       team.scope ==
       'identify,commands,channels:read,groups:read,users:read,chat:write:bot'
     ) {
-      logger.info(
-        `[${team.name}(${team.id})] ${cmd.user_name}(${cmd.user_id}) sees migration message`
-      );
+      logger.info({
+        msg: `Migration message`,
+        team: {
+          id: team.id,
+          name: team.name,
+        },
+        user: {
+          id: cmd.user_id,
+          name: cmd.user_name,
+        },
+      });
       span?.addEvent('show_migration_message');
       return res.json({
         text:
@@ -229,7 +242,12 @@ export class PPCommandRoute {
       }
     } catch (err) {
       const errorId = generateId();
-      logger.error(`(${errorId}) Could not open modal`, cmd, err);
+      logger.error({
+        msg: `Could not open modal`,
+        errorId,
+        error: err,
+        cmd,
+      });
       span?.setAttribute('error.id', errorId);
       span?.setStatus({
         code: opentelemetry.CanonicalCode.INTERNAL,

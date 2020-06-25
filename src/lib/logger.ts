@@ -1,9 +1,10 @@
-import * as winston from 'winston';
+import pino from 'pino';
 
-const logger = winston.createLogger({
-  level: 'info',
-  format: winston.format.simple(),
-  transports: [new winston.transports.Console()],
+const logger = pino({
+  formatters: {
+    level: (label, number) => ({ level: label }),
+    bindings: (bindings) => ({}),
+  },
 });
 
 export default logger;

@@ -1,5 +1,4 @@
 import { ISlackChatPostMessageResponse } from '../vendor/slack-api-interfaces';
-import logger from '../lib/logger';
 import * as redis from '../lib/redis';
 import { promisify } from 'util';
 import { Trace, getSpan } from '../lib/trace-decorator';
