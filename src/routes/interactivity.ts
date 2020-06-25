@@ -400,9 +400,9 @@ export class InteractivityRoute {
       }
 
       const otherCheckboxesState = payload.view.state.values.other as any;
-      const selectedOptions =
+      const selectedOptions = otherCheckboxesState ?
         otherCheckboxesState[Object.keys(otherCheckboxesState)[0]]
-          .selected_options || [];
+          .selected_options : [];
       const isProtected = !!find(
         selectedOptions,
         (option) => option.value == 'protected'
