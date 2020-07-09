@@ -147,6 +147,6 @@ async function setupTracing() {
 }
 
 main().catch((err) => {
-  logger.error({ msg: 'Could not boot', error: err });
+  logger.error({ msg: 'Could not boot', err });
   process.exit(1);
 });

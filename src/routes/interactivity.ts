@@ -145,7 +145,7 @@ export class InteractivityRoute {
       logger.error({
         msg: `Could not get session`,
         errorId,
-        error: sessionErr,
+        err: sessionErr,
         payload,
       });
       span?.setAttribute('error.id', errorId);
@@ -182,7 +182,7 @@ export class InteractivityRoute {
       logger.error({
         msg: `Could not get team`,
         errorId,
-        error: teamErr,
+        err: teamErr,
         payload,
       });
       span?.setAttribute('error.id', errorId);
@@ -320,7 +320,7 @@ export class InteractivityRoute {
       logger.error({
         msg: `Could not create session, could not get the team from db`,
         errorId,
-        error: teamGetErr,
+        err: teamGetErr,
         payload,
       });
       span?.setAttribute('error.id', errorId);
@@ -608,7 +608,7 @@ export class InteractivityRoute {
         logger[logLevel]({
           msg: `Could not create session`,
           errorId,
-          error: err,
+          err,
           payload,
         });
       }
@@ -718,7 +718,7 @@ export class InteractivityRoute {
           logger.error({
             msg: `Could not vote`,
             errorId,
-            error: voteErr,
+            err: voteErr,
             payload,
           });
           span?.setAttributes({ 'error.id': errorId });
@@ -802,7 +802,7 @@ export class InteractivityRoute {
       logger.error({
         msg: `Could not reveal session`,
         errorId,
-        error: revealErr,
+        err: revealErr,
         payload,
       });
       span?.setAttributes({ 'error.id': errorId });
@@ -880,7 +880,7 @@ export class InteractivityRoute {
       logger.error({
         msg: `Could not cancel session`,
         errorId,
-        error: cancelErr,
+        err: cancelErr,
         payload,
       });
       span?.setAttributes({ 'error.id': errorId });

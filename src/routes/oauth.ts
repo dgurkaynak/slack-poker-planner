@@ -15,7 +15,7 @@ export class OAuthRoute {
     if (req.query.error) {
       logger.error({
         msg: `Could not oauth`,
-        error: req.query.error,
+        err: req.query.error,
       });
       return res.status(500).send(req.query.error);
     }
@@ -36,7 +36,7 @@ export class OAuthRoute {
         logger.error({
           msg: `Could not oauth, slack api call failed`,
           errorId,
-          error: oauthErr,
+          err: oauthErr,
         });
         return res
           .status(500)
@@ -61,7 +61,7 @@ export class OAuthRoute {
         logger.error({
           msg: `Could not oauth, sqlite upsert failed`,
           errorId,
-          error: upsertErr,
+          err: upsertErr,
         });
         res
           .status(500)

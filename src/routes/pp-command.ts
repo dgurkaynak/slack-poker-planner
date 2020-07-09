@@ -98,7 +98,7 @@ export class PPCommandRoute {
       logger.error({
         msg: `Could not created session, could not get the team from db`,
         errorId,
-        error: teamGetErr,
+        err: teamGetErr,
         cmd,
       });
       span?.setAttribute('error.id', errorId);
@@ -245,7 +245,7 @@ export class PPCommandRoute {
       logger.error({
         msg: `Could not open modal`,
         errorId,
-        error: err,
+        err,
         cmd,
       });
       span?.setAttribute('error.id', errorId);

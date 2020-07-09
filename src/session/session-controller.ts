@@ -273,7 +273,7 @@ export class SessionController {
     } catch (err) {
       logger.warn({
         msg: `Could not refreshed session message after a vote`,
-        error: err,
+        err,
         session,
         userId,
         point,
