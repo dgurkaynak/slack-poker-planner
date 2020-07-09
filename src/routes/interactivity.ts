@@ -507,7 +507,7 @@ export class InteractivityRoute {
         logger.error({
           msg: `Could not upsert settings after creating new session`,
           session,
-          error: upsertSettingErr,
+          err: upsertSettingErr,
         });
       }
 
