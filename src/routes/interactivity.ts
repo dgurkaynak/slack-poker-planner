@@ -547,15 +547,13 @@ export class InteractivityRoute {
           `Please try again after adding it. ` +
           `You can simply add the app just by mentioning it, like "*@poker_planner*".`;
       } else if (slackErrorCode == 'channel_not_found') {
-        logLevel = 'info';
+        shouldLog = false;
         errorMessage =
           `Oops, we couldn't find this channel. ` +
           `Are you sure that Poker Planner app is added to this channel/conversation? ` +
           `You can simply add the app by mentioning it, like "*@poker_planner*". ` +
           `However this may not work in Group DMs, you need to explicitly add it as a ` +
-          `member from conversation details menu. Please try again after adding it.\n\n` +
-          `If you still have a problem, you can open an issue on <${process.env.ISSUES_LINK}> ` +
-          `with this error id: ${errorId}`;
+          `member from conversation details menu. Please try again after adding it.`;
       } else if (slackErrorCode == 'token_revoked') {
         logLevel = 'info';
         errorMessage =
