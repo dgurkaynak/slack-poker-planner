@@ -109,31 +109,58 @@
         </li>
       </ul>
 
-      <h4 id="faq">FAQ on Privacy</h4>
+      <h4 id="faq">FAQ</h4>
       <p>
-        I get lots of question about privacy, so I want to clarify what the app can and cannot do:
         <ul>
           <li>
-            The app <strong>does not</strong> know anything about your channels/conversations until
-            you explicitly add the bot user to it.
+            <strong>
+              When I try to vote, I get <code>expired</code> or <code>cancelled</code> error
+            </strong>
+            <br />
+            All the not-finished sessions are kept in a database for 48 hours.
+            After that they're completely deleted.
           </li>
           <li>
-            Even if the bot is added to a channel, the only data that Slack sends to the app is
-            channel id and channel name. Getting additional information (topic, member list, etc.)
-            requires another permission that the app doesn't have.
-          </li>
-          <li>
-            The app <strong>cannot</strong> read any of your messages, even if the bot is added to
-            that channel/conversation! The only thing the app can read is the poker planning session
-            title you enter while using the app.
-          </li>
-          <li>
-            The app <strong>cannot</strong> list the users in your team workspace. When a user
-            interacted with the app (create a new session, use a vote, etc.), Slack sends just
-            user id and user name, nothing more.
+            <strong>
+              I enter <code>/pp</code> command, but nothing happens?
+            </strong>
+            <br />
+            In order to open a modal, Slack waits an API call for 3 seconds. After that,
+            Slack does not allow us to open a modal. However, due to operational latencies
+            which can be caused by either Slack's or our infrastructure, it's normal to get
+            this error. Please try again.
           </li>
         </ul>
       </p>
+
+      <h4 id="privacy">Privacy</h4>
+
+      <div style="margin-bottom: 10px;">
+        Apart from that, I get lots of question about privacy,
+        so I want to clarify what the app can and cannot do:
+      </div>
+
+      <ul>
+        <li>
+          The app <strong>does not</strong> know anything about your channels/conversations until
+          you explicitly add the bot user to it.
+        </li>
+        <li>
+          Even if the bot is added to a channel, the only data that Slack sends to the app is
+          channel id and channel name. Getting additional information (topic, member list, etc.)
+          requires another permission that the app doesn't have.
+        </li>
+        <li>
+          The app <strong>cannot</strong> read any of your messages, even if the bot is added to
+          that channel/conversation! The only thing the app can read is the poker planning session
+          title you enter while using the app.
+        </li>
+        <li>
+          The app <strong>cannot</strong> list the users in your team workspace. When a user
+          interacted with the app (create a new session, use a vote, etc.), Slack sends just
+          user id and user name, nothing more.
+        </li>
+      </ul>
 
       <h4 id="support">Support</h4>
       <p>
