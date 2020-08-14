@@ -51,6 +51,10 @@ export interface ISession {
    * can cancel and reveal session.
    */
   protected: boolean;
+  /**
+   * Whether to calculate the average from numeric points.
+   */
+  average: boolean;
 }
 
 // If `process.env.USE_REDIS` is falsy, in-memory db will be used

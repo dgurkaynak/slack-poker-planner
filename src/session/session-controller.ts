@@ -65,6 +65,7 @@ export class SessionController {
     participants,
     points,
     isProtected,
+    calculateAverage,
   }: {
     triggerId: string;
     team: ITeam;
@@ -73,6 +74,7 @@ export class SessionController {
     participants: string[];
     points: string[];
     isProtected: boolean;
+    calculateAverage: boolean;
   }) {
     const slackWebClient = new WebClient(team.access_token);
 
@@ -84,6 +86,25 @@ export class SessionController {
       },
       value: 'protected',
     } as any;
+
+    const averageCheckboxesOption = {
+      text: {
+        type: 'plain_text',
+        text: 'Calculate the average (only numeric points will be used)',
+        emoji: true,
+      },
+      value: 'average',
+    } as any;
+
+    let initialOptions = undefined;
+    if (isProtected) {
+      initialOptions = initialOptions || [];
+      initialOptions.push(protectedCheckboxesOption);
+    }
+    if (calculateAverage) {
+      initialOptions = initialOptions || [];
+      initialOptions.push(averageCheckboxesOption);
+    }
 
     await slackWebClient.views.open({
       trigger_id: triggerId,
@@ -158,7 +179,7 @@ export class SessionController {
             },
             hint: {
               type: 'plain_text',
-              text: 'Enter points seperated by space',
+              text: 'Enter points separated by space',
               emoji: true,
             },
             label: {
@@ -173,10 +194,8 @@ export class SessionController {
             optional: true,
             element: {
               type: 'checkboxes',
-              options: [protectedCheckboxesOption],
-              initial_options: isProtected
-                ? [protectedCheckboxesOption]
-                : undefined,
+              options: [protectedCheckboxesOption, averageCheckboxesOption],
+              initial_options: initialOptions
             },
             label: {
               type: 'plain_text',
@@ -312,12 +331,18 @@ export class SessionController {
         })
         .join('\n');
 
+      let averageText = "";
+      if (session.average) {
+        const average = SessionController.getAverage(session.votes);
+        averageText = average ? `\nAverage: ${SessionController.getAverage(session.votes)}` : "";
+      }
+
       await slackWebClient.chat.update({
         ts: session.rawPostMessageResponse.ts,
         channel: session.rawPostMessageResponse.channel,
         text: userId
-          ? `Title: *${session.title}* (revealed by <@${userId}>)\n\nResult:\n${votesText}`
-          : `Title: *${session.title}*\n\nResult:\n${votesText}`,
+          ? `Title: *${session.title}* (revealed by <@${userId}>)\n\nResult:\n${votesText}${averageText}`
+          : `Title: *${session.title}*\n\nResult:\n${votesText}${averageText}`,
         attachments: [],
       });
     } else if (session.state == 'cancelled') {
@@ -348,9 +373,22 @@ export class SessionController {
   }
 
   /**
+   * For given votes, calculate average point
+   */
+  static getAverage(votes: { [key: string]: string }): string | boolean {
+    const numericPoints = Object.values(votes).filter(SessionController.isNumeric).map(parseFloat);
+    if (numericPoints.length < 1) return false;
+    return (numericPoints.reduce((a, b) => a + b) / numericPoints.length).toFixed(1);
+  }
+
+  static isNumeric(n: any) {
+    return !isNaN(parseFloat(n)) && isFinite(n);
+  }
+
+  /**
    * For a given slack slash-command text, extract mentions
    */
-  static exractMentions(text: string) {
+  static extractMentions(text: string) {
     const allMentions: ISessionMention[] = [];
 
     // User mentions

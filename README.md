@@ -37,6 +37,10 @@ If you want to host your own app, follow this steps:
   - Required user permission scopes: None
 - User ID Translation
   - **Turn off** "Translate Global IDs"
+- Tokens
+  - Client ID, Secret and Verification token can be found on Basic Information page
+- Installation
+  - Go to Manage Distribution, click "Add to Slack" and grant permissions
 
 ### Running via Docker
 
