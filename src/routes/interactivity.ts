@@ -447,7 +447,12 @@ export class InteractivityRoute {
         selectedOptions,
         (option) => option.value == 'protected'
       );
+      const calculateAverage = !!find(
+        selectedOptions,
+        (option) => option.value == 'average'
+      );
       span?.setAttributes({ isProtected: `${isProtected}` });
+      span?.setAttributes({ calculateAverage: `${calculateAverage}` });
 
       // Create session struct
       const session: ISession = {
@@ -461,6 +466,7 @@ export class InteractivityRoute {
         participants,
         rawPostMessageResponse: undefined,
         protected: isProtected,
+        average: calculateAverage,
       };
       span?.setAttributes({
         sessionId: session.id,
@@ -498,6 +504,7 @@ export class InteractivityRoute {
           [ChannelSettingKey.PARTICIPANTS]: session.participants.join(' '),
           [ChannelSettingKey.POINTS]: session.points.join(' '),
           [ChannelSettingKey.PROTECTED]: JSON.stringify(session.protected),
+          [ChannelSettingKey.AVERAGE]: JSON.stringify(session.average),
         })
       );
       if (upsertSettingErr) {

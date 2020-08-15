@@ -200,6 +200,7 @@ export class PPCommandRoute {
         [ChannelSettingKey.PARTICIPANTS]: [] as string[],
         [ChannelSettingKey.POINTS]: DEFAULT_POINTS,
         [ChannelSettingKey.PROTECTED]: false,
+        [ChannelSettingKey.AVERAGE]: false,
       };
       if (channelSettings?.[ChannelSettingKey.PARTICIPANTS]) {
         settings[ChannelSettingKey.PARTICIPANTS] = channelSettings[
@@ -219,6 +220,11 @@ export class PPCommandRoute {
           channelSettings[ChannelSettingKey.PROTECTED]
         );
       }
+      if (channelSettings?.[ChannelSettingKey.AVERAGE]) {
+        settings[ChannelSettingKey.AVERAGE] = JSON.parse(
+          channelSettings[ChannelSettingKey.AVERAGE]
+        );
+      }
 
       await SessionController.openModal({
         triggerId: cmd.trigger_id,
@@ -228,6 +234,7 @@ export class PPCommandRoute {
         participants: settings[ChannelSettingKey.PARTICIPANTS],
         points: settings[ChannelSettingKey.POINTS],
         isProtected: settings[ChannelSettingKey.PROTECTED],
+        calculateAverage: settings[ChannelSettingKey.AVERAGE],
       });
 
       // Send acknowledgement back to API -- HTTP 200
@@ -269,7 +276,7 @@ export class PPCommandRoute {
   static async configure(cmd: ISlackCommandRequestBody, res: express.Response) {
     return res.json({
       text:
-        'This command is depracated. The session settings (points, participants, ...) ' +
+        'This command is deprecated. The session settings (points, participants, ...) ' +
         'are now persisted automatically for each channel/conversation.',
       response_type: 'ephemeral',
       replace_original: false,
