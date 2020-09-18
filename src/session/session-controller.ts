@@ -313,7 +313,7 @@ export class SessionController {
         (userId) => session.votes[userId] || 'not-voted'
       );
       const votesText = Object.keys(voteGroups)
-        .sort()
+        .sort((a, b) => session.points.indexOf(a) - session.points.indexOf(b))
         .map((point) => {
           const votes = voteGroups[point];
           const peopleText =
