@@ -720,6 +720,23 @@ export class InteractivityRoute {
         // Unknown error
         default: {
           const errorId = generateId();
+          let errorMessage = `Internal server error, please try again later (error code: ${errorId})\n\n` +
+            `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`;
+
+          const slackErrorCode = (voteErr as any)?.data?.error;
+          if (slackErrorCode) {
+            span?.setAttributes({ slackErrorCode });
+            errorMessage =
+              `Unexpected Slack API Error: "*${slackErrorCode}*", please try again later (error code: ${errorId})\n\n` +
+              `If you think this is an issue, please report to <${process.env.ISSUES_LINK}>`;
+          }
+          if (slackErrorCode == 'channel_not_found') {
+            errorMessage =
+              `Unexpected Slack API Error: "*${slackErrorCode}*". Are you using Poker Planner on a shared channel? ` +
+              `Shared channels are not supported due to Slack API limitations.\n\n` +
+              `If you think this is an issue, please report to <${process.env.ISSUES_LINK}> with this error code: ${errorId}`;
+          }
+
           logger.error({
             msg: `Could not vote`,
             errorId,
@@ -732,9 +749,7 @@ export class InteractivityRoute {
             message: `Unexpected vote error`,
           });
           return res.json({
-            text:
-              `Internal server error, please try again later (error code: ${errorId})\n\n` +
-              `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
+            text: errorMessage,
             response_type: 'ephemeral',
             replace_original: false,
           });
@@ -804,6 +819,23 @@ export class InteractivityRoute {
 
     if (revealErr) {
       const errorId = generateId();
+      let errorMessage = `Internal server error, please try again later (error code: ${errorId})\n\n` +
+        `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`;
+
+      const slackErrorCode = (revealErr as any)?.data?.error;
+      if (slackErrorCode) {
+        span?.setAttributes({ slackErrorCode });
+        errorMessage =
+          `Unexpected Slack API Error: "*${slackErrorCode}*", please try again later (error code: ${errorId})\n\n` +
+          `If you think this is an issue, please report to <${process.env.ISSUES_LINK}>`;
+      }
+      if (slackErrorCode == 'channel_not_found') {
+        errorMessage =
+          `Unexpected Slack API Error: "*${slackErrorCode}*". Are you using Poker Planner on a shared channel? ` +
+          `Shared channels are not supported due to Slack API limitations.\n\n` +
+          `If you think this is an issue, please report to <${process.env.ISSUES_LINK}> with this error code: ${errorId}`;
+      }
+
       logger.error({
         msg: `Could not reveal session`,
         errorId,
@@ -816,9 +848,7 @@ export class InteractivityRoute {
         message: `Unexpected error while reveal session & update message`,
       });
       return res.json({
-        text:
-          `Internal server error, please try again later (error code: ${errorId})\n\n` +
-          `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
+        text: errorMessage,
         response_type: 'ephemeral',
         replace_original: false,
       });
@@ -882,6 +912,23 @@ export class InteractivityRoute {
 
     if (cancelErr) {
       const errorId = generateId();
+      let errorMessage = `Internal server error, please try again later (error code: ${errorId})\n\n` +
+        `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`;
+
+      const slackErrorCode = (cancelErr as any)?.data?.error;
+      if (slackErrorCode) {
+        span?.setAttributes({ slackErrorCode });
+        errorMessage =
+          `Unexpected Slack API Error: "*${slackErrorCode}*", please try again later (error code: ${errorId})\n\n` +
+          `If you think this is an issue, please report to <${process.env.ISSUES_LINK}>`;
+      }
+      if (slackErrorCode == 'channel_not_found') {
+        errorMessage =
+          `Unexpected Slack API Error: "*${slackErrorCode}*". Are you using Poker Planner on a shared channel? ` +
+          `Shared channels are not supported due to Slack API limitations.\n\n` +
+          `If you think this is an issue, please report to <${process.env.ISSUES_LINK}> with this error code: ${errorId}`;
+      }
+
       logger.error({
         msg: `Could not cancel session`,
         errorId,
@@ -894,9 +941,7 @@ export class InteractivityRoute {
         message: `Unexpected error while cancel session & update message`,
       });
       return res.json({
-        text:
-          `Internal server error, please try again later (error code: ${errorId})\n\n` +
-          `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
+        text: errorMessage,
         response_type: 'ephemeral',
         replace_original: false,
       });
