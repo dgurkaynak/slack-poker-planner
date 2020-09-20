@@ -11,7 +11,7 @@ import { Trace, getSpan } from '../lib/trace-decorator';
 
 export const DEFAULT_POINTS = [
   '0',
-  '1/2',
+  '0.5',
   '1',
   '2',
   '3',
