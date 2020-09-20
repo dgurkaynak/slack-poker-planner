@@ -285,19 +285,8 @@ export class SessionController {
     }
 
     // Voting is still active
+    await SessionController.updateMessage(session, team);
     await SessionStore.upsert(session);
-
-    try {
-      await SessionController.updateMessage(session, team);
-    } catch (err) {
-      logger.warn({
-        msg: `Could not refreshed session message after a vote`,
-        err,
-        session,
-        userId,
-        point,
-      });
-    }
   }
 
   /**
