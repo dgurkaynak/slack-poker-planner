@@ -2,3 +2,5 @@
 db.sqlite
 dist
 
+src/.DS_Store
+runngrok.sh

@@ -1,22 +1,15 @@
-require('dotenv').config();
-import {
-  BasicTracerProvider,
-  BatchSpanProcessor,
-} from '@opentelemetry/tracing';
-import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
-setupTracing();
+const result = require('dotenv').config();
 
-import logger from './lib/logger';
-import * as sqlite from './lib/sqlite';
-import * as redis from './lib/redis';
-import Countly from 'countly-sdk-nodejs';
+import logger from './server/lib/logger';
+import * as sqlite from './server/lib/sqlite';
+import * as redis from './server/lib/redis';
 import * as express from 'express';
-import * as bodyParser from 'body-parser';
 import * as path from 'path';
+import * as bodyParser from 'body-parser';
 import * as exphbs from 'express-handlebars';
-import { OAuthRoute } from './routes/oauth';
-import { PPCommandRoute } from './routes/pp-command';
-import { InteractivityRoute } from './routes/interactivity';
+import { OAuthRoute } from './server/routes/oauth';
+import { PPCommandRoute } from './server/routes/pp-command';
+import { InteractivityRoute } from './server/routes/interactivity';
 
 async function main() {
   // Start sqlite
@@ -30,19 +23,6 @@ async function main() {
   // Start server
   await initServer();
 
-  // If countly env variables exists, start countly stat reporting
-  if (process.env.COUNTLY_APP_KEY && process.env.COUNTLY_URL) {
-    logger.info({
-      msg: `Initing countly`,
-      url: process.env.COUNTLY_URL,
-      appKey: process.env.COUNTLY_APP_KEY,
-    });
-    Countly.init({
-      app_key: process.env.COUNTLY_APP_KEY,
-      url: process.env.COUNTLY_URL,
-    });
-  }
-
   logger.info({ msg: 'Boot successful!' });
 }
 
@@ -52,19 +32,19 @@ async function initServer() {
   // Setup handlebars
   server.engine('html', exphbs({ extname: '.html' }));
   server.set('view engine', 'html');
-  server.set('views', 'src/views'); // relative to process.cwd
+  server.set('views', 'src/server/views'); // relative to process.cwd
 
   // Parse body
   server.use(bodyParser.urlencoded({ extended: false }));
   server.use(bodyParser.json());
 
   // Serve static files
-  server.use(process.env.BASE_PATH, express.static('src/public')); // relative to process.cwd
+  server.use(process.env.BASE_PATH, express.static('src/server/public')); // relative to process.cwd
 
   // Setup routes
   initRoutes(server);
 
-  return new Promise((resolve, reject) => {
+  return new Promise<void>((resolve, reject) => {
     server.listen(process.env.PORT, (err) => {
       if (err) return reject(err);
       logger.info({ msg: `Server running`, port: process.env.PORT });
@@ -113,37 +93,6 @@ function initRoutes(server: express.Express) {
 
   // Serve under specified base path
   server.use(`${process.env.BASE_PATH}`, router);
-}
-
-async function setupTracing() {
-  const traceProvider = new BasicTracerProvider();
-  traceProvider.register();
-
-  if (!process.env.REPORT_TRACES) {
-    return;
-  }
-
-  const exporter = new JaegerExporter({
-    serviceName: 'pp',
-    tags: [],
-    host: process.env.JAEGER_HOST,
-    port: parseInt(process.env.JAEGER_PORT, 10),
-    logger: {
-      debug: () => {},
-      info: () => {},
-      warn: logger.warn.bind(logger),
-      error: logger.error.bind(logger),
-    },
-  });
-  traceProvider.addSpanProcessor(new BatchSpanProcessor(exporter));
-
-  logger.info({
-    msg: `Trace reporter started`,
-    jaegerAgent: {
-      host: process.env.JAEGER_HOST,
-      port: process.env.JAEGER_PORT,
-    },
-  });
 }
 
 main().catch((err) => {

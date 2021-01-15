@@ -1,7 +1,6 @@
 import * as express from 'express';
 import { WebClient } from '@slack/web-api';
 import logger from '../lib/logger';
-import Countly from 'countly-sdk-nodejs';
 import { TeamStore } from '../team/team-model';
 import { generate as generateId } from 'shortid';
 import { to } from '../lib/to';
@@ -69,14 +68,6 @@ export class OAuthRoute {
             `Internal server error, please try again later (error code: ${errorId})\n\n` +
               `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`
           );
-      }
-
-      if (process.env.COUNTLY_APP_KEY) {
-        Countly.add_event({
-          key: 'added_to_team',
-          count: 1,
-          segmentation: {},
-        });
       }
 
       logger.info({

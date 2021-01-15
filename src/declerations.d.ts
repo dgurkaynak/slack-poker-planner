@@ -1,1 +1,1 @@
-declare module 'countly-sdk-nodejs'
+declare module 'countly-sdk-nodejs';

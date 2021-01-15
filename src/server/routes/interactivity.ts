@@ -9,7 +9,6 @@ import {
   SessionControllerErrorCode,
   DEFAULT_POINTS,
 } from '../session/session-controller';
-import Countly from 'countly-sdk-nodejs';
 import isEmpty from 'lodash/isEmpty';
 import {
   IInteractiveMessageActionPayload,
@@ -517,16 +516,6 @@ export class InteractivityRoute {
           err: upsertSettingErr,
         });
       }
-
-      if (process.env.COUNTLY_APP_KEY) {
-        Countly.add_event({
-          key: 'topic_created',
-          count: 1,
-          segmentation: {
-            participants: session.participants.length,
-          },
-        });
-      }
     } catch (err) {
       const errorId = generateId();
       let shouldLog = true;
@@ -759,16 +748,6 @@ export class InteractivityRoute {
 
     // Successfully voted
 
-    if (process.env.COUNTLY_APP_KEY) {
-      Countly.add_event({
-        key: 'topic_voted',
-        count: 1,
-        segmentation: {
-          points: payload.actions[0].value,
-        },
-      });
-    }
-
     return res.send();
   }
 
@@ -854,14 +833,6 @@ export class InteractivityRoute {
       });
     }
 
-    if (process.env.COUNTLY_APP_KEY) {
-      Countly.add_event({
-        key: 'topic_revealed',
-        count: 1,
-        segmentation: {},
-      });
-    }
-
     return res.send();
   }
 
@@ -944,14 +915,6 @@ export class InteractivityRoute {
         text: errorMessage,
         response_type: 'ephemeral',
         replace_original: false,
-      });
-    }
-
-    if (process.env.COUNTLY_APP_KEY) {
-      Countly.add_event({
-        key: 'topic_cancelled',
-        count: 1,
-        segmentation: {},
       });
     }
 

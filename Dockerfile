@@ -1,4 +1,5 @@
 FROM mhart/alpine-node:12.18.1
+
 MAINTAINER Deniz Gurkaynak <dgurkaynak@gmail.com>
 
 WORKDIR /app
