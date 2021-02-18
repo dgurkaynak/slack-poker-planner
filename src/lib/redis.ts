@@ -11,7 +11,7 @@ export async function init() {
   }
 
   logger.info({ msg: `Creating redis client...` });
-  client = redis.createClient();
+  client = redis.createClient(process.env.REDIS_URL);
 
   await new Promise((resolve, reject) => {
     client.once('ready', resolve);
