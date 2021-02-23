@@ -3,11 +3,6 @@ import * as redis from '../lib/redis';
 import { promisify } from 'util';
 import { Trace, getSpan } from '../lib/trace-decorator';
 
-export interface ISessionMention {
-  type: 'user' | 'special' | 'user-group';
-  id: string;
-}
-
 export interface ISession {
   /**
    * Random generated session id.

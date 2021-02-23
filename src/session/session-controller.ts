@@ -1,6 +1,4 @@
-import { matchAll } from '../lib/string-match-all';
-import { ISession, ISessionMention, SessionStore } from './session-model';
-import uniqBy from 'lodash/uniqBy';
+import { ISession, SessionStore } from './session-model';
 import chunk from 'lodash/chunk';
 import map from 'lodash/map';
 import groupBy from 'lodash/groupBy';
@@ -375,38 +373,7 @@ export class SessionController {
   }
 
   /**
-   * For a given slack slash-command text, extract mentions
-   */
-  static extractMentions(text: string) {
-    const allMentions: ISessionMention[] = [];
-
-    // User mentions
-    matchAll(text, /<@(.*?)>/g).forEach((str) => {
-      allMentions.push({ type: 'user', id: str.split('|')[0] });
-    });
-
-    // Group mentions
-    matchAll(text, /<!(.*?)>/g).forEach((str) => {
-      const specialMentions = ['everyone', 'channel', 'here'];
-      if (specialMentions.indexOf(str) > -1) {
-        allMentions.push({ type: 'special', id: str });
-      } else if (str.includes('subteam')) {
-        // Custom user group mentions
-        const [id, name] = str.replace('subteam^', '').split('|');
-
-        allMentions.push({
-          type: 'user-group',
-          id,
-        });
-      }
-    });
-
-    // Remove duplicate mentions
-    return uniqBy(allMentions, (mention) => `${mention.type}-${mention.id}`);
-  }
-
-  /**
-   * For a given slack slash-command text, extract mentions
+   * For a given slack slash-command text, remove mentions
    */
   static stripMentions(text: string) {
     return text
