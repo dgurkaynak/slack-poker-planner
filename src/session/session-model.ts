@@ -90,8 +90,8 @@ export class SessionStore {
     await setAsync(
       buildRedisKey(session.id),
       JSON.stringify(session),
-      'EX',
-      Number(process.env.REDIS_SESSION_TTL)
+      'PX',
+      Number(process.env.SESSION_TTL)
     );
   }
 
