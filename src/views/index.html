@@ -55,7 +55,7 @@
           </li>
           <li>Protected sessions: prevent others to reveal/cancel the sessions you've created.</li>
           <li>Average point: calculate average point to aid decision making process .</li>
-          <li>The sessions are kept in database for 48 hours, after that it's completely gone.</li>
+          <li>The sessions are kept in database for {{@HUMAN_READABLE_SESSION_TTL}}, after that it's completely gone.</li>
         </ul>
       </p>
 
@@ -118,7 +118,7 @@
               When I try to vote, I get <code>expired</code> or <code>cancelled</code> error
             </strong>
             <br />
-            All the not-finished sessions are kept in a database for 48 hours.
+            All the not-finished sessions are kept in a database for {{@HUMAN_READABLE_SESSION_TTL}}.
             After that they're completely deleted.
           </li>
           <li>

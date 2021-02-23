@@ -17,6 +17,7 @@ import * as exphbs from 'express-handlebars';
 import { OAuthRoute } from './routes/oauth';
 import { PPCommandRoute } from './routes/pp-command';
 import { InteractivityRoute } from './routes/interactivity';
+import prettyMilliseconds from 'pretty-ms';
 
 async function main() {
   // Start sqlite
@@ -75,6 +76,10 @@ async function initServer() {
 
 function initRoutes(server: express.Express) {
   const router = express.Router();
+  const humanReadableSessionTTL = prettyMilliseconds(
+    Number(process.env.SESSION_TTL),
+    { verbose: true }
+  );
 
   router.get('/', (req, res, next) => {
     res.render('index', {
@@ -85,6 +90,7 @@ function initRoutes(server: express.Express) {
         SLACK_APP_ID: process.env.SLACK_APP_ID,
         COUNTLY_URL: process.env.COUNTLY_URL,
         COUNTLY_APP_KEY: process.env.COUNTLY_APP_KEY,
+        HUMAN_READABLE_SESSION_TTL: humanReadableSessionTTL,
       },
     });
   });
