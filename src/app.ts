@@ -12,23 +12,19 @@ import * as redis from './lib/redis';
 import Countly from 'countly-sdk-nodejs';
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
-import * as path from 'path';
 import * as exphbs from 'express-handlebars';
 import { OAuthRoute } from './routes/oauth';
 import { PPCommandRoute } from './routes/pp-command';
 import { InteractivityRoute } from './routes/interactivity';
 import prettyMilliseconds from 'pretty-ms';
+import * as SessionStore from './session/session-model';
 
 async function main() {
-  // Start sqlite
   await sqlite.init();
-
-  // Start redis
   if (process.env.USE_REDIS) {
     await redis.init();
+    await SessionStore.restore();
   }
-
-  // Start server
   await initServer();
 
   // If countly env variables exists, start countly stat reporting
@@ -47,7 +43,7 @@ async function main() {
   logger.info({ msg: 'Boot successful!' });
 }
 
-async function initServer() {
+async function initServer(): Promise<void> {
   const server = express();
 
   // Setup handlebars

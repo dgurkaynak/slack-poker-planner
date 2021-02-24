@@ -3,7 +3,8 @@ import logger from '../lib/logger';
 import { generate as generateId } from 'shortid';
 import { to } from '../lib/to';
 import { TeamStore, ITeam, ChannelSettingKey } from '../team/team-model';
-import { SessionStore, ISession } from '../session/session-model';
+import * as SessionStore from '../session/session-model';
+import { ISession } from '../session/isession';
 import {
   SessionController,
   SessionControllerErrorCode,
@@ -137,30 +138,7 @@ export class InteractivityRoute {
     const [action, sessionId] = parts;
     span?.setAttributes({ action, sessionId });
 
-    // Get session
-    const [sessionErr, session] = await to(SessionStore.findById(sessionId));
-
-    if (sessionErr) {
-      const errorId = generateId();
-      logger.error({
-        msg: `Could not get session`,
-        errorId,
-        err: sessionErr,
-        payload,
-      });
-      span?.setAttribute('error.id', errorId);
-      span?.setStatus({
-        code: opentelemetry.CanonicalCode.INTERNAL,
-        message: sessionErr.message,
-      });
-      return res.json({
-        text:
-          `Internal server error, please try again later (error code: ${errorId})\n\n` +
-          `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
-        response_type: 'ephemeral',
-        replace_original: false,
-      });
-    }
+    const session = SessionStore.findById(sessionId);
 
     if (!session) {
       span?.setStatus({
@@ -457,6 +435,7 @@ export class InteractivityRoute {
       // Create session struct
       const session: ISession = {
         id: generateId(),
+        expiresAt: Date.now() + Number(process.env.SESSION_TTL),
         title,
         points,
         votes: {},
@@ -495,7 +474,7 @@ export class InteractivityRoute {
       );
       session.rawPostMessageResponse = postMessageResponse as any;
 
-      await SessionStore.upsert(session);
+      SessionStore.upsert(session);
 
       res.send();
 
@@ -720,7 +699,8 @@ export class InteractivityRoute {
         // Unknown error
         default: {
           const errorId = generateId();
-          let errorMessage = `Internal server error, please try again later (error code: ${errorId})\n\n` +
+          let errorMessage =
+            `Internal server error, please try again later (error code: ${errorId})\n\n` +
             `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`;
 
           const slackErrorCode = (voteErr as any)?.data?.error;
@@ -819,7 +799,8 @@ export class InteractivityRoute {
 
     if (revealErr) {
       const errorId = generateId();
-      let errorMessage = `Internal server error, please try again later (error code: ${errorId})\n\n` +
+      let errorMessage =
+        `Internal server error, please try again later (error code: ${errorId})\n\n` +
         `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`;
 
       const slackErrorCode = (revealErr as any)?.data?.error;
@@ -912,7 +893,8 @@ export class InteractivityRoute {
 
     if (cancelErr) {
       const errorId = generateId();
-      let errorMessage = `Internal server error, please try again later (error code: ${errorId})\n\n` +
+      let errorMessage =
+        `Internal server error, please try again later (error code: ${errorId})\n\n` +
         `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`;
 
       const slackErrorCode = (cancelErr as any)?.data?.error;

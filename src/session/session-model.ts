@@ -1,110 +1,156 @@
-import { ISlackChatPostMessageResponse } from '../vendor/slack-api-interfaces';
 import * as redis from '../lib/redis';
 import { promisify } from 'util';
-import { Trace, getSpan } from '../lib/trace-decorator';
+import { ISession } from './isession';
+import logger from '../lib/logger';
+import pickBy from 'lodash/pickBy';
 
-export interface ISession {
-  /**
-   * Random generated session id.
-   */
-  id: string;
-  /**
-   * Title of the session. Mentions are excluded.
-   */
-  title: string;
-  /**
-   * Slack Channel ID.
-   */
-  channelId: string;
-  /**
-   * Slack User ID who starts this session.
-   */
-  userId: string;
-  /**
-   * Poker point values.
-   */
-  points: string[];
-  /**
-   * List of User IDs resolved from used mentions.
-   */
-  participants: string[];
-  /**
-   * Votes like { U2147483697: '3', U2147483698: '2' }
-   */
-  votes: { [key: string]: string };
-  /**
-   * Session state.
-   */
-  state: 'active' | 'revealed' | 'cancelled';
-  /**
-   * The result of `chat.postMessage` that sent by our bot to
-   * the channel/conversation to /pp command used in.
-   */
-  rawPostMessageResponse: ISlackChatPostMessageResponse;
-  /**
-   * Whether this session is protected, which means only the owner
-   * can cancel and reveal session.
-   */
-  protected: boolean;
-  /**
-   * Whether to calculate the average from numeric points.
-   */
-  average: boolean;
+/**
+ * Redis key stuff.
+ */
+function getRedisKeyMatcher() {
+  return `${process.env.REDIS_NAMESPACE}:session:*`;
 }
 
-// If `process.env.USE_REDIS` is falsy, in-memory db will be used
-const sessions: { [key: string]: ISession } = {};
+function buildRedisKey(sessionId: string) {
+  return `${process.env.REDIS_NAMESPACE}:session:${sessionId}`;
+}
 
-export class SessionStore {
-  @Trace({ name: 'session.findById' })
-  static async findById(id: string): Promise<ISession> {
-    if (!process.env.USE_REDIS) {
-      return sessions[id];
-    }
+/**
+ * In memory sessions object.
+ */
+let sessions: { [key: string]: ISession } = {};
 
-    const span = getSpan();
-    span?.setAttribute('id', id);
-    const client = redis.getSingleton();
-    const getAsync = promisify(client.get.bind(client));
-    const rawSession = await getAsync(buildRedisKey(id));
-    if (!rawSession) return;
-    return JSON.parse(rawSession);
+/**
+ * Simple getter by session id.
+ */
+export function findById(id: string): ISession {
+  return sessions[id];
+}
+
+/**
+ * Restores all the sessions from redis.
+ */
+export async function restore(): Promise<void> {
+  if (!process.env.USE_REDIS) return;
+
+  // Scan session keys in redis
+  const client = redis.getSingleton();
+  const scanAsync = promisify(client.scan.bind(client));
+
+  const keys: string[] = [];
+  let cursor = '0';
+
+  do {
+    const response = await scanAsync(cursor, 'MATCH', getRedisKeyMatcher());
+
+    cursor = response[0];
+    keys.push(...response[1]);
+  } while (cursor !== '0');
+
+  // Get these keys
+  if (keys.length > 0) {
+    const mgetAsync = promisify(client.mget.bind(client));
+    const rawSessions: string[] = await mgetAsync(keys);
+
+    rawSessions.forEach((rawSession) => {
+      if (!rawSession) return;
+
+      try {
+        const session = JSON.parse(rawSession) as ISession;
+        sessions[session.id] = session;
+      } catch (err) {
+        // NOOP
+      }
+    });
   }
 
-  @Trace({ name: 'session.upsert' })
-  static async upsert(session: ISession) {
-    if (!process.env.USE_REDIS) {
-      sessions[session.id] = session;
-      return;
-    }
+  logger.info({
+    msg: 'Sessions restored from redis',
+    count: Object.keys(sessions).length,
+  });
+}
 
-    const span = getSpan();
-    span?.setAttribute('id', session.id);
-    const client = redis.getSingleton();
-    const setAsync = promisify(client.set.bind(client));
+/**
+ * Holds persisting timeout ids.
+ */
+const persistTimeouts: { [key: string]: number } = {};
+
+/**
+ * Updates/inserts the session. This method immediately updates in-memory
+ * database. However if redis is being used, we delay (debounce) persisting
+ * of a session for 1 second.
+ */
+export function upsert(session: ISession) {
+  sessions[session.id] = session;
+
+  // If using redis, debounce persisting
+  if (process.env.USE_REDIS) {
+    if (persistTimeouts[session.id]) clearTimeout(persistTimeouts[session.id]);
+    persistTimeouts[session.id] = setTimeout(
+      () => persist(session.id),
+      1000
+    ) as any;
+  }
+}
+
+/**
+ * Reads a session from in-memory db, and persists to redis.
+ */
+async function persist(sessionId: string) {
+  if (!process.env.USE_REDIS) return;
+
+  // Immediately delete the timeout key
+  delete persistTimeouts[sessionId];
+
+  // If specified session is not in in-memory db,
+  // it must be deleted, so NOOP.
+  const session = sessions[sessionId];
+  if (!session) return;
+
+  // If specified session is expired, NOOP.
+  // We expect that its redis record is/will-be deleted by its TTL.
+  const remainingTTL = session.expiresAt - Date.now();
+  if (remainingTTL <= 0) return;
+
+  const client = redis.getSingleton();
+  const setAsync = promisify(client.set.bind(client));
+  try {
     await setAsync(
       buildRedisKey(session.id),
       JSON.stringify(session),
       'PX',
-      Number(process.env.SESSION_TTL)
+      remainingTTL
     );
+  } catch (err) {
+    logger.error({
+      msg: 'Could not persist session',
+      err,
+      session,
+      remainingTTL,
+    });
   }
+}
 
-  @Trace({ name: 'session.delete' })
-  static async delete(id: string) {
-    if (!process.env.USE_REDIS) {
-      delete sessions[id];
-      return;
-    }
+/**
+ * Deletes the session.
+ */
+export async function remove(id: string) {
+  delete sessions[id];
 
-    const span = getSpan();
-    span?.setAttribute('id', id);
+  if (process.env.USE_REDIS) {
     const client = redis.getSingleton();
     const delAsync = promisify(client.del.bind(client));
     await delAsync(buildRedisKey(id));
   }
 }
 
-function buildRedisKey(sessionId: string) {
-  return `${process.env.REDIS_NAMESPACE}:session:${sessionId}`;
-}
+/**
+ * Set a interval that deletes expired sessions
+ */
+setInterval(() => {
+  const now = Date.now();
+  sessions = pickBy(sessions, (session) => {
+    const remainingTTL = session.expiresAt - now;
+    return remainingTTL > 0;
+  });
+}, 60000);

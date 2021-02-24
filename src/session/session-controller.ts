@@ -1,4 +1,5 @@
-import { ISession, SessionStore } from './session-model';
+import * as SessionStore from './session-model';
+import { ISession } from './isession';
 import chunk from 'lodash/chunk';
 import map from 'lodash/map';
 import groupBy from 'lodash/groupBy';
@@ -193,7 +194,7 @@ export class SessionController {
             element: {
               type: 'checkboxes',
               options: [protectedCheckboxesOption, averageCheckboxesOption],
-              initial_options: initialOptions
+              initial_options: initialOptions,
             },
             label: {
               type: 'plain_text',
@@ -226,7 +227,7 @@ export class SessionController {
   ) {
     session.state = 'revealed';
     await SessionController.updateMessage(session, team, userId);
-    await SessionStore.delete(session.id);
+    await SessionStore.remove(session.id);
   }
 
   /**
@@ -241,7 +242,7 @@ export class SessionController {
   ) {
     session.state = 'cancelled';
     await SessionController.updateMessage(session, team, userId);
-    await SessionStore.delete(session.id);
+    await SessionStore.remove(session.id);
   }
 
   /**
@@ -270,7 +271,7 @@ export class SessionController {
 
     if (session.state == 'revealed') {
       await SessionController.updateMessage(session, team); // do not send userId
-      await SessionStore.delete(session.id);
+      await SessionStore.remove(session.id);
       logger.info({
         msg: `Auto revealing votes`,
         sessionId: session.id,
@@ -284,7 +285,7 @@ export class SessionController {
 
     // Voting is still active
     await SessionController.updateMessage(session, team);
-    await SessionStore.upsert(session);
+    SessionStore.upsert(session);
   }
 
   /**
@@ -318,10 +319,12 @@ export class SessionController {
         })
         .join('\n');
 
-      let averageText = "";
+      let averageText = '';
       if (session.average) {
         const average = SessionController.getAverage(session.votes);
-        averageText = average ? `\nAverage: ${SessionController.getAverage(session.votes)}` : "";
+        averageText = average
+          ? `\nAverage: ${SessionController.getAverage(session.votes)}`
+          : '';
       }
 
       await slackWebClient.chat.update({
@@ -363,9 +366,13 @@ export class SessionController {
    * For given votes, calculate average point
    */
   static getAverage(votes: { [key: string]: string }): string | boolean {
-    const numericPoints = Object.values(votes).filter(SessionController.isNumeric).map(parseFloat);
+    const numericPoints = Object.values(votes)
+      .filter(SessionController.isNumeric)
+      .map(parseFloat);
     if (numericPoints.length < 1) return false;
-    return (numericPoints.reduce((a, b) => a + b) / numericPoints.length).toFixed(1);
+    return (
+      numericPoints.reduce((a, b) => a + b) / numericPoints.length
+    ).toFixed(1);
   }
 
   static isNumeric(n: any) {
