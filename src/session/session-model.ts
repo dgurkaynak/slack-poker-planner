@@ -149,8 +149,20 @@ export async function remove(id: string) {
  */
 setInterval(() => {
   const now = Date.now();
+  const previousSessionCount = Object.keys(sessions).length;
+
   sessions = pickBy(sessions, (session) => {
     const remainingTTL = session.expiresAt - now;
     return remainingTTL > 0;
   });
+
+  const expiredSessionCount =
+    previousSessionCount - Object.keys(sessions).length;
+
+  if (expiredSessionCount > 0) {
+    logger.info({
+      msg: 'Cleaned up expired sessions',
+      count: expiredSessionCount,
+    });
+  }
 }, 60000);
