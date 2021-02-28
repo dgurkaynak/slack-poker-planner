@@ -284,6 +284,7 @@ export class InteractivityRoute {
     payload: IViewSubmissionActionPayload;
     res: express.Response;
   }) {
+    logger.info({msg: 'in viewSubmission', payload: payload});
     const span = getSpan();
     span?.setAttributes({
       teamId: payload.team.id,
