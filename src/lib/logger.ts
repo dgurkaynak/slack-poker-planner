@@ -5,6 +5,7 @@ const logger = pino({
     level: (label, number) => ({ level: label }),
     bindings: (bindings) => ({}),
   },
+  level: process.env.LOG_LEVEL || 'info',
 });
 
 export default logger;

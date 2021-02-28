@@ -379,6 +379,7 @@ export class InteractivityRoute {
     const span = getSpan();
 
     try {
+      logger.info({msg: 'in createSession', payload: payload});
       span?.setAttributes({
         rawPrivateMetadata: payload.view.private_metadata,
       });
