@@ -287,7 +287,7 @@ export class PPCommandRoute {
    * `/pp help`
    */
   static help(res: express.Response) {
-    logger.debug("user asked for help")
+    logger.info("user asked for help")
     return res.json({
       text: ``,
       response_type: 'ephemeral',
