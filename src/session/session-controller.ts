@@ -106,7 +106,8 @@ export class SessionController {
       initialOptions.push(averageCheckboxesOption);
     }
 
-    gus.getConnection().query(`SELECT Subject__c FROM ADM_Work__c WHERE Name='${title}'`,
+    let subject: string;
+    await gus.getConnection().query(`SELECT Subject__c FROM ADM_Work__c WHERE Name='${title}'`,
       function(err: any, result: any) {
         if (err) {
           return logger.error(err);
@@ -120,7 +121,7 @@ export class SessionController {
           logger.info("next records URL : " + result.nextRecordsUrl);
         }
         logger.info(result.records[0])
-        title = result.records[0].Subject__c
+        subject = result.records[0].Subject__c
       }
     );
 
@@ -156,7 +157,7 @@ export class SessionController {
                 text: 'Write a topic for this voting session',
                 emoji: true,
               },
-              initial_value: title || '',
+              initial_value: subject || '',
             },
             label: {
               type: 'plain_text',
