@@ -27,6 +27,8 @@ async function main() {
   }
   await initServer();
 
+  await initGus();
+
   // If countly env variables exists, start countly stat reporting
   if (process.env.COUNTLY_APP_KEY && process.env.COUNTLY_URL) {
     logger.info({
@@ -41,6 +43,51 @@ async function main() {
   }
 
   logger.info({ msg: 'Boot successful!' });
+}
+
+async function initGus(): Promise<void> {
+  const jsforce = require('jsforce');
+  const gus = new jsforce.Connection(
+    {
+      version: '50.0'
+    }
+  );
+  logger.info({ msg: `in initGus ${process.env.GUS_USER}` });
+  // Login to GUS, then start the processor
+  gus.login(process.env.GUS_USER, process.env.GUS_PASSWORD)
+    .then(() => {
+      logger.info('CONNECTED, W00t');
+      //gus.query("SELECT Id, Name, Subject__c FROM ADM_Work__c LIMIT 1");
+      gus.query("SELECT Id, Name, Subject__c FROM ADM_Work__c LIMIT 1", function(err: any, result: any) {
+        if (err) { return logger.error(err); }
+        logger.info("total : " + result.totalSize);
+        logger.info("fetched : " + result.records.length);
+        logger.info("done ? : " + result.done);
+        if (!result.done) {
+          // you can use the locator to fetch next records set.
+          // Connection#queryMore()
+          logger.info("next records URL : " + result.nextRecordsUrl);
+        }
+      logger.info(result.records[0])
+      });
+    })
+    // .then((err: any, result: any) => {
+    //   if (err) { return logger.error(err); }
+    //   logger.info(`Query result is is ${result}`);
+    //   logger.info("total : " + result.totalSize);
+    //   logger.info("fetched : " + result.records.length);
+    //   logger.info("done ? : " + result.done);
+    //   if (!result.done) {
+    //     // you can use the locator to fetch next records set.
+    //     // Connection#queryMore()
+    //     logger.info("next records URL : " + result.nextRecordsUrl);
+    //   }
+    //   logger.info(result.records[0])
+    // })
+    .catch((err: any) => {
+      if (err.stack === undefined) logger.error('ERROR: ' + err)
+      logger.error(err.stack)
+    });
 }
 
 async function initServer(): Promise<void> {
