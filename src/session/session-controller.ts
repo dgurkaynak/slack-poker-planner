@@ -106,24 +106,7 @@ export class SessionController {
       initialOptions.push(averageCheckboxesOption);
     }
 
-    let subject: string;
-    await gus.getConnection().query(`SELECT Subject__c FROM ADM_Work__c WHERE Name='${title}'`,
-      function(err: any, result: any) {
-        if (err) {
-          return logger.error(err);
-        }
-        logger.info("total : " + result.totalSize);
-        logger.info("fetched : " + result.records.length);
-        logger.info("done ? : " + result.done);
-        if (!result.done) {
-          // you can use the locator to fetch next records set.
-          // Connection#queryMore()
-          logger.info("next records URL : " + result.nextRecordsUrl);
-        }
-        logger.info(result.records[0])
-        subject = result.records[0].Subject__c
-      }
-    );
+    let subject: string = await gus.getSubject(title);
 
     await slackWebClient.views.open({
       trigger_id: triggerId,
