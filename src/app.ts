@@ -1,3 +1,5 @@
+import { accessInfo } from './lib/gus';
+
 require('dotenv').config();
 import {
   BasicTracerProvider,
@@ -7,6 +9,7 @@ import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 setupTracing();
 
 import logger from './lib/logger';
+import * as gus from './lib/gus';
 import * as sqlite from './lib/sqlite';
 import * as redis from './lib/redis';
 import Countly from 'countly-sdk-nodejs';
@@ -20,6 +23,7 @@ import prettyMilliseconds from 'pretty-ms';
 import * as SessionStore from './session/session-model';
 
 async function main() {
+
   await sqlite.init();
   if (process.env.USE_REDIS) {
     await redis.init();
@@ -27,7 +31,20 @@ async function main() {
   }
   await initServer();
 
-  await initGus();
+  // gus.init();
+  // gus.getConnection()
+  //   .query("SELECT Id, Name, Subject__c FROM ADM_Work__c LIMIT 1", function(err: any, result: any) {
+  //     if (err) { return logger.error(err); }
+  //     logger.info("total : " + result.totalSize);
+  //     logger.info("fetched : " + result.records.length);
+  //     logger.info("done ? : " + result.done);
+  //     if (!result.done) {
+  //       // you can use the locator to fetch next records set.
+  //       // Connection#queryMore()
+  //       logger.info("next records URL : " + result.nextRecordsUrl);
+  //     }
+  //     logger.info(result.records[0])
+  //   });
 
   // If countly env variables exists, start countly stat reporting
   if (process.env.COUNTLY_APP_KEY && process.env.COUNTLY_URL) {
@@ -45,50 +62,50 @@ async function main() {
   logger.info({ msg: 'Boot successful!' });
 }
 
-async function initGus(): Promise<void> {
-  const jsforce = require('jsforce');
-  const gus = new jsforce.Connection(
-    {
-      version: '50.0'
-    }
-  );
-  logger.info({ msg: `in initGus ${process.env.GUS_USER}` });
-  // Login to GUS, then start the processor
-  gus.login(process.env.GUS_USER, process.env.GUS_PASSWORD)
-    .then(() => {
-      logger.info('CONNECTED, W00t');
-      //gus.query("SELECT Id, Name, Subject__c FROM ADM_Work__c LIMIT 1");
-      gus.query("SELECT Id, Name, Subject__c FROM ADM_Work__c LIMIT 1", function(err: any, result: any) {
-        if (err) { return logger.error(err); }
-        logger.info("total : " + result.totalSize);
-        logger.info("fetched : " + result.records.length);
-        logger.info("done ? : " + result.done);
-        if (!result.done) {
-          // you can use the locator to fetch next records set.
-          // Connection#queryMore()
-          logger.info("next records URL : " + result.nextRecordsUrl);
-        }
-      logger.info(result.records[0])
-      });
-    })
-    // .then((err: any, result: any) => {
-    //   if (err) { return logger.error(err); }
-    //   logger.info(`Query result is is ${result}`);
-    //   logger.info("total : " + result.totalSize);
-    //   logger.info("fetched : " + result.records.length);
-    //   logger.info("done ? : " + result.done);
-    //   if (!result.done) {
-    //     // you can use the locator to fetch next records set.
-    //     // Connection#queryMore()
-    //     logger.info("next records URL : " + result.nextRecordsUrl);
-    //   }
-    //   logger.info(result.records[0])
-    // })
-    .catch((err: any) => {
-      if (err.stack === undefined) logger.error('ERROR: ' + err)
-      logger.error(err.stack)
-    });
-}
+// async function initGus(): Promise<void> {
+//   const jsforce = require('jsforce');
+//   const gus = new jsforce.Connection(
+//     {
+//       version: '50.0'
+//     }
+//   );
+//   logger.info({ msg: `in initGus ${process.env.GUS_USER}` });
+//   // Login to GUS, then start the processor
+//   gus.login(process.env.GUS_USER, process.env.GUS_PASSWORD)
+//     .then(() => {
+//       logger.info('CONNECTED, W00t');
+//       //gus.query("SELECT Id, Name, Subject__c FROM ADM_Work__c LIMIT 1");
+//       gus.query("SELECT Id, Name, Subject__c FROM ADM_Work__c LIMIT 1", function(err: any, result: any) {
+//         if (err) { return logger.error(err); }
+//         logger.info("total : " + result.totalSize);
+//         logger.info("fetched : " + result.records.length);
+//         logger.info("done ? : " + result.done);
+//         if (!result.done) {
+//           // you can use the locator to fetch next records set.
+//           // Connection#queryMore()
+//           logger.info("next records URL : " + result.nextRecordsUrl);
+//         }
+//       logger.info(result.records[0])
+//       });
+//     })
+//     // .then((err: any, result: any) => {
+//     //   if (err) { return logger.error(err); }
+//     //   logger.info(`Query result is is ${result}`);
+//     //   logger.info("total : " + result.totalSize);
+//     //   logger.info("fetched : " + result.records.length);
+//     //   logger.info("done ? : " + result.done);
+//     //   if (!result.done) {
+//     //     // you can use the locator to fetch next records set.
+//     //     // Connection#queryMore()
+//     //     logger.info("next records URL : " + result.nextRecordsUrl);
+//     //   }
+//     //   logger.info(result.records[0])
+//     // })
+//     .catch((err: any) => {
+//       if (err.stack === undefined) logger.error('ERROR: ' + err)
+//       logger.error(err.stack)
+//     });
+// }
 
 async function initServer(): Promise<void> {
   const server = express();

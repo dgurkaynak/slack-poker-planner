@@ -7,6 +7,7 @@ import { ITeam } from '../team/team-model';
 import { WebClient } from '@slack/web-api';
 import logger from '../lib/logger';
 import { Trace, getSpan } from '../lib/trace-decorator';
+import * as gus from '../lib/gus';
 
 export const DEFAULT_POINTS = [
   '0',
@@ -105,6 +106,24 @@ export class SessionController {
       initialOptions.push(averageCheckboxesOption);
     }
 
+    gus.getConnection().query(`SELECT Subject__c FROM ADM_Work__c WHERE Name='${title}'`,
+      function(err: any, result: any) {
+        if (err) {
+          return logger.error(err);
+        }
+        logger.info("total : " + result.totalSize);
+        logger.info("fetched : " + result.records.length);
+        logger.info("done ? : " + result.done);
+        if (!result.done) {
+          // you can use the locator to fetch next records set.
+          // Connection#queryMore()
+          logger.info("next records URL : " + result.nextRecordsUrl);
+        }
+        logger.info(result.records[0])
+        title = result.records[0].Subject__c
+      }
+    );
+
     await slackWebClient.views.open({
       trigger_id: triggerId,
       view: {
@@ -113,7 +132,7 @@ export class SessionController {
         type: 'modal',
         title: {
           type: 'plain_text',
-          text: 'Poker Planner',
+          text: 'GUS Poker Planner',
           emoji: true,
         },
         submit: {
