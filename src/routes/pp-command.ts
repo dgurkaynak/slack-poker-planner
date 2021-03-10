@@ -288,7 +288,9 @@ export class PPCommandRoute {
   //   });
   // }
   static async configure(parts: Array<string>, res: express.Response) {
-    let token:string = await gus.loginUser(parts[0], parts[1]);
+    let username:string = parts[0].split('|')[1].replace('>', '');
+    let token:string = await gus.loginUser(username, parts[1]);
+
     return res.json({
       text:
         `Updated the GUS user credentials, new token is ${token}`,
