@@ -1,4 +1,5 @@
 import logger from './logger';
+import TurndownService from 'turndown';
 
 const jsforce = require('jsforce');
 
@@ -54,7 +55,11 @@ export async function getRecord(title: string, connection = getConnection()): Pr
         logger.info("next records URL : " + result.nextRecordsUrl);
       }
       logger.info(result.records[0]);
+
       record = <IGusRecord> result.records[0];
+
+      // strip html tag and convert it to markdown
+      record.Details__c = new TurndownService().turndown(record.Details__c);
     }
   );
   return record;
