@@ -35,7 +35,7 @@ export async function getRecord(title: string, connection = getConnection()): Pr
   let record: IGusRecord;
 
   logger.info(`Connection is ${connection}, with access token ${connection.accessToken}`);
-  await connection.query(`SELECT Id, Subject__c FROM, Details__c ADM_Work__c WHERE Name='${title}'`,
+  await connection.query(`SELECT Id, Subject__c, Details__c FROM ADM_Work__c WHERE Name='${title}'`,
     function(err: any, result: any) {
       if (err) {
         return logger.error(err);
