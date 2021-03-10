@@ -1,5 +1,3 @@
-import { accessInfo } from './lib/gus';
-
 require('dotenv').config();
 import {
   BasicTracerProvider,
