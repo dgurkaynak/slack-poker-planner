@@ -344,7 +344,7 @@ export class SessionController {
       const average = SessionController.getAverage(session.votes);
       if (session.average) {
         averageText = average
-          ? `\nAverage: ${average}`
+          ? `\nAverage: ${average}\nAverage story points: ${gus.fib(Number(average))}`
           : '';
       }
 

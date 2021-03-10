@@ -81,7 +81,7 @@ export async function getRecord(title: string): Promise<IGusRecord> {
 }
 
 // Find the closest Fibonacci number, given number `n`
-function fib(n: number, x:number=0, y:number=1):number {
+export function fib(n: number, x:number=0, y:number=1):number {
   if (y < n) {
     return fib(n, y, x + y);
   } else {
@@ -100,8 +100,8 @@ export async function reportStoryPoints(average: string, workId: string): Promis
     Id : workId,
     Story_Points__c : fibAverage
   }, function(err: any, ret: any) {
-    if (err || !ret.success) { return "Update Error : " + logger.error(err); }
+    if (err || !ret.success) { return "ERROR Updating GUS: " + logger.error(err); }
 
-    logger.info("SUCCESS UPDATING GUS: avg " + fibAverage + " work ID: " + workId);
+    logger.info(`SUCCESS Updating GUS: avg=${average}, fibAvg=${fibAverage}, workId=${workId}`);
   });
 }
