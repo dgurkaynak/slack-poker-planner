@@ -47,7 +47,8 @@
     "redis": "^3.0.2",
     "shortid": "^2.2.15",
     "sqlite": "^4.0.10",
-    "sqlite3": "^4.2.0"
+    "sqlite3": "^4.2.0",
+    "turndown": "~7.0.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.6",

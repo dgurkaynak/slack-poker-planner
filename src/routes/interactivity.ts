@@ -20,6 +20,7 @@ import uniq from 'lodash/uniq';
 import find from 'lodash/find';
 import * as opentelemetry from '@opentelemetry/api';
 import { Trace, getSpan } from '../lib/trace-decorator';
+import TurndownService from 'turndown';
 
 export class InteractivityRoute {
   /**
@@ -390,7 +391,11 @@ export class InteractivityRoute {
       const detailsInputState = payload.view.state.values.itemDetails as any;
       const title = titleInputState[Object.keys(titleInputState)[0]].value;
       const workId = workIdInputState[Object.keys(workIdInputState)[0]].value;
-      const details = detailsInputState[Object.keys(detailsInputState)[0]].value;
+
+      const turndownService = new TurndownService();
+      const htmlDetails = detailsInputState[Object.keys(detailsInputState)[0]].value;
+      const details = turndownService.turndown(htmlDetails);
+
       span?.setAttributes({ title });
 
       if (!title || title.trim().length == 0) {
