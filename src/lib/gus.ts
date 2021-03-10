@@ -88,7 +88,7 @@ export interface IGusRecord {
 export async function getRecord(title: string, connection = getConnection()): Promise<IGusRecord> {
   let record: IGusRecord;
 
-  logger.info(`Connection is ${JSON.stringify(connection, null, 2)}`);
+  logger.info(`Connection is ${connection}, with access token ${connection.accessToken}`);
   await connection.query(`SELECT Id, Subject__c FROM ADM_Work__c WHERE Name='${title}'`,
     function(err: any, result: any) {
       if (err) {
