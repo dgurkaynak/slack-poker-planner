@@ -5,13 +5,17 @@ const jsforce = require('jsforce');
 
 export let access_token: string = process.env.ACCESS_TOKEN;
 
-let client = new jsforce.Connection(
-  {
-    version: '50.0',
-    accessToken: access_token,
-    instanceUrl: process.env.INSTANCE_URL
-  }
-);
+export function new_connection(token:string) {
+  return new jsforce.Connection(
+    {
+      version: '50.0',
+      accessToken: token,
+      instanceUrl: process.env.INSTANCE_URL
+    });
+}
+
+let client = new_connection(access_token);
+
 
 export let accessInfo:Object = {
   accessToken: process.env.ACCESS_TOKEN,
@@ -81,10 +85,11 @@ export interface IGusRecord {
   Subject__c: string;
 }
 
-export async function getRecord(title: string): Promise<IGusRecord> {
+export async function getRecord(title: string, connection = getConnection()): Promise<IGusRecord> {
   let record: IGusRecord;
 
-  await getConnection().query(`SELECT Id, Subject__c FROM ADM_Work__c WHERE Name='${title}'`,
+  logger.info(`Connection is ${JSON.stringify(connection, null, 2)}`);
+  await connection.query(`SELECT Id, Subject__c FROM ADM_Work__c WHERE Name='${title}'`,
     function(err: any, result: any) {
       if (err) {
         return logger.error(err);
