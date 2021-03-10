@@ -20,7 +20,7 @@ export let accessInfo:Object = {
 
 
 export async function loginUser(username: string, password: string) {
-  logger.info({ msg: `in loginUser ${username} ... ${password}` });
+  logger.info({ msg: `in loginUser ${username} ... pw: *******"${password.slice(-7)}` });
   let token: string;
   await client.login(username, password)
     .then(() => {
