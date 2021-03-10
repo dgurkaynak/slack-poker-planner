@@ -48,7 +48,7 @@ export class SessionController {
 
     return slackWebClient.chat.postMessage({
       channel: session.channelId,
-      text: `Title: *${session.title}*\n\nVotes:\n${votesText}`,
+      text: `Title: *${session.title}*\n\nDetails: _${session.details}_\n\nVotes:\n${votesText}`,
       attachments: buildMessageAttachments(session) as any,
     });
   }
@@ -153,17 +153,30 @@ export class SessionController {
             block_id: 'workId',
             element: {
               type: 'plain_text_input',
-              placeholder: {
-                type: 'plain_text',
-                text: 'Write an ID',
-                emoji: false,
-              },
               initial_value: gusRecord.Id || '',
             },
             label: {
               type: 'plain_text',
-              text: 'GUS Work ID',
-              emoji: false,
+              text: 'Work ID',
+              emoji: true,
+            },
+          },
+          {
+            type: 'input',
+            block_id: 'itemDetails',
+            element: {
+              type: 'plain_text_input',
+              placeholder: {
+                type: 'plain_text',
+                text: 'Description of the task',
+                emoji: true,
+              },
+              initial_value: gusRecord.Details__c || '',
+            },
+            label: {
+              type: 'plain_text',
+              text: 'Details',
+              emoji: true,
             },
           },
           {
