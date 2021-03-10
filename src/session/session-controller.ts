@@ -48,7 +48,7 @@ export class SessionController {
 
     return slackWebClient.chat.postMessage({
       channel: session.channelId,
-      text: `Title: *${session.title}*\n\nDetails:\n\n ${session.details}\n\nSprint: ${session.sprint}\n\nVotes:\n${votesText}`,
+      text: `Title: *${session.title}*\n\nDetails:\n\n ${session.details}\n\nName: ${gus.url(session.name, session.workId)}\n\nSprint: ${session.sprint}\n\nVotes:\n${votesText}`,
       attachments: buildMessageAttachments(session) as any,
     });
   }
@@ -132,14 +132,22 @@ export class SessionController {
         blocks: [
           {
             type: 'input',
+            block_id: 'name',
+            element: {
+              type: 'plain_text_input',
+              initial_value: gusRecord.Name || '',
+            },
+            label: {
+              type: 'plain_text',
+              text: 'Name',
+              emoji: true,
+            },
+          },
+          {
+            type: 'input',
             block_id: 'title',
             element: {
               type: 'plain_text_input',
-              placeholder: {
-                type: 'plain_text',
-                text: 'Write a topic for this voting session',
-                emoji: true,
-              },
               initial_value: gusRecord.Subject__c || '',
             },
             label: {
@@ -384,7 +392,7 @@ export class SessionController {
       await slackWebClient.chat.update({
         ts: session.rawPostMessageResponse.ts,
         channel: session.rawPostMessageResponse.channel,
-        text: `Title: *${session.title}*\n\nSprint: ${session.sprint}\n\n Url: ${gus.url(session.workId)}\n\nResult:\n${votesText}${averageText}`,
+        text: `Title: *${session.title}*\n\nSprint: ${session.sprint}\n\nName: ${gus.url(session.name, session.workId)}\n\nResult:\n${votesText}${averageText}`,
         attachments: [],
       });
     } else if (session.state == 'cancelled') {
@@ -408,7 +416,7 @@ export class SessionController {
       await slackWebClient.chat.update({
         ts: session.rawPostMessageResponse.ts,
         channel: session.rawPostMessageResponse.channel,
-        text: `Title: *${session.title}*\n\nVotes:\n${votesText}`,
+        text: `Title: *${session.title}*\n\nSprint: ${session.sprint}\n\nName: ${gus.url(session.name, session.workId)}\n\nVotes:\n${votesText}`,
         attachments: buildMessageAttachments(session) as any,
       });
     }
