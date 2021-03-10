@@ -389,8 +389,10 @@ export class InteractivityRoute {
       const titleInputState = payload.view.state.values.title as any;
       const workIdInputState = payload.view.state.values.workId as any;
       const detailsInputState = payload.view.state.values.itemDetails as any;
+      const sprintInputState = payload.view.state.values.sprint as any;
       const title = titleInputState[Object.keys(titleInputState)[0]].value;
       const workId = workIdInputState[Object.keys(workIdInputState)[0]].value;
+      const sprint = sprintInputState[Object.keys(sprintInputState)[0]].value;
 
       const turndownService = new TurndownService();
       const htmlDetails = detailsInputState[Object.keys(detailsInputState)[0]].value;
@@ -450,6 +452,7 @@ export class InteractivityRoute {
         title,
         workId,
         details,
+        sprint,
         points,
         votes: {},
         state: 'active',

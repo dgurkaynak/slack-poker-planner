@@ -48,7 +48,7 @@ export class SessionController {
 
     return slackWebClient.chat.postMessage({
       channel: session.channelId,
-      text: `Title: *${session.title}*\n\nDetails: _${session.details}_\n\nVotes:\n${votesText}`,
+      text: `Title: *${session.title}*\n\nDetails:\n\n ${session.details}\n\nSprint: ${session.sprint}\n\nVotes:\n${votesText}`,
       attachments: buildMessageAttachments(session) as any,
     });
   }
@@ -176,6 +176,24 @@ export class SessionController {
             label: {
               type: 'plain_text',
               text: 'Details',
+              emoji: true,
+            },
+          },
+          {
+            type: 'input',
+            block_id: 'sprint',
+            element: {
+              type: 'plain_text_input',
+              placeholder: {
+                type: 'plain_text',
+                text: 'Sprint of the task',
+                emoji: true,
+              },
+              initial_value: gusRecord.Sprint_Name__c || '',
+            },
+            label: {
+              type: 'plain_text',
+              text: 'Sprint',
               emoji: true,
             },
           },
@@ -366,9 +384,7 @@ export class SessionController {
       await slackWebClient.chat.update({
         ts: session.rawPostMessageResponse.ts,
         channel: session.rawPostMessageResponse.channel,
-        text: userId
-          ? `Title: *${session.title}* (revealed by <@${userId}>)\n\nResult:\n${votesText}${averageText}`
-          : `Title: *${session.title}*\n\nResult:\n${votesText}${averageText}`,
+        text: `Title: *${session.title}*\n\nSprint: ${session.sprint}\n\n Url: ${gus.url(session.workId)}\n\nResult:\n${votesText}${averageText}`,
         attachments: [],
       });
     } else if (session.state == 'cancelled') {

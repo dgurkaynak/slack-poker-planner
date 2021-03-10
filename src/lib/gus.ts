@@ -14,6 +14,10 @@ export function new_connection(token:string) {
     });
 }
 
+export function url(workId: string): string {
+  return client.instanceUrl + "/" + workId;
+}
+
 let client = new_connection(access_token);
 
 export function getConnection() {
@@ -29,13 +33,14 @@ export interface IGusRecord {
   Id: string;
   Subject__c: string;
   Details__c: string;
+  Sprint_Name__c: string;
 }
 
 export async function getRecord(title: string, connection = getConnection()): Promise<IGusRecord> {
   let record: IGusRecord;
 
   logger.info(`Connection is ${connection}, with access token ${connection.accessToken}`);
-  await connection.query(`SELECT Id, Subject__c, Details__c FROM ADM_Work__c WHERE Name='${title}'`,
+  await connection.query(`SELECT Id, Subject__c, Details__c, Sprint_Name__c FROM ADM_Work__c WHERE Name='${title}'`,
     function(err: any, result: any) {
       if (err) {
         return logger.error(err);
