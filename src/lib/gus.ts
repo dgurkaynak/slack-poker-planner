@@ -94,6 +94,7 @@ function fib(n: number, x:number=0, y:number=1):number {
 }
 
 export async function reportStoryPoints(average: string, workId: string): Promise<void> {
+  logger.info("In reportStoryPoints: avg " + average + " work ID: " + workId);
   const fibAverage : number = fib(Number(average));
   await getConnection().sobject("ADM_Work__c").update({
     Id : workId,
