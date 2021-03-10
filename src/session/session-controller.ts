@@ -106,7 +106,7 @@ export class SessionController {
       initialOptions.push(averageCheckboxesOption);
     }
 
-    let subject: string = await gus.getSubject(title);
+    let gusRecord: gus.IGusRecord = await gus.getRecord(title);
 
     await slackWebClient.views.open({
       trigger_id: triggerId,
@@ -140,12 +140,30 @@ export class SessionController {
                 text: 'Write a topic for this voting session',
                 emoji: true,
               },
-              initial_value: subject || '',
+              initial_value: gusRecord.Subject__c || '',
             },
             label: {
               type: 'plain_text',
               text: 'Title',
               emoji: true,
+            },
+          },
+          {
+            type: 'input',
+            block_id: 'workId',
+            element: {
+              type: 'plain_text_input',
+              placeholder: {
+                type: 'plain_text',
+                text: 'Write an ID',
+                emoji: false,
+              },
+              initial_value: gusRecord.Id || '',
+            },
+            label: {
+              type: 'plain_text',
+              text: 'GUS Work ID',
+              emoji: false,
             },
           },
           {
@@ -323,12 +341,14 @@ export class SessionController {
         .join('\n');
 
       let averageText = '';
+      const average = SessionController.getAverage(session.votes);
       if (session.average) {
-        const average = SessionController.getAverage(session.votes);
         averageText = average
-          ? `\nAverage: ${SessionController.getAverage(session.votes)}`
+          ? `\nAverage: ${average}`
           : '';
       }
+
+      if (average !== null) await gus.reportStoryPoints(average, session.workId);
 
       await slackWebClient.chat.update({
         ts: session.rawPostMessageResponse.ts,
@@ -368,11 +388,12 @@ export class SessionController {
   /**
    * For given votes, calculate average point
    */
-  static getAverage(votes: { [key: string]: string }): string | boolean {
+  static getAverage(votes: { [key: string]: string }): string | null
+  {
     const numericPoints = Object.values(votes)
       .filter(SessionController.isNumeric)
       .map(parseFloat);
-    if (numericPoints.length < 1) return false;
+    if (numericPoints.length < 1) return null;
     return (
       numericPoints.reduce((a, b) => a + b) / numericPoints.length
     ).toFixed(1);

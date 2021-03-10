@@ -52,9 +52,15 @@ export function getConnection() {
   return client;
 }
 
-export async function getSubject(title: string): Promise<string> {
-  let subject: string = title;
-  await getConnection().query(`SELECT Subject__c FROM ADM_Work__c WHERE Name='${title}'`,
+export interface IGusRecord {
+  Id: string;
+  Subject__c: string;
+}
+
+export async function getRecord(title: string): Promise<IGusRecord> {
+  let record: IGusRecord;
+
+  await getConnection().query(`SELECT Id, Subject__c FROM ADM_Work__c WHERE Name='${title}'`,
     function(err: any, result: any) {
       if (err) {
         return logger.error(err);
@@ -67,9 +73,32 @@ export async function getSubject(title: string): Promise<string> {
         // Connection#queryMore()
         logger.info("next records URL : " + result.nextRecordsUrl);
       }
-      logger.info(result.records[0])
-      subject = result.records[0].Subject__c;
+      logger.info(result.records[0]);
+      record = <IGusRecord> result.records[0];
     }
   );
-  return subject;
+  return record;
+}
+
+// Find the closest Fibonacci number, given number `n`
+function fib(n: number, x:number=0, y:number=1):number {
+  if (y < n) {
+    return fib(n, y, x + y);
+  } else {
+    if (y - n > n - x) {
+      return x;
+    } else {
+      return y;
+    }
+  }
+}
+
+export async function reportStoryPoints(average: string, workId: string): Promise<void> {
+  const fibAverage : number = fib(Number(average));
+  await getConnection().sobject("ADM_Work__c").update({
+    Id : workId,
+    Story_Points__c : fibAverage
+  }, function(err: any, ret: any) {
+    if (err || !ret.success) { return "Update Error : " + logger.error(err); }
+  });
 }

@@ -386,7 +386,9 @@ export class InteractivityRoute {
       });
       const privateMetadata = JSON.parse(payload.view.private_metadata);
       const titleInputState = payload.view.state.values.title as any;
+      const workIdInputState = payload.view.state.values.workId as any;
       const title = titleInputState[Object.keys(titleInputState)[0]].value;
+      const workId = workIdInputState[Object.keys(workIdInputState)[0]].value;
       span?.setAttributes({ title });
 
       if (!title || title.trim().length == 0) {
@@ -439,6 +441,7 @@ export class InteractivityRoute {
         id: generateId(),
         expiresAt: Date.now() + Number(process.env.SESSION_TTL),
         title,
+        workId,
         points,
         votes: {},
         state: 'active',
