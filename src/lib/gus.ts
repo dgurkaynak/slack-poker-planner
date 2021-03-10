@@ -16,7 +16,7 @@ export function new_connection(token:string) {
 }
 
 export function url(name: string, workId: string): string {
-  return `[${name}](${client.instanceUrl}/${workId})`;
+  return `<${client.instanceUrl}/${workId}|${name}>`;
 }
 
 let client = new_connection(access_token);

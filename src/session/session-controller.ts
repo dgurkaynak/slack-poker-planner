@@ -174,6 +174,7 @@ export class SessionController {
             block_id: 'itemDetails',
             element: {
               type: 'plain_text_input',
+              multiline: true,
               placeholder: {
                 type: 'plain_text',
                 text: 'Description of the task',
