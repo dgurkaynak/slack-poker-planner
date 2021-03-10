@@ -278,25 +278,10 @@ export class PPCommandRoute {
   /**
    * `/pp config ...`
    */
-  // static async configure(cmd: ISlackCommandRequestBody, res: express.Response) {
-  //   return res.json({
-  //     text:
-  //       'This command is deprecated. The session settings (points, participants, ...) ' +
-  //       'are now persisted automatically for each channel/conversation.',
-  //     response_type: 'ephemeral',
-  //     replace_original: false,
-  //   });
-  // }
   static async configure(parts: Array<string>, res: express.Response) {
-
-    // username / parts[0] will be '<mailto:tschmelmer@gus.com|tschmelmer@gus.com>"
-    //let username:string = parts[0].split('|')[1].replace('>', '');
-    //let token:string = await gus.loginUser(username, parts[1]);
 
     let input_token: string = parts[0];
     logger.info(`Input token is |||${input_token}|||`);
-
-    // let record = await gus.getRecord('W-8101149', gus.new_connection(parts[0]));
 
     gus.update_client(input_token);
 
