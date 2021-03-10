@@ -94,12 +94,14 @@ function fib(n: number, x:number=0, y:number=1):number {
 }
 
 export async function reportStoryPoints(average: string, workId: string): Promise<void> {
-  logger.info("In reportStoryPoints: avg " + average + " work ID: " + workId);
   const fibAverage : number = fib(Number(average));
+  logger.info("In reportStoryPoints: avg " + fibAverage + " work ID: " + workId);
   await getConnection().sobject("ADM_Work__c").update({
     Id : workId,
     Story_Points__c : fibAverage
   }, function(err: any, ret: any) {
     if (err || !ret.success) { return "Update Error : " + logger.error(err); }
+
+    logger.info("SUCCESS UPDATING GUS: avg " + fibAverage + " work ID: " + workId);
   });
 }
