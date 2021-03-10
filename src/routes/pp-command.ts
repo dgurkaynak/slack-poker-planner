@@ -12,6 +12,7 @@ import {
 } from '../session/session-controller';
 import * as opentelemetry from '@opentelemetry/api';
 import { Trace, getSpan } from '../lib/trace-decorator';
+import * as gus from '../lib/gus'
 
 export class PPCommandRoute {
   /**
@@ -49,14 +50,18 @@ export class PPCommandRoute {
       });
     }
 
-    const firstWord = cmd.text.trim().split(' ')[0];
+    const [firstWord, ...rest] =  cmd.text.trim().split(' ');
     switch (firstWord) {
       case 'help': {
         return PPCommandRoute.help(res);
       }
 
+      // case 'config': {
+      //   return await PPCommandRoute.configure(cmd, res);
+      // }
+
       case 'config': {
-        return await PPCommandRoute.configure(cmd, res);
+        return await PPCommandRoute.configure(rest, res);
       }
 
       default: {
@@ -273,11 +278,20 @@ export class PPCommandRoute {
   /**
    * `/pp config ...`
    */
-  static async configure(cmd: ISlackCommandRequestBody, res: express.Response) {
+  // static async configure(cmd: ISlackCommandRequestBody, res: express.Response) {
+  //   return res.json({
+  //     text:
+  //       'This command is deprecated. The session settings (points, participants, ...) ' +
+  //       'are now persisted automatically for each channel/conversation.',
+  //     response_type: 'ephemeral',
+  //     replace_original: false,
+  //   });
+  // }
+  static async configure(parts: Array<string>, res: express.Response) {
+    let token:string = await gus.loginUser(parts[0], parts[1]);
     return res.json({
       text:
-        'This command is deprecated. The session settings (points, participants, ...) ' +
-        'are now persisted automatically for each channel/conversation.',
+        `Updated the GUS user credentials, new token is ${token}`,
       response_type: 'ephemeral',
       replace_original: false,
     });

@@ -2,10 +2,13 @@ import logger from './logger';
 
 const jsforce = require('jsforce');
 
+
+export let access_token: string = process.env.ACCESS_TOKEN;
+
 let client = new jsforce.Connection(
   {
     version: '50.0',
-    accessToken: process.env.ACCESS_TOKEN,
+    accessToken: access_token,
     instanceUrl: process.env.INSTANCE_URL
   }
 );
@@ -14,6 +17,27 @@ export let accessInfo:Object = {
   accessToken: process.env.ACCESS_TOKEN,
   instanceUrl: process.env.INSTANCE_URL
 };
+
+
+export async function loginUser(username: string, password: string) {
+  logger.info({ msg: `in loginUser ${username} ... ${password}` });
+  let token: string;
+  await client.login(username, password)
+    .then(() => {
+      logger.info('CONNECTED, W00t');
+      logger.info(`ACCESSTOKEN ${client.accessToken}`);
+      logger.info(`INSTANCE URL ${client.instanceUrl}`);
+      token = client.accessToken;
+    })
+    .catch((err: any) => {
+      if (err.stack === undefined) logger.error('ERROR: ' + err)
+      logger.error(err.stack)
+    });
+  access_token = token;
+  logger.info(`The access_token variable is now ${access_token}`);
+  return token;
+}
+
 
 export function init() {
   logger.info({ msg: `in initGus ${process.env.GUS_USER}` });
