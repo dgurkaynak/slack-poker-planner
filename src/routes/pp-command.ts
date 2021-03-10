@@ -293,12 +293,15 @@ export class PPCommandRoute {
     //let username:string = parts[0].split('|')[1].replace('>', '');
     //let token:string = await gus.loginUser(username, parts[1]);
 
-    logger.info(`Input token is |||${parts[0]}|||`);
+    let input_token: string = parts[0];
+    logger.info(`Input token is |||${input_token}|||`);
 
-    let record = await gus.getRecord('W-8101149', gus.new_connection(parts[0]));
+    // let record = await gus.getRecord('W-8101149', gus.new_connection(parts[0]));
+
+    gus.update_client(input_token);
 
     return res.json({
-      text: `GUS record title is ${record.Subject__c}`,
+      text: `Updated the GUS user credentials, new token is ${gus.getConnection().accessToken}`,
         // `Updated the GUS user credentials, new token is ${token}`,
       response_type: 'ephemeral',
       replace_original: false,
