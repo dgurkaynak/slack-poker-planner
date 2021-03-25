@@ -18,6 +18,8 @@ import {
 } from '../vendor/slack-api-interfaces';
 import uniq from 'lodash/uniq';
 import find from 'lodash/find';
+import get from 'lodash/get';
+import isObject from 'lodash/isObject';
 import * as opentelemetry from '@opentelemetry/api';
 import { Trace, getSpan } from '../lib/trace-decorator';
 
@@ -377,36 +379,102 @@ export class InteractivityRoute {
     res: express.Response;
   }) {
     const span = getSpan();
+    const errorId = generateId();
 
     try {
-      span?.setAttributes({
-        rawPrivateMetadata: payload.view.private_metadata,
-      });
-      const privateMetadata = JSON.parse(payload.view.private_metadata);
-      const titleInputState = payload.view.state.values.title as any;
-      const title = titleInputState[Object.keys(titleInputState)[0]].value;
+      ////////////////////////
+      // Get the channel id //
+      ////////////////////////
+      let channelId: string;
+      try {
+        span?.setAttributes({
+          rawPrivateMetadata: payload.view.private_metadata,
+        });
+        const privateMetadata = JSON.parse(payload.view.private_metadata);
+        channelId = privateMetadata.channelId;
+      } catch (err) {
+        logger.error({
+          msg: 'Could not create session: Cannot parse private_metadata',
+          errorId,
+          err,
+          payload,
+        });
+        throw new Error(SessionControllerErrorCode.UNEXPECTED_PAYLOAD);
+      }
+
+      if (!channelId) {
+        logger.error({
+          msg: 'Could not create session: Missing channelId',
+          errorId,
+          payload,
+        });
+        throw new Error(SessionControllerErrorCode.UNEXPECTED_PAYLOAD);
+      }
+
+      ///////////////////////////
+      // Get the session title //
+      ///////////////////////////
+      const titleInputState = get(payload, 'view.state.values.title');
+      if (!isObject(titleInputState) || isEmpty(titleInputState)) {
+        logger.error({
+          msg: 'Could not create session: Title is not an object or empty',
+          errorId,
+          payload,
+        });
+        throw new Error(SessionControllerErrorCode.TITLE_REQUIRED);
+      }
+      const title = (titleInputState as any)[Object.keys(titleInputState)[0]]
+        .value;
       span?.setAttributes({ title });
 
       if (!title || title.trim().length == 0) {
         throw new Error(SessionControllerErrorCode.TITLE_REQUIRED);
       }
 
-      const participantsInputState = payload.view.state.values
-        .participants as any;
-      const participants =
-        participantsInputState[Object.keys(participantsInputState)[0]]
-          .selected_users;
+      //////////////////////////
+      // Get the participants //
+      //////////////////////////
+      const participantsInputState = get(
+        payload,
+        'view.state.values.participants'
+      );
+      if (
+        !isObject(participantsInputState) ||
+        isEmpty(participantsInputState)
+      ) {
+        logger.error({
+          msg:
+            'Could not create session: Participants is not an object or empty',
+          errorId,
+          payload,
+        });
+        throw new Error(SessionControllerErrorCode.NO_PARTICIPANTS);
+      }
+      const participants = (participantsInputState as any)[
+        Object.keys(participantsInputState)[0]
+      ].selected_users;
       span?.setAttributes({ participants: participants.join(' ') });
 
       if (participants.length == 0) {
         throw new Error(SessionControllerErrorCode.NO_PARTICIPANTS);
       }
 
-      const pointsInputState = payload.view.state.values.points as any;
+      ////////////////////
+      // Get the points //
+      ////////////////////
+      const pointsInputState = get(payload, 'view.state.values.points');
+      if (!isObject(pointsInputState) || isEmpty(pointsInputState)) {
+        logger.error({
+          msg: 'Could not create session: Points is not an object or empty',
+          errorId,
+          payload,
+        });
+        throw new Error(SessionControllerErrorCode.INVALID_POINTS);
+      }
       const pointsStr =
-        pointsInputState[Object.keys(pointsInputState)[0]].value || '';
-      let points: string[] = uniq(pointsStr.match(/\S+/g)) || [];
+        (pointsInputState as any)[Object.keys(pointsInputState)[0]].value || '';
       span?.setAttributes({ points: pointsStr });
+      let points: string[] = uniq(pointsStr.match(/\S+/g)) || [];
 
       if (points.length == 1 && points[0] == 'reset') {
         points = DEFAULT_POINTS;
@@ -416,11 +484,15 @@ export class InteractivityRoute {
         throw new Error(SessionControllerErrorCode.INVALID_POINTS);
       }
 
-      const otherCheckboxesState = payload.view.state.values.other as any;
-      const selectedOptions = otherCheckboxesState
-        ? otherCheckboxesState[Object.keys(otherCheckboxesState)[0]]
-            .selected_options
-        : [];
+      ////////////////////////////
+      // Get "other" checkboxes //
+      ////////////////////////////
+      const otherCheckboxesState = get(payload, 'view.state.values.other');
+      const selectedOptions =
+        isObject(otherCheckboxesState) && !isEmpty(otherCheckboxesState)
+          ? (otherCheckboxesState as any)[Object.keys(otherCheckboxesState)[0]]
+              .selected_options
+          : [];
       const isProtected = !!find(
         selectedOptions,
         (option) => option.value == 'protected'
@@ -440,7 +512,7 @@ export class InteractivityRoute {
         points,
         votes: {},
         state: 'active',
-        channelId: privateMetadata.channelId,
+        channelId,
         userId: payload.user.id,
         participants,
         rawPostMessageResponse: undefined,
@@ -449,7 +521,7 @@ export class InteractivityRoute {
       };
       span?.setAttributes({
         sessionId: session.id,
-        channelId: privateMetadata.channelId,
+        channelId,
         userId: payload.user.id,
         userName: payload.user.name,
       });
@@ -464,7 +536,7 @@ export class InteractivityRoute {
           id: payload.user.id,
           name: payload.user.name,
         },
-        channelId: privateMetadata.channelId,
+        channelId,
         sessionId: session.id,
       });
 
@@ -507,7 +579,6 @@ export class InteractivityRoute {
         });
       }
     } catch (err) {
-      const errorId = generateId();
       let shouldLog = true;
       let logLevel: 'info' | 'warn' | 'error' = 'error';
       let errorMessage =
@@ -582,10 +653,18 @@ export class InteractivityRoute {
         };
       } else if (err.message == SessionControllerErrorCode.INVALID_POINTS) {
         shouldLog = false;
-        errorMessage = `You must provide at least 2 poker points, the maximum is 25.`;
+        errorMessage =
+          `You must provide at least 2 poker points seperated by space, ` +
+          `the maximum is 25.`;
         modalErrors = {
           points: errorMessage,
         };
+      } else if (err.message == SessionControllerErrorCode.UNEXPECTED_PAYLOAD) {
+        shouldLog = false;
+        errorMessage =
+          `Oops, Slack API sends a payload that we don't expect. Please try again.\n\n` +
+          `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}> ` +
+          `with following error code: ${errorId}`;
       }
 
       if (shouldLog) {

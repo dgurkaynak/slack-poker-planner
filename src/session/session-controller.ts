@@ -27,6 +27,7 @@ export const DEFAULT_POINTS = [
 export enum SessionControllerErrorCode {
   NO_PARTICIPANTS = 'no_participants',
   TITLE_REQUIRED = 'title_required',
+  UNEXPECTED_PAYLOAD = 'unexpected_payload',
   INVALID_POINTS = 'invalid_points',
   SESSION_NOT_ACTIVE = 'session_not_active',
   ONLY_PARTICIPANTS_CAN_VOTE = 'only_participants_can_vote',
