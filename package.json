@@ -4,7 +4,7 @@
   "description": "Poker planning app for slack",
   "main": "dist/app.js",
   "scripts": {
-    "build": "webpack --mode production",
+    "build": "webpack --mode development",
     "build:watch": "webpack --mode development --watch",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node dist/app.js"
