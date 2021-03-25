@@ -1,6 +1,6 @@
 {
   "name": "slack-poker-planner",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "description": "Poker planning app for slack",
   "main": "dist/app.js",
   "scripts": {
