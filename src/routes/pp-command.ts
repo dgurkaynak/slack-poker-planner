@@ -10,8 +10,6 @@ import {
   SessionController,
   DEFAULT_POINTS,
 } from '../session/session-controller';
-import * as opentelemetry from '@opentelemetry/api';
-import { Trace, getSpan } from '../lib/trace-decorator';
 
 export class PPCommandRoute {
   /**
@@ -68,22 +66,10 @@ export class PPCommandRoute {
   /**
    * `/pp some task name`
    */
-  @Trace()
   static async openNewSessionModal(
     cmd: ISlackCommandRequestBody,
     res: express.Response
   ) {
-    const span = getSpan();
-    span?.setAttributes({
-      teamId: cmd.team_id,
-      teamDomain: cmd.team_domain,
-      channelId: cmd.channel_id,
-      channelName: cmd.channel_name,
-      userId: cmd.user_id,
-      userName: cmd.user_name,
-      text: cmd.text,
-    });
-
     if (cmd.channel_name == 'directmessage') {
       return res.json({
         text: `Poker planning cannot be started in direct messages`,
@@ -101,11 +87,7 @@ export class PPCommandRoute {
         err: teamGetErr,
         cmd,
       });
-      span?.setAttribute('error.id', errorId);
-      span?.setStatus({
-        code: opentelemetry.CanonicalCode.INTERNAL,
-        message: teamGetErr.message,
-      });
+
       return res.json({
         text:
           `Internal server error, please try again later (error code: ${errorId})\n\n` +
@@ -120,10 +102,7 @@ export class PPCommandRoute {
         msg: `Could not created session, team could not be found`,
         cmd,
       });
-      span?.setStatus({
-        code: opentelemetry.CanonicalCode.NOT_FOUND,
-        message: 'Team not found',
-      });
+
       return res.json({
         text: `Your Slack team (${cmd.team_domain}) could not be found, please reinstall Poker Planner on <${process.env.APP_INSTALL_LINK}>`,
         response_type: 'ephemeral',
@@ -147,7 +126,7 @@ export class PPCommandRoute {
           name: cmd.user_name,
         },
       });
-      span?.addEvent('show_migration_message');
+
       return res.json({
         text:
           'Poker Planner has migrated to ' +
@@ -191,11 +170,6 @@ export class PPCommandRoute {
       const [settingsFetchErr, channelSettings] = await to(
         TeamStore.fetchSettings(team.id, cmd.channel_id)
       );
-      if (settingsFetchErr) {
-        span?.addEvent('settings_fetch_error', {
-          error: settingsFetchErr.message,
-        });
-      }
       const settings = {
         [ChannelSettingKey.PARTICIPANTS]: [] as string[],
         [ChannelSettingKey.POINTS]: DEFAULT_POINTS,
@@ -255,11 +229,7 @@ export class PPCommandRoute {
         err,
         cmd,
       });
-      span?.setAttribute('error.id', errorId);
-      span?.setStatus({
-        code: opentelemetry.CanonicalCode.INTERNAL,
-        message: err.message,
-      });
+
       return res.json({
         text:
           `Could not open modal (error code: ${errorId})\n\n` +

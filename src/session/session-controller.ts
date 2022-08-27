@@ -6,7 +6,6 @@ import groupBy from 'lodash/groupBy';
 import { ITeam } from '../team/team-model';
 import { WebClient } from '@slack/web-api';
 import logger from '../lib/logger';
-import { Trace, getSpan } from '../lib/trace-decorator';
 
 export const DEFAULT_POINTS = [
   '0',
@@ -38,7 +37,6 @@ export class SessionController {
    * Sends a message for the provided session.
    * CAUTION: Participants must resolved before using this method.
    */
-  @Trace()
   static async postMessage(session: ISession, team: ITeam) {
     const slackWebClient = new WebClient(team.access_token);
     const votesText = map(
@@ -56,7 +54,6 @@ export class SessionController {
   /**
    * Opens a `new session` modal
    */
-  @Trace()
   static async openModal({
     triggerId,
     team,
@@ -220,7 +217,6 @@ export class SessionController {
    * Updates the session message as revealing all the votes.
    * And clean-up the session from store.
    */
-  @Trace()
   static async revealAndUpdateMessage(
     session: ISession,
     team: ITeam,
@@ -235,7 +231,6 @@ export class SessionController {
    * Updates the session message as cancelled.
    * And clean-up the session from store.
    */
-  @Trace()
   static async cancelAndUpdateMessage(
     session: ISession,
     team: ITeam,
@@ -249,7 +244,6 @@ export class SessionController {
   /**
    *
    */
-  @Trace()
   static async vote(
     session: ISession,
     team: ITeam,
@@ -292,7 +286,6 @@ export class SessionController {
   /**
    * Updates session message according to session state.
    */
-  @Trace()
   static async updateMessage(session: ISession, team: ITeam, userId?: string) {
     const slackWebClient = new WebClient(team.access_token);
 

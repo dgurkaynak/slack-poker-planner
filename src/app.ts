@@ -1,10 +1,4 @@
 require('dotenv').config();
-import {
-  BasicTracerProvider,
-  BatchSpanProcessor,
-} from '@opentelemetry/tracing';
-import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
-setupTracing();
 
 import logger from './lib/logger';
 import * as sqlite from './lib/sqlite';
@@ -114,37 +108,6 @@ function initRoutes(server: express.Express) {
 
   // Serve under specified base path
   server.use(`${process.env.BASE_PATH}`, router);
-}
-
-async function setupTracing() {
-  const traceProvider = new BasicTracerProvider();
-  traceProvider.register();
-
-  if (!process.env.REPORT_TRACES) {
-    return;
-  }
-
-  const exporter = new JaegerExporter({
-    serviceName: 'pp',
-    tags: [],
-    host: process.env.JAEGER_HOST,
-    port: parseInt(process.env.JAEGER_PORT, 10),
-    logger: {
-      debug: () => {},
-      info: () => {},
-      warn: logger.warn.bind(logger),
-      error: logger.error.bind(logger),
-    },
-  });
-  traceProvider.addSpanProcessor(new BatchSpanProcessor(exporter));
-
-  logger.info({
-    msg: `Trace reporter started`,
-    jaegerAgent: {
-      host: process.env.JAEGER_HOST,
-      port: process.env.JAEGER_PORT,
-    },
-  });
 }
 
 main().catch((err) => {

@@ -30,9 +30,6 @@
     "node": ">=12.17.0"
   },
   "dependencies": {
-    "@opentelemetry/api": "^0.8.3",
-    "@opentelemetry/exporter-jaeger": "^0.8.3",
-    "@opentelemetry/tracing": "^0.8.3",
     "@slack/web-api": "^6.1.0",
     "body-parser": "^1.19.0",
     "countly-sdk-nodejs": "^20.4.0",

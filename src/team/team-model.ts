@@ -1,5 +1,4 @@
 import * as sqlite from '../lib/sqlite';
-import { Trace, getSpan } from '../lib/trace-decorator';
 
 export interface ITeam {
   id: string;
@@ -14,7 +13,7 @@ export enum ChannelSettingKey {
   PARTICIPANTS = 'participants',
   POINTS = 'points',
   PROTECTED = 'protected',
-  AVERAGE = "average",
+  AVERAGE = 'average',
 }
 
 export interface IChannelSetting {
@@ -25,15 +24,11 @@ export interface IChannelSetting {
 }
 
 export class TeamStore {
-  @Trace({ name: 'team.findById' })
   static async findById(id: string): Promise<ITeam> {
-    const span = getSpan();
-    span?.setAttribute('id', id);
     const db = sqlite.getSingleton();
     return db.get('SELECT * FROM team WHERE id = ?', id);
   }
 
-  @Trace({ name: 'team.create' })
   static async create({
     id,
     name,
@@ -41,8 +36,6 @@ export class TeamStore {
     scope,
     user_id,
   }: Pick<ITeam, 'id' | 'name' | 'access_token' | 'scope' | 'user_id'>) {
-    const span = getSpan();
-    span?.setAttributes({ id, name, scope, user_id });
     const db = sqlite.getSingleton();
     await db.run(
       `INSERT INTO
@@ -59,7 +52,6 @@ export class TeamStore {
     );
   }
 
-  @Trace({ name: 'team.update' })
   static async update({
     id,
     name,
@@ -67,8 +59,6 @@ export class TeamStore {
     scope,
     user_id,
   }: Pick<ITeam, 'id' | 'name' | 'access_token' | 'scope' | 'user_id'>) {
-    const span = getSpan();
-    span?.setAttributes({ id, name, scope, user_id });
     const db = sqlite.getSingleton();
     await db.run(
       `UPDATE
@@ -90,7 +80,6 @@ export class TeamStore {
     );
   }
 
-  @Trace({ name: 'team.upsert' })
   static async upsert({
     id,
     name,
@@ -98,8 +87,6 @@ export class TeamStore {
     scope,
     user_id,
   }: Pick<ITeam, 'id' | 'name' | 'access_token' | 'scope' | 'user_id'>) {
-    const span = getSpan();
-    span?.setAttributes({ id, name, scope, user_id });
     const team = await TeamStore.findById(id);
     if (!team) {
       await TeamStore.create({ id, name, access_token, scope, user_id });
@@ -109,10 +96,7 @@ export class TeamStore {
     return TeamStore.findById(id);
   }
 
-  @Trace()
   static async fetchSettings(teamId: string, channelId: string) {
-    const span = getSpan();
-    span?.setAttributes({ teamId, channelId });
     const db = sqlite.getSingleton();
     const settingRows = await db.all(
       `SELECT
@@ -137,7 +121,6 @@ export class TeamStore {
     return rv;
   }
 
-  @Trace()
   static async upsertSettings(
     teamId: string,
     channelId: string,
@@ -154,15 +137,12 @@ export class TeamStore {
     await Promise.all(tasks);
   }
 
-  @Trace()
   static async upsertSetting(
     teamId: string,
     channelId: string,
     key: string,
     value: string
   ) {
-    const span = getSpan();
-    span?.setAttributes({ teamId, channelId, key, value });
     const db = sqlite.getSingleton();
     await db.run(
       `INSERT INTO

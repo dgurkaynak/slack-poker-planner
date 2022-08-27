@@ -20,8 +20,6 @@ import uniq from 'lodash/uniq';
 import find from 'lodash/find';
 import get from 'lodash/get';
 import isObject from 'lodash/isObject';
-import * as opentelemetry from '@opentelemetry/api';
-import { Trace, getSpan } from '../lib/trace-decorator';
 
 export class InteractivityRoute {
   /**
@@ -96,7 +94,6 @@ export class InteractivityRoute {
   /**
    * A user clicks on a button on message
    */
-  @Trace()
   static async interactiveMessage({
     payload, // action request payload
     res,
@@ -104,16 +101,6 @@ export class InteractivityRoute {
     payload: IInteractiveMessageActionPayload;
     res: express.Response;
   }) {
-    const span = getSpan();
-    span?.setAttributes({
-      callbackId: payload.callback_id,
-      teamId: payload.team.id,
-      teamDomain: payload.team.domain,
-      userId: payload.user.id,
-      userName: payload.user.name,
-      channelId: payload.channel.id,
-      channelName: payload.channel.name,
-    });
     const parts = payload.callback_id.split(':');
 
     if (parts.length != 2) {
@@ -123,11 +110,7 @@ export class InteractivityRoute {
         errorId,
         payload,
       });
-      span?.setAttribute('error.id', errorId);
-      span?.setStatus({
-        code: opentelemetry.CanonicalCode.INVALID_ARGUMENT,
-        message: `Unexpected callback_id`,
-      });
+
       return res.json({
         text:
           `Unexpected interactive message callback id (error code: ${errorId})\n\n` +
@@ -138,15 +121,10 @@ export class InteractivityRoute {
     }
 
     const [action, sessionId] = parts;
-    span?.setAttributes({ action, sessionId });
 
     const session = SessionStore.findById(sessionId);
 
     if (!session) {
-      span?.setStatus({
-        code: opentelemetry.CanonicalCode.NOT_FOUND,
-        message: 'Session not found',
-      });
       return res.json({
         text: `Ooops, could not find the session, it may be expired or cancelled`,
         response_type: 'ephemeral',
@@ -165,11 +143,7 @@ export class InteractivityRoute {
         err: teamErr,
         payload,
       });
-      span?.setAttribute('error.id', errorId);
-      span?.setStatus({
-        code: opentelemetry.CanonicalCode.INTERNAL,
-        message: teamErr.message,
-      });
+
       return res.json({
         text:
           `Internal server error, please try again later (error code: ${errorId})\n\n` +
@@ -180,10 +154,6 @@ export class InteractivityRoute {
     }
 
     if (!team) {
-      span?.setStatus({
-        code: opentelemetry.CanonicalCode.NOT_FOUND,
-        message: 'Team not found',
-      });
       return res.json({
         text: `Your Slack team (${payload.team.domain}) could not be found, please reinstall Poker Planner on <${process.env.APP_INSTALL_LINK}>`,
         response_type: 'ephemeral',
@@ -199,7 +169,6 @@ export class InteractivityRoute {
        */
       case 'action': {
         const sessionAction = payload.actions[0].value;
-        span?.setAttributes({ sessionAction });
 
         if (sessionAction == 'reveal') {
           await InteractivityRoute.revealSession({
@@ -223,11 +192,7 @@ export class InteractivityRoute {
             sessionAction,
             payload,
           });
-          span?.setAttribute('error.id', errorId);
-          span?.setStatus({
-            code: opentelemetry.CanonicalCode.INVALID_ARGUMENT,
-            message: `Unexpected session action`,
-          });
+
           res.json({
             text:
               `Unexpected action button (error code: ${errorId})\n\n` +
@@ -259,11 +224,7 @@ export class InteractivityRoute {
           action,
           payload,
         });
-        span?.setAttribute('error.id', errorId);
-        span?.setStatus({
-          code: opentelemetry.CanonicalCode.INVALID_ARGUMENT,
-          message: `Unexpected action`,
-        });
+
         return res.json({
           text:
             `Unexpected action (error code: ${errorId})\n\n` +
@@ -278,7 +239,6 @@ export class InteractivityRoute {
   /**
    * A user clicks a submit button a view
    */
-  @Trace()
   static async viewSubmission({
     payload, // action request payload
     res,
@@ -286,14 +246,6 @@ export class InteractivityRoute {
     payload: IViewSubmissionActionPayload;
     res: express.Response;
   }) {
-    const span = getSpan();
-    span?.setAttributes({
-      teamId: payload.team.id,
-      teamDomain: payload.team.domain,
-      userId: payload.user.id,
-      userName: payload.user.name,
-    });
-
     const [teamGetErr, team] = await to(TeamStore.findById(payload.team.id));
     if (teamGetErr) {
       const errorId = generateId();
@@ -303,11 +255,7 @@ export class InteractivityRoute {
         err: teamGetErr,
         payload,
       });
-      span?.setAttribute('error.id', errorId);
-      span?.setStatus({
-        code: opentelemetry.CanonicalCode.INTERNAL,
-        message: teamGetErr.message,
-      });
+
       return res.json({
         text:
           `Internal server error, please try again later (error code: ${errorId})\n\n` +
@@ -322,10 +270,7 @@ export class InteractivityRoute {
         msg: `Could not create session, team could not be found`,
         payload,
       });
-      span?.setStatus({
-        code: opentelemetry.CanonicalCode.NOT_FOUND,
-        message: 'Team not found',
-      });
+
       return res.json({
         text: `Your Slack team (${payload.team.domain}) could not be found, please reinstall Poker Planner on <${process.env.APP_INSTALL_LINK}>`,
         response_type: 'ephemeral',
@@ -334,7 +279,6 @@ export class InteractivityRoute {
     }
 
     const callbackId = payload.view.callback_id;
-    span?.setAttributes({ callbackId });
 
     switch (callbackId) {
       case 'newSessionModal:submit': {
@@ -349,11 +293,7 @@ export class InteractivityRoute {
           callbackId,
           payload,
         });
-        span?.setAttribute('error.id', errorId);
-        span?.setStatus({
-          code: opentelemetry.CanonicalCode.INVALID_ARGUMENT,
-          message: `Unexpected callback_id`,
-        });
+
         return res.json({
           text:
             `Unexpected view-submission callback id (error code: ${errorId})\n\n` +
@@ -368,7 +308,6 @@ export class InteractivityRoute {
   /**
    * A user submits the `new session` modal.
    */
-  @Trace()
   static async createSession({
     payload, // action request payload
     team,
@@ -378,7 +317,6 @@ export class InteractivityRoute {
     team: ITeam;
     res: express.Response;
   }) {
-    const span = getSpan();
     const errorId = generateId();
 
     try {
@@ -387,9 +325,6 @@ export class InteractivityRoute {
       ////////////////////////
       let channelId: string;
       try {
-        span?.setAttributes({
-          rawPrivateMetadata: payload.view.private_metadata,
-        });
         const privateMetadata = JSON.parse(payload.view.private_metadata);
         channelId = privateMetadata.channelId;
       } catch (err) {
@@ -425,7 +360,6 @@ export class InteractivityRoute {
       }
       const title = (titleInputState as any)[Object.keys(titleInputState)[0]]
         .value;
-      span?.setAttributes({ title });
 
       if (!title || title.trim().length == 0) {
         throw new Error(SessionControllerErrorCode.TITLE_REQUIRED);
@@ -453,7 +387,6 @@ export class InteractivityRoute {
       const participants = (participantsInputState as any)[
         Object.keys(participantsInputState)[0]
       ].selected_users;
-      span?.setAttributes({ participants: participants.join(' ') });
 
       if (participants.length == 0) {
         throw new Error(SessionControllerErrorCode.NO_PARTICIPANTS);
@@ -473,7 +406,6 @@ export class InteractivityRoute {
       }
       const pointsStr =
         (pointsInputState as any)[Object.keys(pointsInputState)[0]].value || '';
-      span?.setAttributes({ points: pointsStr });
       let points: string[] = uniq(pointsStr.match(/\S+/g)) || [];
 
       if (points.length == 1 && points[0] == 'reset') {
@@ -501,8 +433,6 @@ export class InteractivityRoute {
         selectedOptions,
         (option) => option.value == 'average'
       );
-      span?.setAttributes({ isProtected: `${isProtected}` });
-      span?.setAttributes({ calculateAverage: `${calculateAverage}` });
 
       // Create session struct
       const session: ISession = {
@@ -519,12 +449,6 @@ export class InteractivityRoute {
         protected: isProtected,
         average: calculateAverage,
       };
-      span?.setAttributes({
-        sessionId: session.id,
-        channelId,
-        userId: payload.user.id,
-        userName: payload.user.name,
-      });
 
       logger.info({
         msg: `Creating a new session`,
@@ -559,9 +483,6 @@ export class InteractivityRoute {
         })
       );
       if (upsertSettingErr) {
-        span?.addEvent('upsert_settings_error', {
-          message: upsertSettingErr.message,
-        });
         logger.error({
           msg: `Could not upsert settings after creating new session`,
           session,
@@ -588,7 +509,6 @@ export class InteractivityRoute {
 
       const slackErrorCode = err.data && err.data.error;
       if (slackErrorCode) {
-        span?.setAttributes({ slackErrorCode });
         errorMessage =
           `Unexpected Slack API Error: "*${slackErrorCode}*" (error code: ${errorId})\n\n` +
           `If you think this is an issue, please report to <${process.env.ISSUES_LINK}>`;
@@ -676,15 +596,6 @@ export class InteractivityRoute {
         });
       }
 
-      span?.setAttributes({
-        'error.id': errorId,
-        userErrorMessage: errorMessage,
-      });
-      span?.setStatus({
-        code: opentelemetry.CanonicalCode.UNKNOWN,
-        message: err.message,
-      });
-
       // Show the generic errors on a new modal
       if (isEmpty(modalErrors)) {
         return res.json({
@@ -725,7 +636,6 @@ export class InteractivityRoute {
   /**
    * A user clicks on a vote button.
    */
-  @Trace()
   static async vote({
     payload, // action request payload
     team,
@@ -737,22 +647,7 @@ export class InteractivityRoute {
     session: ISession;
     res: express.Response;
   }) {
-    const span = getSpan();
     const point = payload.actions[0].value;
-    span?.setAttributes({ point });
-    logger.info({
-      msg: `Voting`,
-      point,
-      sessionId: session.id,
-      team: {
-        id: team.id,
-        name: team.name,
-      },
-      user: {
-        id: payload.user.id,
-        name: payload.user.name,
-      },
-    });
     const [voteErr] = await to(
       SessionController.vote(session, team, payload.user.id, point)
     );
@@ -784,7 +679,6 @@ export class InteractivityRoute {
 
           const slackErrorCode = (voteErr as any)?.data?.error;
           if (slackErrorCode) {
-            span?.setAttributes({ slackErrorCode });
             errorMessage =
               `Unexpected Slack API Error: "*${slackErrorCode}*", please try again later (error code: ${errorId})\n\n` +
               `If you think this is an issue, please report to <${process.env.ISSUES_LINK}>`;
@@ -802,11 +696,7 @@ export class InteractivityRoute {
             err: voteErr,
             payload,
           });
-          span?.setAttributes({ 'error.id': errorId });
-          span?.setStatus({
-            code: opentelemetry.CanonicalCode.INVALID_ARGUMENT,
-            message: `Unexpected vote error`,
-          });
+
           return res.json({
             text: errorMessage,
             response_type: 'ephemeral',
@@ -834,7 +724,6 @@ export class InteractivityRoute {
   /**
    * A user clicks reveal button.
    */
-  @Trace()
   static async revealSession({
     payload, // action request payload
     team,
@@ -846,12 +735,6 @@ export class InteractivityRoute {
     session: ISession;
     res: express.Response;
   }) {
-    const span = getSpan();
-    span?.setAttributes({
-      sessionProtected: session.protected,
-      sessionCreatorId: session.userId,
-    });
-
     if (session.protected && session.userId != payload.user.id) {
       return res.json({
         text: `This session is protected, only the creator can reveal it.`,
@@ -884,7 +767,6 @@ export class InteractivityRoute {
 
       const slackErrorCode = (revealErr as any)?.data?.error;
       if (slackErrorCode) {
-        span?.setAttributes({ slackErrorCode });
         errorMessage =
           `Unexpected Slack API Error: "*${slackErrorCode}*", please try again later (error code: ${errorId})\n\n` +
           `If you think this is an issue, please report to <${process.env.ISSUES_LINK}>`;
@@ -902,11 +784,7 @@ export class InteractivityRoute {
         err: revealErr,
         payload,
       });
-      span?.setAttributes({ 'error.id': errorId });
-      span?.setStatus({
-        code: opentelemetry.CanonicalCode.INTERNAL,
-        message: `Unexpected error while reveal session & update message`,
-      });
+
       return res.json({
         text: errorMessage,
         response_type: 'ephemeral',
@@ -928,7 +806,6 @@ export class InteractivityRoute {
   /**
    * A user clicks cancel button.
    */
-  @Trace()
   static async cancelSession({
     payload, // action request payload
     team,
@@ -940,12 +817,6 @@ export class InteractivityRoute {
     session: ISession;
     res: express.Response;
   }) {
-    const span = getSpan();
-    span?.setAttributes({
-      sessionProtected: session.protected,
-      sessionCreatorId: session.userId,
-    });
-
     if (session.protected && session.userId != payload.user.id) {
       return res.json({
         text: `This session is protected, only the creator can cancel it.`,
@@ -978,7 +849,6 @@ export class InteractivityRoute {
 
       const slackErrorCode = (cancelErr as any)?.data?.error;
       if (slackErrorCode) {
-        span?.setAttributes({ slackErrorCode });
         errorMessage =
           `Unexpected Slack API Error: "*${slackErrorCode}*", please try again later (error code: ${errorId})\n\n` +
           `If you think this is an issue, please report to <${process.env.ISSUES_LINK}>`;
@@ -996,11 +866,7 @@ export class InteractivityRoute {
         err: cancelErr,
         payload,
       });
-      span?.setAttributes({ 'error.id': errorId });
-      span?.setStatus({
-        code: opentelemetry.CanonicalCode.INTERNAL,
-        message: `Unexpected error while cancel session & update message`,
-      });
+
       return res.json({
         text: errorMessage,
         response_type: 'ephemeral',
