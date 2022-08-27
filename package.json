@@ -27,7 +27,7 @@
   },
   "homepage": "https://github.com/dgurkaynak/slack-poker-planner#readme",
   "engines": {
-    "node": ">=12.17.0"
+    "node": ">=16"
   },
   "dependencies": {
     "@slack/web-api": "^6.1.0",
