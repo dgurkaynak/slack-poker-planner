@@ -5,9 +5,9 @@
   "main": "dist/app.js",
   "scripts": {
     "build": "webpack --mode development",
-    "build:watch": "webpack --mode development --watch",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node dist/app.js"
+    "start": "node dist/app.js",
+    "watch": "webpack --mode development --watch"
   },
   "repository": {
     "type": "git",
