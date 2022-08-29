@@ -40,6 +40,7 @@
     "node-fetch": "^2.6.1",
     "pino": "^8.4.2",
     "pretty-ms": "^7.0.1",
+    "quoted-string-space-split": "^1.1.1",
     "redis": "^4.3.0",
     "shortid": "^2.2.15",
     "sqlite": "^4.0.10",

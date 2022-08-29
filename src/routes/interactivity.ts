@@ -20,6 +20,7 @@ import uniq from 'lodash/uniq';
 import find from 'lodash/find';
 import get from 'lodash/get';
 import isObject from 'lodash/isObject';
+import splitSpacesExcludeQuotes from 'quoted-string-space-split';
 
 export class InteractivityRoute {
   /**
@@ -406,7 +407,7 @@ export class InteractivityRoute {
       }
       const pointsStr =
         (pointsInputState as any)[Object.keys(pointsInputState)[0]].value || '';
-      let points: string[] = uniq(pointsStr.match(/\S+/g)) || [];
+      let points: string[] = uniq(splitSpacesExcludeQuotes(pointsStr)) || [];
 
       if (points.length == 1 && points[0] == 'reset') {
         points = DEFAULT_POINTS;
