@@ -1,3 +1,4 @@
+import * as path from 'path';
 import * as sqlite3 from 'sqlite3';
 import { open, Database } from 'sqlite';
 import logger from './logger';
@@ -12,7 +13,7 @@ export async function init() {
 
   logger.info({ msg: `Opening sqlite...` });
   db = await open({
-    filename: process.env.DB_FILE,
+    filename: path.join(process.env.DATA_FOLDER, 'db.sqlite'),
     driver: sqlite3.Database,
   });
 
