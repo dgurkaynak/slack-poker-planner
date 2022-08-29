@@ -41,7 +41,7 @@ async function initServer(): Promise<void> {
   const server = express();
 
   // Setup handlebars
-  server.engine('html', exphbs({ extname: '.html' }));
+  server.engine('html', exphbs.engine({ extname: '.html' }));
   server.set('view engine', 'html');
   server.set('views', 'src/views'); // relative to process.cwd
 
