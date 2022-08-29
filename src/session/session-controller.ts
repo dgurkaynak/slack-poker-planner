@@ -453,10 +453,11 @@ async function autoRevealEndedSessions() {
       await SessionStore.remove(session.id);
     } catch (err) {
       logger.info({
-        msg: `Cannot auto-reveal an ended session`,
+        msg: `Cannot auto-reveal an ended session, removing it...`,
         sessionId: session.id,
         err,
       });
+      await SessionStore.remove(session.id);
     }
   });
 
