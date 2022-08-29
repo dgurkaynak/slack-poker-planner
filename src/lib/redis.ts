@@ -1,17 +1,13 @@
 import * as redis from 'redis';
-
 import logger from './logger';
 
-let client: redis.RedisClient;
+let client: redis.RedisClientType;
 
 export async function init() {
-  if (client) {
-    logger.warn({ msg: `Trying to init redis multiple times!` });
-    return client;
-  }
-
   logger.info({ msg: `Creating redis client...` });
-  client = redis.createClient(process.env.REDIS_URL);
+  client = redis.createClient({
+    url: process.env.REDIS_URL,
+  });
 
   await new Promise((resolve, reject) => {
     client.once('ready', resolve);

@@ -1,5 +1,4 @@
 import * as redis from '../lib/redis';
-import { promisify } from 'util';
 import { ISession } from './isession';
 import logger from '../lib/logger';
 import pickBy from 'lodash/pickBy';
@@ -35,33 +34,18 @@ export async function restore(): Promise<void> {
 
   // Scan session keys in redis
   const client = redis.getSingleton();
-  const scanAsync = promisify(client.scan.bind(client));
 
-  const keys: string[] = [];
-  let cursor = '0';
+  for await (const key of client.scanIterator({
+    MATCH: getRedisKeyMatcher(),
+  })) {
+    const rawSession = await client.get(key);
 
-  do {
-    const response = await scanAsync(cursor, 'MATCH', getRedisKeyMatcher());
-
-    cursor = response[0];
-    keys.push(...response[1]);
-  } while (cursor !== '0');
-
-  // Get these keys
-  if (keys.length > 0) {
-    const mgetAsync = promisify(client.mget.bind(client));
-    const rawSessions: string[] = await mgetAsync(keys);
-
-    rawSessions.forEach((rawSession) => {
-      if (!rawSession) return;
-
-      try {
-        const session = JSON.parse(rawSession) as ISession;
-        sessions[session.id] = session;
-      } catch (err) {
-        // NOOP
-      }
-    });
+    try {
+      const session = JSON.parse(rawSession) as ISession;
+      sessions[session.id] = session;
+    } catch (err) {
+      // NOOP
+    }
   }
 
   logger.info({
@@ -113,14 +97,11 @@ async function persist(sessionId: string) {
   if (remainingTTL <= 0) return;
 
   const client = redis.getSingleton();
-  const setAsync = promisify(client.set.bind(client));
+
   try {
-    await setAsync(
-      buildRedisKey(session.id),
-      JSON.stringify(session),
-      'PX',
-      remainingTTL
-    );
+    await client.set(buildRedisKey(session.id), JSON.stringify(session), {
+      PX: remainingTTL,
+    });
   } catch (err) {
     logger.error({
       msg: 'Could not persist session',
@@ -139,8 +120,7 @@ export async function remove(id: string) {
 
   if (process.env.USE_REDIS) {
     const client = redis.getSingleton();
-    const delAsync = promisify(client.del.bind(client));
-    await delAsync(buildRedisKey(id));
+    await client.del(buildRedisKey(id));
   }
 }
 
