@@ -3,7 +3,7 @@ import { ISession } from './isession';
 import chunk from 'lodash/chunk';
 import map from 'lodash/map';
 import groupBy from 'lodash/groupBy';
-import { ITeam } from '../team/team-model';
+import { ITeam, TeamStore } from '../team/team-model';
 import { WebClient } from '@slack/web-api';
 import logger from '../lib/logger';
 
@@ -30,6 +30,7 @@ export enum SessionControllerErrorCode {
   INVALID_POINTS = 'invalid_points',
   SESSION_NOT_ACTIVE = 'session_not_active',
   ONLY_PARTICIPANTS_CAN_VOTE = 'only_participants_can_vote',
+  INVALID_VOTING_DURATION = 'invalid_voting_duration',
 }
 
 export class SessionController {
@@ -63,6 +64,7 @@ export class SessionController {
     points,
     isProtected,
     calculateAverage,
+    votingDuration,
   }: {
     triggerId: string;
     team: ITeam;
@@ -72,6 +74,7 @@ export class SessionController {
     points: string[];
     isProtected: boolean;
     calculateAverage: boolean;
+    votingDuration: string;
   }) {
     const slackWebClient = new WebClient(team.access_token);
 
@@ -187,6 +190,29 @@ export class SessionController {
           },
           {
             type: 'input',
+            block_id: 'votingDuration',
+            element: {
+              type: 'plain_text_input',
+              placeholder: {
+                type: 'plain_text',
+                text: 'Enter a duration like: 3d 6h 30m',
+                emoji: true,
+              },
+              initial_value: votingDuration || '',
+            },
+            hint: {
+              type: 'plain_text',
+              text: 'After voting ends, points will be reveal automatically',
+              emoji: true,
+            },
+            label: {
+              type: 'plain_text',
+              text: 'Voting ends in',
+              emoji: true,
+            },
+          },
+          {
+            type: 'input',
             block_id: 'other',
             optional: true,
             element: {
@@ -268,7 +294,7 @@ export class SessionController {
       await SessionController.updateMessage(session, team); // do not send userId
       await SessionStore.remove(session.id);
       logger.info({
-        msg: `Auto revealing votes`,
+        msg: `Auto revealing votes, everyone voted`,
         sessionId: session.id,
         team: {
           id: team.id,
@@ -383,6 +409,57 @@ export class SessionController {
       .replace(/\s\s+/g, ' ')
       .trim();
   }
+}
+
+/**
+ * Set a interval that auto-reveals ended sessions
+ */
+let autoRevealEndedSessionsTimeoutId: number = setTimeout(
+  autoRevealEndedSessions,
+  60000
+) as any;
+async function autoRevealEndedSessions() {
+  const now = Date.now();
+  const sessions = SessionStore.getAllSessions();
+
+  const endedSessions = Object.values(sessions).filter((session) => {
+    const remainingTTL = session.endsAt - now;
+    return remainingTTL <= 0;
+  });
+
+  const tasks = endedSessions.map(async (session) => {
+    try {
+      // If `teamId` doesn't exists in the session, just remove the session like before.
+      if (typeof session.teamId !== 'string') {
+        await SessionStore.remove(session.id);
+        return;
+      }
+
+      logger.info({
+        msg: `Auto revealing votes, session ended`,
+        sessionId: session.id,
+      });
+
+      const team = await TeamStore.findById(session.teamId);
+
+      session.state = 'revealed';
+      await SessionController.updateMessage(session, team);
+      await SessionStore.remove(session.id);
+    } catch (err) {
+      logger.info({
+        msg: `Cannot auto-reveal an ended session`,
+        sessionId: session.id,
+        err,
+      });
+    }
+  });
+
+  await Promise.all(tasks);
+
+  autoRevealEndedSessionsTimeoutId = setTimeout(
+    autoRevealEndedSessions,
+    60000
+  ) as any;
 }
 
 export function buildMessageAttachments(session: ISession) {

@@ -21,6 +21,8 @@ import find from 'lodash/find';
 import get from 'lodash/get';
 import isObject from 'lodash/isObject';
 import splitSpacesExcludeQuotes from 'quoted-string-space-split';
+import parseDuration from 'parse-duration';
+import prettyMilliseconds from 'pretty-ms';
 
 export class InteractivityRoute {
   /**
@@ -417,6 +419,44 @@ export class InteractivityRoute {
         throw new Error(SessionControllerErrorCode.INVALID_POINTS);
       }
 
+      /////////////////////////////
+      // Get the voting duration //
+      /////////////////////////////
+      const votingDurationInputState = get(
+        payload,
+        'view.state.values.votingDuration'
+      );
+      if (
+        !isObject(votingDurationInputState) ||
+        isEmpty(votingDurationInputState)
+      ) {
+        logger.error({
+          msg:
+            'Could not create session: Voting duration is not an object or empty',
+          errorId,
+          payload,
+        });
+        throw new Error(SessionControllerErrorCode.INVALID_VOTING_DURATION);
+      }
+      const votingDurationStr = (votingDurationInputState as any)[
+        Object.keys(votingDurationInputState)[0]
+      ].value;
+
+      if (!votingDurationStr || votingDurationStr.trim().length == 0) {
+        throw new Error(SessionControllerErrorCode.INVALID_VOTING_DURATION);
+      }
+
+      const votingDurationMs = parseDuration(votingDurationStr);
+      if (typeof votingDurationMs !== 'number') {
+        throw new Error(SessionControllerErrorCode.INVALID_VOTING_DURATION);
+      }
+      if (
+        votingDurationMs < 60000 ||
+        votingDurationMs > Number(process.env.MAX_VOTING_DURATION)
+      ) {
+        throw new Error(SessionControllerErrorCode.INVALID_VOTING_DURATION);
+      }
+
       ////////////////////////////
       // Get "other" checkboxes //
       ////////////////////////////
@@ -438,11 +478,12 @@ export class InteractivityRoute {
       // Create session struct
       const session: ISession = {
         id: generateId(),
-        expiresAt: Date.now() + Number(process.env.SESSION_TTL),
+        endsAt: Date.now() + votingDurationMs,
         title,
         points,
         votes: {},
         state: 'active',
+        teamId: team.id,
         channelId,
         userId: payload.user.id,
         participants,
@@ -481,6 +522,7 @@ export class InteractivityRoute {
           [ChannelSettingKey.POINTS]: session.points.join(' '),
           [ChannelSettingKey.PROTECTED]: JSON.stringify(session.protected),
           [ChannelSettingKey.AVERAGE]: JSON.stringify(session.average),
+          [ChannelSettingKey.VOTING_DURATION]: prettyMilliseconds(votingDurationMs),
         })
       );
       if (upsertSettingErr) {
@@ -586,6 +628,16 @@ export class InteractivityRoute {
           `Oops, Slack API sends a payload that we don't expect. Please try again.\n\n` +
           `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}> ` +
           `with following error code: ${errorId}`;
+      } else if (
+        err.message == SessionControllerErrorCode.INVALID_VOTING_DURATION
+      ) {
+        shouldLog = false;
+        errorMessage = `Voting window must be between 1m and ${prettyMilliseconds(
+          Number(process.env.MAX_VOTING_DURATION)
+        )}`;
+        modalErrors = {
+          votingDuration: errorMessage,
+        };
       }
 
       if (shouldLog) {

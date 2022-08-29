@@ -10,6 +10,7 @@ import {
   SessionController,
   DEFAULT_POINTS,
 } from '../session/session-controller';
+import prettyMilliseconds from 'pretty-ms';
 
 export class PPCommandRoute {
   /**
@@ -175,6 +176,7 @@ export class PPCommandRoute {
         [ChannelSettingKey.POINTS]: DEFAULT_POINTS,
         [ChannelSettingKey.PROTECTED]: false,
         [ChannelSettingKey.AVERAGE]: false,
+        [ChannelSettingKey.VOTING_DURATION]: '24h',
       };
       if (channelSettings?.[ChannelSettingKey.PARTICIPANTS]) {
         settings[ChannelSettingKey.PARTICIPANTS] = channelSettings[
@@ -199,6 +201,10 @@ export class PPCommandRoute {
           channelSettings[ChannelSettingKey.AVERAGE]
         );
       }
+      if (channelSettings?.[ChannelSettingKey.VOTING_DURATION]) {
+        settings[ChannelSettingKey.VOTING_DURATION] =
+          channelSettings[ChannelSettingKey.VOTING_DURATION];
+      }
 
       await SessionController.openModal({
         triggerId: cmd.trigger_id,
@@ -209,6 +215,7 @@ export class PPCommandRoute {
         points: settings[ChannelSettingKey.POINTS],
         isProtected: settings[ChannelSettingKey.PROTECTED],
         calculateAverage: settings[ChannelSettingKey.AVERAGE],
+        votingDuration: settings[ChannelSettingKey.VOTING_DURATION],
       });
 
       // Send acknowledgement back to API -- HTTP 200

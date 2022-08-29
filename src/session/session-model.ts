@@ -1,7 +1,6 @@
 import * as redis from '../lib/redis';
 import { ISession } from './isession';
 import logger from '../lib/logger';
-import pickBy from 'lodash/pickBy';
 
 /**
  * Redis key stuff.
@@ -42,6 +41,16 @@ export async function restore(): Promise<void> {
 
     try {
       const session = JSON.parse(rawSession) as ISession;
+
+      // Migrate `expiresAt`
+      if (
+        typeof session.endsAt !== 'number' &&
+        typeof (session as any).expiresAt === 'number'
+      ) {
+        session.endsAt = (session as any).expiresAt;
+        delete (session as any).expiresAt;
+      }
+
       sessions[session.id] = session;
     } catch (err) {
       // NOOP
@@ -93,7 +102,7 @@ async function persist(sessionId: string) {
 
   // If specified session is expired, NOOP.
   // We expect that its redis record is/will-be deleted by its TTL.
-  const remainingTTL = session.expiresAt - Date.now();
+  const remainingTTL = session.endsAt - Date.now();
   if (remainingTTL <= 0) return;
 
   const client = redis.getSingleton();
@@ -124,25 +133,6 @@ export async function remove(id: string) {
   }
 }
 
-/**
- * Set a interval that deletes expired sessions
- */
-setInterval(() => {
-  const now = Date.now();
-  const previousSessionCount = Object.keys(sessions).length;
-
-  sessions = pickBy(sessions, (session) => {
-    const remainingTTL = session.expiresAt - now;
-    return remainingTTL > 0;
-  });
-
-  const expiredSessionCount =
-    previousSessionCount - Object.keys(sessions).length;
-
-  if (expiredSessionCount > 0) {
-    logger.info({
-      msg: 'Cleaned up expired sessions',
-      count: expiredSessionCount,
-    });
-  }
-}, 60000);
+export function getAllSessions() {
+  return sessions;
+}

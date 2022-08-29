@@ -38,6 +38,7 @@
     "express-handlebars": "^6.0.6",
     "lodash": "^4.17.19",
     "node-fetch": "^2.6.1",
+    "parse-duration": "^1.0.2",
     "pino": "^8.4.2",
     "pretty-ms": "^7.0.1",
     "quoted-string-space-split": "^1.1.1",

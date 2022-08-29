@@ -14,6 +14,7 @@ export enum ChannelSettingKey {
   POINTS = 'points',
   PROTECTED = 'protected',
   AVERAGE = 'average',
+  VOTING_DURATION = 'votingDuration',
 }
 
 export interface IChannelSetting {

@@ -6,13 +6,17 @@ export interface ISession {
    */
   id: string;
   /**
-   * The timestamp of expiration.
+   * The timestamp of vote ending.
    */
-  expiresAt: number;
+  endsAt: number;
   /**
    * Title of the session. Mentions are excluded.
    */
   title: string;
+  /**
+   * Slack Team ID.
+   */
+  teamId: string;
   /**
    * Slack Channel ID.
    */

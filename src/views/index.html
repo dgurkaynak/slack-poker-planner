@@ -53,9 +53,9 @@
             Persistent settings for each channel/conversation: the app will remember the last settings you
             use on that channel, including participants and poker points.
           </li>
+          <li>Auto-reveal after voting ends (min 1 minute, max 7 days)</li>
           <li>Protected sessions: prevent others to reveal/cancel the sessions you've created.</li>
-          <li>Average point: calculate average point to aid decision making process .</li>
-          <li>The sessions are kept in database for {{@HUMAN_READABLE_SESSION_TTL}}, after that it's completely gone.</li>
+          <li>Average point: calculate average point to aid decision making process.</li>
         </ul>
       </p>
 
@@ -113,14 +113,6 @@
       <h4 id="faq">FAQ</h4>
       <p>
         <ul>
-          <li>
-            <strong>
-              When I try to vote, I get <code>expired</code> or <code>cancelled</code> error
-            </strong>
-            <br />
-            All the not-finished sessions are kept in a database for {{@HUMAN_READABLE_SESSION_TTL}}.
-            After that they're completely deleted.
-          </li>
           <li>
             <strong>
               I enter <code>/pp</code> command, but nothing happens?
