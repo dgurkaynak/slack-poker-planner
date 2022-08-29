@@ -9,10 +9,7 @@ export async function init() {
     url: process.env.REDIS_URL,
   });
 
-  await new Promise((resolve, reject) => {
-    client.once('ready', resolve);
-    client.once('error', reject);
-  });
+  await client.connect();
 
   client.on('error', (err) => {
     logger.error({
