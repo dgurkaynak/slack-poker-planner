@@ -10,7 +10,7 @@ import {
   SessionController,
   DEFAULT_POINTS,
 } from '../session/session-controller';
-import prettyMilliseconds from 'pretty-ms';
+import { splitSpacesExcludeQuotes } from 'quoted-string-space-split';
 
 export class PPCommandRoute {
   /**
@@ -187,9 +187,9 @@ export class PPCommandRoute {
         settings[ChannelSettingKey.POINTS] = team.custom_points.split(' ');
       }
       if (channelSettings?.[ChannelSettingKey.POINTS]) {
-        settings[ChannelSettingKey.POINTS] = channelSettings[
-          ChannelSettingKey.POINTS
-        ].split(' ');
+        settings[ChannelSettingKey.POINTS] = splitSpacesExcludeQuotes(
+          channelSettings[ChannelSettingKey.POINTS]
+        );
       }
       if (channelSettings?.[ChannelSettingKey.PROTECTED]) {
         settings[ChannelSettingKey.PROTECTED] = JSON.parse(

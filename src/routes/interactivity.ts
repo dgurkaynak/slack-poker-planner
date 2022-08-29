@@ -519,10 +519,18 @@ export class InteractivityRoute {
       const [upsertSettingErr] = await to(
         TeamStore.upsertSettings(team.id, session.channelId, {
           [ChannelSettingKey.PARTICIPANTS]: session.participants.join(' '),
-          [ChannelSettingKey.POINTS]: session.points.join(' '),
+          [ChannelSettingKey.POINTS]: session.points
+            .map((point) => {
+              if (!point.includes(' ')) return point;
+              if (point.includes(`"`)) return `'${point}'`;
+              return `"${point}"`;
+            })
+            .join(' '),
           [ChannelSettingKey.PROTECTED]: JSON.stringify(session.protected),
           [ChannelSettingKey.AVERAGE]: JSON.stringify(session.average),
-          [ChannelSettingKey.VOTING_DURATION]: prettyMilliseconds(votingDurationMs),
+          [ChannelSettingKey.VOTING_DURATION]: prettyMilliseconds(
+            votingDurationMs
+          ),
         })
       );
       if (upsertSettingErr) {

@@ -175,7 +175,13 @@ export class SessionController {
                 text: 'Change poker points',
                 emoji: true,
               },
-              initial_value: points.join(' ') || DEFAULT_POINTS.join(' '),
+              initial_value: points
+                .map((point) => {
+                  if (!point.includes(' ')) return point;
+                  if (point.includes(`"`)) return `'${point}'`;
+                  return `"${point}"`;
+                })
+                .join(' '),
             },
             hint: {
               type: 'plain_text',
