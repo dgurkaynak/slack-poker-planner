@@ -44,25 +44,47 @@ If you want to host your own app, follow this steps:
 
 ### Running via Docker
 
+- Clone the repo & `cd` into it
+- Build docker image: `docker build -t dgurkaynak/slack-poker-planner .`
+- Start container:
 ```sh
-docker run \
-  --publish 3000:3000 \
-  --env SLACK_CLIENT_ID="xxx" \
-  --env SLACK_CLIENT_SECRET="xxx" \
-  --env SLACK_VERIFICATION_TOKEN="xxx" \
-  dgurkaynak/slack-poker-planner:latest
+docker run -d \
+  --restart=unless-stopped \
+  -p 3000:3000 \
+  -e SLACK_CLIENT_ID=xxx \
+  -e SLACK_CLIENT_SECRET=xxx \
+  -e SLACK_VERIFICATION_TOKEN=xxx \
+  -e SLACK_APP_ID=xxx \
+  -e DATA_FOLDER=/data \
+  -v /host/data/folder/slack-poker-planner:/data \
+  --name slack-poker-planner \
+  dgurkaynak/slack-poker-planner
 ```
+- *(optional)* If you wanna persist poker sessions, you can provide a Redis server.
+```sh
+docker run -d \
+  --restart=unless-stopped \
+  -p 3000:3000 \
+  -e SLACK_CLIENT_ID=xxx \
+  -e SLACK_CLIENT_SECRET=xxx \
+  -e SLACK_VERIFICATION_TOKEN=xxx \
+  -e SLACK_APP_ID=xxx \
+  -e DATA_FOLDER=/data \
+  -v /host/data/folder/slack-poker-planner:/data \
+  -e USE_REDIS=true \
+  -e REDIS_URL="redis://X.X.X.X:6379" \
+  --name slack-poker-planner \
+  dgurkaynak/slack-poker-planner
+```
+
+> Check out [.env](https://github.com/dgurkaynak/slack-poker-planner/blob/master/.env) file for the complete list of environment variables.
 
 ### Running Manually
 
-Node.js requirement `>= 12.17.0`
+Node.js requirement `>= 16.17.0`
 
 - Clone this repo
 - Install dependencies: `npm i`
 - Build: `npm run build`
 - Start the app: `npm start`
-
-#### Environment variables
-
-Check out [.env](https://github.com/dgurkaynak/slack-poker-planner/blob/master/.env) file.
 
