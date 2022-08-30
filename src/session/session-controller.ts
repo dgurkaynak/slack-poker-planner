@@ -45,6 +45,7 @@ export class SessionController {
 
     return slackWebClient.chat.postMessage({
       channel: session.channelId,
+      blocks: buildMessageBlocks(session),
       text: buildMessageText(session),
       attachments: buildMessageAttachments(session) as any,
     });
@@ -353,6 +354,7 @@ export class SessionController {
       await slackWebClient.chat.update({
         ts: session.rawPostMessageResponse.ts,
         channel: session.rawPostMessageResponse.channel,
+        blocks: buildMessageBlocks(session),
         text: buildMessageText(session),
         attachments: buildMessageAttachments(session) as any,
       });
@@ -360,6 +362,7 @@ export class SessionController {
       await slackWebClient.chat.update({
         ts: session.rawPostMessageResponse.ts,
         channel: session.rawPostMessageResponse.channel,
+        blocks: buildMessageBlocks(session),
         text: buildMessageText(session),
         attachments: buildMessageAttachments(session) as any,
       });
@@ -367,6 +370,7 @@ export class SessionController {
       await slackWebClient.chat.update({
         ts: session.rawPostMessageResponse.ts,
         channel: session.rawPostMessageResponse.channel,
+        blocks: buildMessageBlocks(session),
         text: buildMessageText(session),
         attachments: buildMessageAttachments(session) as any,
       });
@@ -461,6 +465,115 @@ async function autoRevealEndedSessions() {
     autoRevealEndedSessions,
     60000
   ) as any;
+}
+
+function buildMessageBlocks(session: ISession) {
+  if (session.state === 'active') {
+    const votesText = map(session.participants.sort(), (userId) => {
+      if (session.votes.hasOwnProperty(userId)) {
+        return `<@${userId}>: :white_check_mark:`;
+      }
+
+      return `<@${userId}>: awaiting`;
+    }).join('\n');
+
+    return [
+      {
+        type: 'header',
+        text: {
+          type: 'plain_text',
+          text: session.title,
+          emoji: true,
+        },
+      },
+      {
+        type: 'context',
+        elements: [
+          {
+            type: 'mrkdwn',
+            text: votesText,
+          },
+        ],
+      },
+    ];
+  }
+
+  if (session.state === 'revealed') {
+    const voteGroups = groupBy(
+      session.participants,
+      (userId) => session.votes[userId] || 'not-voted'
+    );
+    const votesText = Object.keys(voteGroups)
+      .sort((a, b) => session.points.indexOf(a) - session.points.indexOf(b))
+      .map((point) => {
+        const votes = voteGroups[point];
+        const peopleText =
+          votes.length == 1 ? `1 person` : `${votes.length} people`;
+        const userIds = votes
+          .sort()
+          .map((userId) => `<@${userId}>`)
+          .join(', ');
+
+        if (point == 'not-voted') {
+          return `${peopleText} *did not vote* (${userIds})`;
+        }
+
+        return `${peopleText} voted *${point}* (${userIds})`;
+      })
+      .join('\n');
+
+    let averageText = '';
+    if (session.average) {
+      const average = SessionController.getAverage(session.votes);
+      averageText = average
+        ? `\nAverage: ${SessionController.getAverage(session.votes)}`
+        : '';
+    }
+
+    return [
+      {
+        type: 'header',
+        text: {
+          type: 'plain_text',
+          text: session.title,
+          emoji: true,
+        },
+      },
+      {
+        type: 'context',
+        elements: [
+          {
+            type: 'mrkdwn',
+            text: `${votesText}${averageText}`,
+          },
+        ],
+      },
+    ];
+  }
+
+  if (session.state === 'cancelled') {
+    return [
+      {
+        type: 'header',
+        text: {
+          type: 'plain_text',
+          text: session.title,
+          emoji: true,
+        },
+      },
+      {
+        type: 'context',
+        elements: [
+          {
+            type: 'mrkdwn',
+            text: `Cancelled`,
+          },
+        ],
+      },
+    ];
+  }
+
+  throw new Error(`Unknown session state: ${session.state}`);
 }
 
 function buildMessageText(session: ISession) {
