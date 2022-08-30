@@ -285,7 +285,6 @@ export class InteractivityRoute {
             average: buttonPayload.av === 1 ? true : false,
           };
 
-          // if restart
           logger.info({
             msg: `Restarting session`,
             originalSessionId: sessionId,
@@ -386,7 +385,62 @@ export class InteractivityRoute {
         // Delete message //
         ////////////////////
         else if (buttonPayload.b === 1) {
-          // TODO
+          logger.info({
+            msg: `Deleting session message`,
+            team: {
+              id: team.id,
+              name: team.name,
+            },
+            user: {
+              id: payload.user.id,
+              name: payload.user.name,
+            },
+            channelId: payload.channel.id,
+            sessionId: sessionId,
+          });
+
+          try {
+            await SessionController.deleteMessage(
+              team,
+              payload.channel.id,
+              payload.message_ts
+            );
+
+            res.send();
+
+            if (process.env.COUNTLY_APP_KEY) {
+              Countly.add_event({
+                key: 'topic_deleted',
+                count: 1,
+                segmentation: {},
+              });
+            }
+          } catch (err) {
+            const errorId = generateId();
+            let errorMessage =
+              `Internal server error, please try again later (error code: ${errorId})\n\n` +
+              `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`;
+
+            const slackErrorCode = err.data && err.data.error;
+            if (slackErrorCode) {
+              errorMessage =
+                `Unexpected Slack API Error: "*${slackErrorCode}*" (error code: ${errorId})\n\n` +
+                `If you think this is an issue, please report to <${process.env.ISSUES_LINK}>`;
+            }
+
+            logger.error({
+              msg: `Could not delete session message`,
+              errorId,
+              err,
+              payload,
+            });
+
+            res.json({
+              text: errorMessage,
+              response_type: 'ephemeral',
+              replace_original: false,
+            });
+          }
 
           return;
         }

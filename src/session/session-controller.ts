@@ -53,6 +53,19 @@ export class SessionController {
     });
   }
 
+  static async deleteMessage(
+    team: ITeam,
+    channelId: string,
+    messageTs: string
+  ) {
+    const slackWebClient = new WebClient(team.access_token);
+
+    return slackWebClient.chat.delete({
+      ts: messageTs,
+      channel: channelId,
+    });
+  }
+
   /**
    * Opens a `new session` modal
    */
@@ -471,20 +484,12 @@ async function autoRevealEndedSessions() {
         });
       }
     } catch (err) {
-      logger.info({
+      logger.error({
         msg: `Cannot auto-reveal an ended session, removing it...`,
         sessionId: session.id,
         err,
       });
       await SessionStore.remove(session.id);
-
-      if (process.env.COUNTLY_APP_KEY) {
-        Countly.add_event({
-          key: 'session_revealed_ended_error',
-          count: 1,
-          segmentation: {},
-        });
-      }
     }
   });
 
@@ -566,7 +571,7 @@ function buildMessageAttachmentsForEnding(session: ISession) {
           name: 'action',
           text: 'Delete message',
           type: 'button',
-          value: 'TODO',
+          value: JSON.stringify({b: 1}), // button type, 0 => restart, 1 => delete
           style: 'danger',
         },
       ],
@@ -576,7 +581,7 @@ function buildMessageAttachmentsForEnding(session: ISession) {
 
 function encodeRestartVotingButtonPayload(session: ISession) {
   return JSON.stringify({
-    b: 0, // button type
+    b: 0, // button type, 0 => restart, 1 => delete
     vd: session.votingDuration,
     ti: session.title,
     po: session.points,
