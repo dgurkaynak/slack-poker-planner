@@ -42,14 +42,10 @@ export class SessionController {
    */
   static async postMessage(session: ISession, team: ITeam) {
     const slackWebClient = new WebClient(team.access_token);
-    const votesText = map(
-      session.participants.sort(),
-      (userId) => `<@${userId}>: awaiting`
-    ).join('\n');
 
     return slackWebClient.chat.postMessage({
       channel: session.channelId,
-      text: `Title: *${session.title}*\n\nVotes:\n${votesText}`,
+      text: buildMessageText(session),
       attachments: buildMessageAttachments(session) as any,
     });
   }
@@ -277,7 +273,7 @@ export class SessionController {
     userId: string
   ) {
     session.state = 'revealed';
-    await SessionController.updateMessage(session, team, userId);
+    await SessionController.updateMessage(session, team);
     await SessionStore.remove(session.id);
   }
 
@@ -291,7 +287,7 @@ export class SessionController {
     userId: string
   ) {
     session.state = 'cancelled';
-    await SessionController.updateMessage(session, team, userId);
+    await SessionController.updateMessage(session, team);
     await SessionStore.remove(session.id);
   }
 
@@ -350,71 +346,28 @@ export class SessionController {
   /**
    * Updates session message according to session state.
    */
-  static async updateMessage(session: ISession, team: ITeam, userId?: string) {
+  static async updateMessage(session: ISession, team: ITeam) {
     const slackWebClient = new WebClient(team.access_token);
 
     if (session.state == 'revealed') {
-      const voteGroups = groupBy(
-        session.participants,
-        (userId) => session.votes[userId] || 'not-voted'
-      );
-      const votesText = Object.keys(voteGroups)
-        .sort((a, b) => session.points.indexOf(a) - session.points.indexOf(b))
-        .map((point) => {
-          const votes = voteGroups[point];
-          const peopleText =
-            votes.length == 1 ? `1 person` : `${votes.length} people`;
-          const userIds = votes
-            .sort()
-            .map((userId) => `<@${userId}>`)
-            .join(', ');
-
-          if (point == 'not-voted') {
-            return `${peopleText} *did not vote* (${userIds})`;
-          }
-
-          return `${peopleText} voted *${point}* (${userIds})`;
-        })
-        .join('\n');
-
-      let averageText = '';
-      if (session.average) {
-        const average = SessionController.getAverage(session.votes);
-        averageText = average
-          ? `\nAverage: ${SessionController.getAverage(session.votes)}`
-          : '';
-      }
-
       await slackWebClient.chat.update({
         ts: session.rawPostMessageResponse.ts,
         channel: session.rawPostMessageResponse.channel,
-        text: userId
-          ? `Title: *${session.title}* (revealed by <@${userId}>)\n\nResult:\n${votesText}${averageText}`
-          : `Title: *${session.title}*\n\nResult:\n${votesText}${averageText}`,
+        text: buildMessageText(session),
         attachments: buildMessageAttachments(session) as any,
       });
     } else if (session.state == 'cancelled') {
       await slackWebClient.chat.update({
         ts: session.rawPostMessageResponse.ts,
         channel: session.rawPostMessageResponse.channel,
-        text: userId
-          ? `Title: *${session.title}* (cancelled by <@${userId}>)`
-          : `Title: *${session.title}* (cancelled)`,
+        text: buildMessageText(session),
         attachments: buildMessageAttachments(session) as any,
       });
     } else {
-      const votesText = map(session.participants.sort(), (userId) => {
-        if (session.votes.hasOwnProperty(userId)) {
-          return `<@${userId}>: :white_check_mark:`;
-        }
-
-        return `<@${userId}>: awaiting`;
-      }).join('\n');
-
       await slackWebClient.chat.update({
         ts: session.rawPostMessageResponse.ts,
         channel: session.rawPostMessageResponse.channel,
-        text: `Title: *${session.title}*\n\nVotes:\n${votesText}`,
+        text: buildMessageText(session),
         attachments: buildMessageAttachments(session) as any,
       });
     }
@@ -508,6 +461,61 @@ async function autoRevealEndedSessions() {
     autoRevealEndedSessions,
     60000
   ) as any;
+}
+
+function buildMessageText(session: ISession) {
+  if (session.state === 'active') {
+    const votesText = map(session.participants.sort(), (userId) => {
+      if (session.votes.hasOwnProperty(userId)) {
+        return `<@${userId}>: :white_check_mark:`;
+      }
+
+      return `<@${userId}>: awaiting`;
+    }).join('\n');
+
+    return `Title: *${session.title}*\n\nVotes:\n${votesText}`;
+  }
+
+  if (session.state === 'revealed') {
+    const voteGroups = groupBy(
+      session.participants,
+      (userId) => session.votes[userId] || 'not-voted'
+    );
+    const votesText = Object.keys(voteGroups)
+      .sort((a, b) => session.points.indexOf(a) - session.points.indexOf(b))
+      .map((point) => {
+        const votes = voteGroups[point];
+        const peopleText =
+          votes.length == 1 ? `1 person` : `${votes.length} people`;
+        const userIds = votes
+          .sort()
+          .map((userId) => `<@${userId}>`)
+          .join(', ');
+
+        if (point == 'not-voted') {
+          return `${peopleText} *did not vote* (${userIds})`;
+        }
+
+        return `${peopleText} voted *${point}* (${userIds})`;
+      })
+      .join('\n');
+
+    let averageText = '';
+    if (session.average) {
+      const average = SessionController.getAverage(session.votes);
+      averageText = average
+        ? `\nAverage: ${SessionController.getAverage(session.votes)}`
+        : '';
+    }
+
+    return `Title: *${session.title}*\n\nResult:\n${votesText}${averageText}`;
+  }
+
+  if (session.state === 'cancelled') {
+    return `Title: *${session.title}* (cancelled)`;
+  }
+
+  throw new Error(`Unknown session state: ${session.state}`);
 }
 
 function buildMessageAttachments(session: ISession) {
