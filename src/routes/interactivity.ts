@@ -539,7 +539,7 @@ export class InteractivityRoute {
 
     switch (callbackId) {
       case 'newSessionModal:submit': {
-        return InteractivityRoute.createSession({ payload, team, res });
+        return InteractivityRoute.submitNewSessionModal({ payload, team, res });
       }
 
       default: {
@@ -565,7 +565,7 @@ export class InteractivityRoute {
   /**
    * A user submits the `new session` modal.
    */
-  static async createSession({
+  static async submitNewSessionModal({
     payload, // action request payload
     team,
     res,
@@ -615,11 +615,26 @@ export class InteractivityRoute {
         });
         throw new Error(SessionControllerErrorCode.TITLE_REQUIRED);
       }
-      const title = (titleInputState as any)[Object.keys(titleInputState)[0]]
-        .value;
 
-      if (!title || title.trim().length == 0) {
+      const rawTitle = (titleInputState as any)[Object.keys(titleInputState)[0]]
+        .value;
+      if (typeof rawTitle !== 'string') {
         throw new Error(SessionControllerErrorCode.TITLE_REQUIRED);
+      }
+
+      const titles: string[] = [];
+      rawTitle.split(/\r?\n/).forEach((rawLine) => {
+        const trimmed = rawLine.trim();
+        if (trimmed.length === 0) return;
+        titles.push(trimmed);
+      });
+
+      if (titles.length === 0) {
+        throw new Error(SessionControllerErrorCode.TITLE_REQUIRED);
+      }
+
+      if (titles.length > 10) {
+        throw new Error(SessionControllerErrorCode.MAX_TITLE_LIMIT_EXCEEDED);
       }
 
       //////////////////////////
@@ -729,60 +744,78 @@ export class InteractivityRoute {
         (option) => option.value == 'average'
       );
 
-      // Create session struct
-      const session: ISession = {
-        id: generateId(),
-        votingDuration: votingDurationMs,
-        endsAt: Date.now() + votingDurationMs,
-        title,
-        points,
-        votes: {},
-        state: 'active',
-        teamId: team.id,
-        channelId,
-        userId: payload.user.id,
-        participants,
-        rawPostMessageResponse: undefined,
-        protected: isProtected,
-        average: calculateAverage,
-      };
+      // Async tasks for slack `postMessage`
+      const tasks = titles.map(async (title) => {
+        // Create session struct
+        const session: ISession = {
+          id: generateId(),
+          votingDuration: votingDurationMs,
+          endsAt: Date.now() + votingDurationMs,
+          title,
+          points,
+          votes: {},
+          state: 'active',
+          teamId: team.id,
+          channelId,
+          userId: payload.user.id,
+          participants,
+          rawPostMessageResponse: undefined,
+          protected: isProtected,
+          average: calculateAverage,
+        };
 
-      logger.info({
-        msg: `Creating a new session`,
-        team: {
-          id: team.id,
-          name: team.name,
-        },
-        user: {
-          id: payload.user.id,
-          name: payload.user.name,
-        },
-        channelId,
-        sessionId: session.id,
+        logger.info({
+          msg: `Creating a new session`,
+          team: {
+            id: team.id,
+            name: team.name,
+          },
+          user: {
+            id: payload.user.id,
+            name: payload.user.name,
+          },
+          channelId,
+          sessionId: session.id,
+          bulkCount: titles.length,
+        });
+
+        const postMessageResponse = await SessionController.postMessage(
+          session,
+          team
+        );
+        session.rawPostMessageResponse = postMessageResponse as any;
+
+        SessionStore.upsert(session);
+
+        if (process.env.COUNTLY_APP_KEY) {
+          Countly.add_event({
+            key: 'topic_created',
+            count: 1,
+            segmentation: {
+              participants: session.participants.length,
+              votingDuration: votingDurationMs,
+              bulkCount: titles.length,
+            },
+          });
+        }
       });
 
-      const postMessageResponse = await SessionController.postMessage(
-        session,
-        team
-      );
-      session.rawPostMessageResponse = postMessageResponse as any;
-
-      SessionStore.upsert(session);
+      await Promise.all(tasks);
 
       res.send();
 
       const [upsertSettingErr] = await to(
-        TeamStore.upsertSettings(team.id, session.channelId, {
-          [ChannelSettingKey.PARTICIPANTS]: session.participants.join(' '),
-          [ChannelSettingKey.POINTS]: session.points
+        TeamStore.upsertSettings(team.id, channelId, {
+          [ChannelSettingKey.PARTICIPANTS]: participants.join(' '),
+          [ChannelSettingKey.POINTS]: points
             .map((point) => {
               if (!point.includes(' ')) return point;
               if (point.includes(`"`)) return `'${point}'`;
               return `"${point}"`;
             })
             .join(' '),
-          [ChannelSettingKey.PROTECTED]: JSON.stringify(session.protected),
-          [ChannelSettingKey.AVERAGE]: JSON.stringify(session.average),
+          [ChannelSettingKey.PROTECTED]: JSON.stringify(isProtected),
+          [ChannelSettingKey.AVERAGE]: JSON.stringify(calculateAverage),
           [ChannelSettingKey.VOTING_DURATION]: prettyMilliseconds(
             votingDurationMs
           ),
@@ -791,19 +824,9 @@ export class InteractivityRoute {
       if (upsertSettingErr) {
         logger.error({
           msg: `Could not upsert settings after creating new session`,
-          session,
+          teamId: team.id,
+          channelId,
           err: upsertSettingErr,
-        });
-      }
-
-      if (process.env.COUNTLY_APP_KEY) {
-        Countly.add_event({
-          key: 'topic_created',
-          count: 1,
-          segmentation: {
-            participants: session.participants.length,
-            votingDuration: votingDurationMs,
-          },
         });
       }
     } catch (err) {
@@ -874,7 +897,15 @@ export class InteractivityRoute {
         };
       } else if (err.message == SessionControllerErrorCode.TITLE_REQUIRED) {
         shouldLog = false;
-        errorMessage = `Title is required`;
+        errorMessage = `At least one title is required`;
+        modalErrors = {
+          title: errorMessage,
+        };
+      } else if (
+        err.message == SessionControllerErrorCode.MAX_TITLE_LIMIT_EXCEEDED
+      ) {
+        shouldLog = false;
+        errorMessage = `You can bulk-create up to 10 sessions`;
         modalErrors = {
           title: errorMessage,
         };

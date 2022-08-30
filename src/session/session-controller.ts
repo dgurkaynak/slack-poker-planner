@@ -27,6 +27,7 @@ export const DEFAULT_POINTS = [
 export enum SessionControllerErrorCode {
   NO_PARTICIPANTS = 'no_participants',
   TITLE_REQUIRED = 'title_required',
+  MAX_TITLE_LIMIT_EXCEEDED = 'max_title_limit_exceeded',
   UNEXPECTED_PAYLOAD = 'unexpected_payload',
   INVALID_POINTS = 'invalid_points',
   SESSION_NOT_ACTIVE = 'session_not_active',
@@ -147,6 +148,7 @@ export class SessionController {
             block_id: 'title',
             element: {
               type: 'plain_text_input',
+              multiline: true,
               placeholder: {
                 type: 'plain_text',
                 text: 'Write a topic for this voting session',
@@ -157,6 +159,12 @@ export class SessionController {
             label: {
               type: 'plain_text',
               text: 'Title',
+              emoji: true,
+            },
+            hint: {
+              type: 'plain_text',
+              text:
+                'You can bulk-create voting sessions, every line will correspond to a new separate session (up to 10)',
               emoji: true,
             },
           },
@@ -197,14 +205,14 @@ export class SessionController {
                 })
                 .join(' '),
             },
-            hint: {
-              type: 'plain_text',
-              text: 'Enter points separated by space',
-              emoji: true,
-            },
             label: {
               type: 'plain_text',
               text: 'Points',
+              emoji: true,
+            },
+            hint: {
+              type: 'plain_text',
+              text: 'Enter points separated by space',
               emoji: true,
             },
           },
@@ -573,7 +581,7 @@ function buildMessageAttachmentsForEnding(session: ISession) {
           name: 'action',
           text: 'Delete message',
           type: 'button',
-          value: JSON.stringify({b: 1}), // button type, 0 => restart, 1 => delete
+          value: JSON.stringify({ b: 1 }), // button type, 0 => restart, 1 => delete
           style: 'danger',
         },
       ],
