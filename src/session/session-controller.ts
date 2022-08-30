@@ -50,7 +50,7 @@ export class SessionController {
     return slackWebClient.chat.postMessage({
       channel: session.channelId,
       text: `Title: *${session.title}*\n\nVotes:\n${votesText}`,
-      attachments: buildMessageAttachmentsForVoting(session) as any,
+      attachments: buildMessageAttachments(session) as any,
     });
   }
 
@@ -391,7 +391,7 @@ export class SessionController {
         text: userId
           ? `Title: *${session.title}* (revealed by <@${userId}>)\n\nResult:\n${votesText}${averageText}`
           : `Title: *${session.title}*\n\nResult:\n${votesText}${averageText}`,
-        attachments: buildMessageAttachmentsForEnding(session) as any,
+        attachments: buildMessageAttachments(session) as any,
       });
     } else if (session.state == 'cancelled') {
       await slackWebClient.chat.update({
@@ -400,7 +400,7 @@ export class SessionController {
         text: userId
           ? `Title: *${session.title}* (cancelled by <@${userId}>)`
           : `Title: *${session.title}* (cancelled)`,
-        attachments: buildMessageAttachmentsForEnding(session) as any,
+        attachments: buildMessageAttachments(session) as any,
       });
     } else {
       const votesText = map(session.participants.sort(), (userId) => {
@@ -415,7 +415,7 @@ export class SessionController {
         ts: session.rawPostMessageResponse.ts,
         channel: session.rawPostMessageResponse.channel,
         text: `Title: *${session.title}*\n\nVotes:\n${votesText}`,
-        attachments: buildMessageAttachmentsForVoting(session) as any,
+        attachments: buildMessageAttachments(session) as any,
       });
     }
   }
@@ -510,52 +510,54 @@ async function autoRevealEndedSessions() {
   ) as any;
 }
 
-function buildMessageAttachmentsForVoting(session: ISession) {
-  const pointAttachments = chunk(session.points, 5).map((points) => {
-    return {
-      text: '',
-      fallback: 'You are unable to vote',
-      callback_id: `vote:${session.id}`,
-      color: '#3AA3E3',
-      attachment_type: 'default',
-      actions: points.map((point) => ({
-        name: 'point',
-        text: point,
-        type: 'button',
-        value: point,
-      })),
-    };
-  });
-
-  return [
-    ...pointAttachments,
-    {
-      text: 'Actions',
-      fallback: 'You are unable to send action',
-      callback_id: `action:${session.id}`,
-      color: '#3AA3E3',
-      attachment_type: 'default',
-      actions: [
-        {
-          name: 'action',
-          text: 'Reveal',
+function buildMessageAttachments(session: ISession) {
+  if (session.state === 'active') {
+    const pointAttachments = chunk(session.points, 5).map((points) => {
+      return {
+        text: '',
+        fallback: 'You are unable to vote',
+        callback_id: `vote:${session.id}`,
+        color: '#3AA3E3',
+        attachment_type: 'default',
+        actions: points.map((point) => ({
+          name: 'point',
+          text: point,
           type: 'button',
-          value: 'reveal',
-          style: 'danger',
-        },
-        {
-          name: 'action',
-          text: 'Cancel',
-          type: 'button',
-          value: 'cancel',
-          style: 'danger',
-        },
-      ],
-    },
-  ];
-}
+          value: point,
+        })),
+      };
+    });
 
-function buildMessageAttachmentsForEnding(session: ISession) {
+    return [
+      ...pointAttachments,
+      {
+        text: 'Actions',
+        fallback: 'You are unable to send action',
+        callback_id: `action:${session.id}`,
+        color: '#3AA3E3',
+        attachment_type: 'default',
+        actions: [
+          {
+            name: 'action',
+            text: 'Reveal',
+            type: 'button',
+            value: 'reveal',
+            style: 'danger',
+          },
+          {
+            name: 'action',
+            text: 'Cancel',
+            type: 'button',
+            value: 'cancel',
+            style: 'danger',
+          },
+        ],
+      },
+    ];
+  }
+
+  // Session is revealed or cancelled
+
   // If session is in old structure, noop
   // TODO: You can delete here after 7 days of production release
   if (typeof session.votingDuration !== 'number') {
@@ -574,7 +576,15 @@ function buildMessageAttachmentsForEnding(session: ISession) {
           name: 'action',
           text: 'Restart voting',
           type: 'button',
-          value: encodeRestartVotingButtonPayload(session),
+          value: JSON.stringify({
+            b: 0, // button type, 0 => restart, 1 => delete
+            vd: session.votingDuration,
+            ti: session.title,
+            po: session.points,
+            pa: session.participants,
+            pr: session.protected ? 1 : 0,
+            av: session.average ? 1 : 0,
+          }),
           style: 'default',
         },
         {
@@ -587,16 +597,4 @@ function buildMessageAttachmentsForEnding(session: ISession) {
       ],
     },
   ];
-}
-
-function encodeRestartVotingButtonPayload(session: ISession) {
-  return JSON.stringify({
-    b: 0, // button type, 0 => restart, 1 => delete
-    vd: session.votingDuration,
-    ti: session.title,
-    po: session.points,
-    pa: session.participants,
-    pr: session.protected ? 1 : 0,
-    av: session.average ? 1 : 0,
-  });
 }
