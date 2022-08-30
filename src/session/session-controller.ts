@@ -460,6 +460,7 @@ async function autoRevealEndedSessions() {
   const tasks = endedSessions.map(async (session) => {
     try {
       // If `teamId` doesn't exists in the session, just remove the session like before.
+      // TODO: You can delete here after 7 days of production release
       if (typeof session.teamId !== 'string') {
         await SessionStore.remove(session.id);
         return;
@@ -548,6 +549,7 @@ function buildMessageAttachmentsForVoting(session: ISession) {
 
 function buildMessageAttachmentsForEnding(session: ISession) {
   // If session is in old structure, noop
+  // TODO: You can delete here after 7 days of production release
   if (typeof session.votingDuration !== 'number') {
     return [];
   }

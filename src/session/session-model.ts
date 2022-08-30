@@ -43,6 +43,7 @@ export async function restore(): Promise<void> {
       const session = JSON.parse(rawSession) as ISession;
 
       // Migrate `expiresAt`
+      // TODO: You can delete here after 7 days of production release
       if (
         typeof session.endsAt !== 'number' &&
         typeof (session as any).expiresAt === 'number'
