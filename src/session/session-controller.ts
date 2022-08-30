@@ -49,7 +49,7 @@ export class SessionController {
     return slackWebClient.chat.postMessage({
       channel: session.channelId,
       text: `Title: *${session.title}*\n\nVotes:\n${votesText}`,
-      attachments: buildMessageAttachments(session) as any,
+      attachments: buildMessageAttachmentsForVoting(session) as any,
     });
   }
 
@@ -370,7 +370,7 @@ export class SessionController {
         text: userId
           ? `Title: *${session.title}* (revealed by <@${userId}>)\n\nResult:\n${votesText}${averageText}`
           : `Title: *${session.title}*\n\nResult:\n${votesText}${averageText}`,
-        attachments: [],
+        attachments: buildMessageAttachmentsForEnding(session) as any,
       });
     } else if (session.state == 'cancelled') {
       await slackWebClient.chat.update({
@@ -379,7 +379,7 @@ export class SessionController {
         text: userId
           ? `Title: *${session.title}* (cancelled by <@${userId}>)`
           : `Title: *${session.title}* (cancelled)`,
-        attachments: [],
+        attachments: buildMessageAttachmentsForEnding(session) as any,
       });
     } else {
       const votesText = map(session.participants.sort(), (userId) => {
@@ -394,7 +394,7 @@ export class SessionController {
         ts: session.rawPostMessageResponse.ts,
         channel: session.rawPostMessageResponse.channel,
         text: `Title: *${session.title}*\n\nVotes:\n${votesText}`,
-        attachments: buildMessageAttachments(session) as any,
+        attachments: buildMessageAttachmentsForVoting(session) as any,
       });
     }
   }
@@ -496,7 +496,7 @@ async function autoRevealEndedSessions() {
   ) as any;
 }
 
-export function buildMessageAttachments(session: ISession) {
+function buildMessageAttachmentsForVoting(session: ISession) {
   const pointAttachments = chunk(session.points, 5).map((points) => {
     return {
       text: '',
@@ -539,4 +539,49 @@ export function buildMessageAttachments(session: ISession) {
       ],
     },
   ];
+}
+
+function buildMessageAttachmentsForEnding(session: ISession) {
+  // If session is in old structure, noop
+  if (typeof session.votingDuration !== 'number') {
+    return [];
+  }
+
+  return [
+    {
+      text: '',
+      fallback: 'You are unable to send action',
+      callback_id: `end_action:${session.id}`,
+      color: '#3AA3E3',
+      attachment_type: 'default',
+      actions: [
+        {
+          name: 'action',
+          text: 'Restart voting',
+          type: 'button',
+          value: encodeRestartVotingButtonPayload(session),
+          style: 'default',
+        },
+        {
+          name: 'action',
+          text: 'Delete message',
+          type: 'button',
+          value: 'TODO',
+          style: 'danger',
+        },
+      ],
+    },
+  ];
+}
+
+function encodeRestartVotingButtonPayload(session: ISession) {
+  return JSON.stringify({
+    b: 0, // button type
+    vd: session.votingDuration,
+    ti: session.title,
+    po: session.points,
+    pa: session.participants,
+    pr: session.protected ? 1 : 0,
+    av: session.average ? 1 : 0,
+  });
 }

@@ -6,6 +6,10 @@ export interface ISession {
    */
   id: string;
   /**
+   * Voting duration in milliseconds.
+   */
+  votingDuration: number;
+  /**
    * The timestamp of vote ending.
    */
   endsAt: number;

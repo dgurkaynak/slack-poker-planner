@@ -125,16 +125,6 @@ export class InteractivityRoute {
 
     const [action, sessionId] = parts;
 
-    const session = SessionStore.findById(sessionId);
-
-    if (!session) {
-      return res.json({
-        text: `Ooops, could not find the session, it may be expired or cancelled`,
-        response_type: 'ephemeral',
-        replace_original: false,
-      });
-    }
-
     // Get team
     const [teamErr, team] = await to(TeamStore.findById(payload.team.id));
 
@@ -171,6 +161,16 @@ export class InteractivityRoute {
        * - Cancel
        */
       case 'action': {
+        const session = SessionStore.findById(sessionId);
+
+        if (!session) {
+          return res.json({
+            text: `Ooops, could not find the session, it may be expired or cancelled`,
+            response_type: 'ephemeral',
+            replace_original: false,
+          });
+        }
+
         const sessionAction = payload.actions[0].value;
 
         if (sessionAction == 'reveal') {
@@ -212,7 +212,207 @@ export class InteractivityRoute {
        * A user clicked vote point button
        */
       case 'vote': {
+        const session = SessionStore.findById(sessionId);
+
+        if (!session) {
+          return res.json({
+            text: `Ooops, could not find the session, it may be expired or cancelled`,
+            response_type: 'ephemeral',
+            replace_original: false,
+          });
+        }
+
         await InteractivityRoute.vote({ payload, team, session, res });
+        return;
+      }
+
+      /**
+       * A user clicked ended session actions button:
+       * - Restart voting
+       * - Delete message
+       */
+      case 'end_action': {
+        const buttonPayloadStr = payload.actions[0].value;
+        let buttonPayload: any;
+
+        try {
+          buttonPayload = JSON.parse(buttonPayloadStr);
+        } catch (err) {
+          const errorId = generateId();
+          logger.error({
+            msg: `Unexpected button payload`,
+            errorId,
+            buttonPayloadStr,
+            payload,
+          });
+
+          res.json({
+            text:
+              `Unexpected button payload (error code: ${errorId})\n\n` +
+              `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
+            response_type: 'ephemeral',
+            replace_original: false,
+          });
+
+          return;
+        }
+
+        ////////////////////
+        // Restart voting //
+        ////////////////////
+        if (buttonPayload.b === 0) {
+          const {
+            vd: votingDuration,
+            ti: title,
+            po: points,
+            pa: participants,
+          } = buttonPayload;
+
+          const session: ISession = {
+            id: generateId(),
+            votingDuration: votingDuration,
+            endsAt: Date.now() + votingDuration,
+            title,
+            points,
+            votes: {},
+            state: 'active',
+            teamId: team.id,
+            channelId: payload.channel.id,
+            userId: payload.user.id,
+            participants,
+            rawPostMessageResponse: undefined,
+            protected: buttonPayload.pr === 1 ? true : false,
+            average: buttonPayload.av === 1 ? true : false,
+          };
+
+          // if restart
+          logger.info({
+            msg: `Restarting session`,
+            originalSessionId: sessionId,
+            team: {
+              id: team.id,
+              name: team.name,
+            },
+            user: {
+              id: payload.user.id,
+              name: payload.user.name,
+            },
+            channelId: payload.channel.id,
+            sessionId: session.id,
+          });
+
+          try {
+            const postMessageResponse = await SessionController.postMessage(
+              session,
+              team
+            );
+            session.rawPostMessageResponse = postMessageResponse as any;
+
+            SessionStore.upsert(session);
+
+            res.send();
+
+            if (process.env.COUNTLY_APP_KEY) {
+              Countly.add_event({
+                key: 'topic_restarted',
+                count: 1,
+                segmentation: {},
+              });
+            }
+          } catch (err) {
+            const errorId = generateId();
+            let shouldLog = true;
+            let logLevel: 'info' | 'warn' | 'error' = 'error';
+            let errorMessage =
+              `Internal server error, please try again later (error code: ${errorId})\n\n` +
+              `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`;
+
+            const slackErrorCode = err.data && err.data.error;
+            if (slackErrorCode) {
+              errorMessage =
+                `Unexpected Slack API Error: "*${slackErrorCode}*" (error code: ${errorId})\n\n` +
+                `If you think this is an issue, please report to <${process.env.ISSUES_LINK}>`;
+            }
+
+            /**
+             * Slack API platform errors
+             */
+            if (slackErrorCode == 'not_in_channel') {
+              shouldLog = false;
+              errorMessage =
+                `Poker Planner app is not added to this channel. ` +
+                `Please try again after adding it. ` +
+                `You can simply add the app just by mentioning it, like "*@poker_planner*".`;
+            } else if (slackErrorCode == 'channel_not_found') {
+              shouldLog = false;
+              errorMessage =
+                `Oops, we couldn't find this channel. ` +
+                `Are you sure that Poker Planner app is added to this channel/conversation? ` +
+                `You can simply add the app by mentioning it, like "*@poker_planner*". ` +
+                `However this may not work in Group DMs, you need to explicitly add it as a ` +
+                `member from conversation details menu. Please try again after adding it.`;
+            } else if (slackErrorCode == 'token_revoked') {
+              logLevel = 'info';
+              errorMessage =
+                `Poker Planner's access has been revoked for this workspace. ` +
+                `In order to use it, you need to install the app again on ` +
+                `<${process.env.APP_INSTALL_LINK}>`;
+            } else if (
+              slackErrorCode == 'method_not_supported_for_channel_type'
+            ) {
+              logLevel = 'info';
+              errorMessage = `Poker Planner cannot be used in this type of conversations.`;
+            }
+
+            if (shouldLog) {
+              logger[logLevel]({
+                msg: `Could not restart session`,
+                errorId,
+                err,
+                payload,
+              });
+            }
+
+            res.json({
+              text: errorMessage,
+              response_type: 'ephemeral',
+              replace_original: false,
+            });
+          }
+
+          return;
+        }
+        ////////////////////
+        // Delete message //
+        ////////////////////
+        else if (buttonPayload.b === 1) {
+          // TODO
+
+          return;
+        }
+        ////////////////////
+        // Unknown button //
+        ////////////////////
+        else {
+          const errorId = generateId();
+          logger.error({
+            msg: `Unexpected button type`,
+            errorId,
+            buttonPayloadStr,
+            payload,
+          });
+
+          res.json({
+            text:
+              `Unexpected button type (error code: ${errorId})\n\n` +
+              `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
+            response_type: 'ephemeral',
+            replace_original: false,
+          });
+
+          return;
+        }
+
         return;
       }
 
@@ -478,6 +678,7 @@ export class InteractivityRoute {
       // Create session struct
       const session: ISession = {
         id: generateId(),
+        votingDuration: votingDurationMs,
         endsAt: Date.now() + votingDurationMs,
         title,
         points,
