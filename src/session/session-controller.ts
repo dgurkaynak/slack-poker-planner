@@ -7,6 +7,7 @@ import { ITeam, TeamStore } from '../team/team-model';
 import { WebClient } from '@slack/web-api';
 import logger from '../lib/logger';
 import Countly from 'countly-sdk-nodejs';
+import getUrls from 'get-urls';
 
 export const DEFAULT_POINTS = [
   '0',
@@ -131,7 +132,7 @@ export class SessionController {
         },
         submit: {
           type: 'plain_text',
-          text: 'Start New Session',
+          text: 'Start New Session(s)',
           emoji: true,
         },
         close: {
@@ -468,6 +469,22 @@ async function autoRevealEndedSessions() {
 }
 
 function buildMessageBlocks(session: ISession) {
+  // In slack's `header` block, URLs are not clickable
+  // Extract them and put it as a normal text
+  const urlsInTitle = getUrls(session.title, { requireSchemeOrWww: true });
+  const urlsText = urlsInTitle.size > 0 ? Array.from(urlsInTitle).join('\n') + '\n\n' : '';
+
+  // Remove the URLs from title
+  let title = session.title;
+  urlsInTitle.forEach((url) => {
+    title = title.replaceAll(url, '');
+  });
+
+  // If the title is all URLs, leave it as is
+  if (title.trim().length === 0) {
+    title = session.title;
+  }
+
   if (session.state === 'active') {
     const votesText = map(session.participants.sort(), (userId) => {
       if (session.votes.hasOwnProperty(userId)) {
@@ -482,7 +499,7 @@ function buildMessageBlocks(session: ISession) {
         type: 'header',
         text: {
           type: 'plain_text',
-          text: session.title,
+          text: title,
           emoji: true,
         },
       },
@@ -491,7 +508,7 @@ function buildMessageBlocks(session: ISession) {
         elements: [
           {
             type: 'mrkdwn',
-            text: votesText,
+            text: `${urlsText}${votesText}`,
           },
         ],
       },
@@ -535,7 +552,7 @@ function buildMessageBlocks(session: ISession) {
         type: 'header',
         text: {
           type: 'plain_text',
-          text: session.title,
+          text: title,
           emoji: true,
         },
       },
@@ -544,7 +561,7 @@ function buildMessageBlocks(session: ISession) {
         elements: [
           {
             type: 'mrkdwn',
-            text: `${votesText}${averageText}`,
+            text: `${urlsText}${votesText}${averageText}`,
           },
         ],
       },
@@ -557,7 +574,7 @@ function buildMessageBlocks(session: ISession) {
         type: 'header',
         text: {
           type: 'plain_text',
-          text: session.title,
+          text: title,
           emoji: true,
         },
       },
@@ -566,7 +583,7 @@ function buildMessageBlocks(session: ISession) {
         elements: [
           {
             type: 'mrkdwn',
-            text: `Cancelled`,
+            text: `${urlsText}Cancelled`,
           },
         ],
       },

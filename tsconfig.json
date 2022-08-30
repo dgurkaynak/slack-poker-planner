@@ -4,7 +4,7 @@
     "sourceMap": true,
     "noImplicitAny": true,
     "module": "es6",
-    "target": "es6",
+    "target": "ES2021",
     "jsx": "react",
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
