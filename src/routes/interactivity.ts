@@ -547,6 +547,7 @@ export class InteractivityRoute {
           count: 1,
           segmentation: {
             participants: session.participants.length,
+            votingDuration: votingDurationMs,
           },
         });
       }
@@ -855,7 +856,7 @@ export class InteractivityRoute {
 
     if (process.env.COUNTLY_APP_KEY) {
       Countly.add_event({
-        key: 'topic_revealed',
+        key: 'session_revealed_manual',
         count: 1,
         segmentation: {},
       });
@@ -937,7 +938,7 @@ export class InteractivityRoute {
 
     if (process.env.COUNTLY_APP_KEY) {
       Countly.add_event({
-        key: 'topic_cancelled',
+        key: 'session_cancelled',
         count: 1,
         segmentation: {},
       });
