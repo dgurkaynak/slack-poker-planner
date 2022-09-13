@@ -552,7 +552,7 @@ function buildMessageBlocks(session: ISession) {
         type: 'header',
         text: {
           type: 'plain_text',
-          text: title,
+          text: title.substring(0, 150),
           emoji: true,
         },
       },
@@ -574,7 +574,7 @@ function buildMessageBlocks(session: ISession) {
         type: 'header',
         text: {
           type: 'plain_text',
-          text: title,
+          text: title.substring(0, 150),
           emoji: true,
         },
       },
