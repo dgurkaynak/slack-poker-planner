@@ -26,3 +26,5 @@ export async function init() {
 export function getSingleton() {
   return db;
 }
+
+export default {init};
