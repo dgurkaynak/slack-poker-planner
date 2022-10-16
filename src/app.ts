@@ -1,10 +1,10 @@
 require('dotenv').config();
 
 import logger from './lib/logger';
-import * as sqlite from './lib/sqlite';
-import * as express from 'express';
-import * as bodyParser from 'body-parser';
-import * as exphbs from 'express-handlebars';
+import sqlite from './lib/sqlite';
+import express from 'express';
+import bodyParser from 'body-parser';
+import exphbs from 'express-handlebars';
 import { OAuthRoute } from './routes/oauth';
 import { PPCommandRoute } from './routes/pp-command';
 import { InteractivityRoute } from './routes/interactivity';
