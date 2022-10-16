@@ -1,5 +1,5 @@
 {
-  "name": "slack-poker-planner",
+  "name": "slack-jira-estimation-planner",
   "version": "2.0.2",
   "description": "Poker planning app for slack",
   "main": "dist/app.js",
@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dgurkaynak/slack-poker-planner.git"
+    "url": "git+https://github.com/hendriknielaender/slack-jira-estimation-planner.git"
   },
   "keywords": [
     "slack",
@@ -20,19 +20,13 @@
     "poker planner",
     "scrum poker"
   ],
-  "author": "Deniz Gurkaynak <dgurkaynak@gmail.com>",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/dgurkaynak/slack-poker-planner/issues"
-  },
-  "homepage": "https://github.com/dgurkaynak/slack-poker-planner#readme",
   "engines": {
     "node": ">=16"
   },
   "dependencies": {
     "@slack/web-api": "^6.1.0",
     "body-parser": "^1.19.0",
-    "countly-sdk-nodejs": "^20.4.0",
     "dotenv": "^16.0.1",
     "express": "^4.17.1",
     "express-handlebars": "^6.0.6",
@@ -43,7 +37,6 @@
     "pino": "^8.4.2",
     "pretty-ms": "^7.0.1",
     "quoted-string-space-split": "^1.1.1",
-    "redis": "^4.3.0",
     "shortid": "^2.2.15",
     "sqlite": "^4.0.10",
     "sqlite3": "^5.0.11"

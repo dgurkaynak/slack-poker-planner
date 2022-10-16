@@ -6,7 +6,6 @@ import groupBy from 'lodash/groupBy';
 import { ITeam, TeamStore } from '../team/team-model';
 import { WebClient } from '@slack/web-api';
 import logger from '../lib/logger';
-import Countly from 'countly-sdk-nodejs';
 import getUrls from 'get-urls';
 
 export const DEFAULT_POINTS = [
@@ -329,14 +328,6 @@ export class SessionController {
         },
       });
 
-      if (process.env.COUNTLY_APP_KEY) {
-        Countly.add_event({
-          key: 'session_revealed_everyone_voted',
-          count: 1,
-          segmentation: {},
-        });
-      }
-
       return;
     }
 
@@ -442,14 +433,6 @@ async function autoRevealEndedSessions() {
       session.state = 'revealed';
       await SessionController.updateMessage(session, team);
       await SessionStore.remove(session.id);
-
-      if (process.env.COUNTLY_APP_KEY) {
-        Countly.add_event({
-          key: 'session_revealed_ended',
-          count: 1,
-          segmentation: {},
-        });
-      }
     } catch (err) {
       logger.error({
         msg: `Cannot auto-reveal an ended session, removing it...`,

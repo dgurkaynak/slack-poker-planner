@@ -10,7 +10,6 @@ import {
   SessionControllerErrorCode,
   DEFAULT_POINTS,
 } from '../session/session-controller';
-import Countly from 'countly-sdk-nodejs';
 import isEmpty from 'lodash/isEmpty';
 import {
   IInteractiveMessageActionPayload,
@@ -310,14 +309,6 @@ export class InteractivityRoute {
             SessionStore.upsert(session);
 
             res.send();
-
-            if (process.env.COUNTLY_APP_KEY) {
-              Countly.add_event({
-                key: 'topic_restarted',
-                count: 1,
-                segmentation: {},
-              });
-            }
           } catch (err) {
             const errorId = generateId();
             let shouldLog = true;
@@ -407,14 +398,6 @@ export class InteractivityRoute {
             );
 
             res.send();
-
-            if (process.env.COUNTLY_APP_KEY) {
-              Countly.add_event({
-                key: 'topic_deleted',
-                count: 1,
-                segmentation: {},
-              });
-            }
           } catch (err) {
             const errorId = generateId();
             let errorMessage =
@@ -786,18 +769,6 @@ export class InteractivityRoute {
         session.rawPostMessageResponse = postMessageResponse as any;
 
         SessionStore.upsert(session);
-
-        if (process.env.COUNTLY_APP_KEY) {
-          Countly.add_event({
-            key: 'topic_created',
-            count: 1,
-            segmentation: {
-              participants: session.participants.length,
-              votingDuration: votingDurationMs,
-              bulkCount: titles.length,
-            },
-          });
-        }
       });
 
       await Promise.all(tasks);
@@ -1055,17 +1026,6 @@ export class InteractivityRoute {
     }
 
     // Successfully voted
-
-    if (process.env.COUNTLY_APP_KEY) {
-      Countly.add_event({
-        key: 'topic_voted',
-        count: 1,
-        segmentation: {
-          points: payload.actions[0].value,
-        },
-      });
-    }
-
     return res.send();
   }
 
@@ -1140,14 +1100,6 @@ export class InteractivityRoute {
       });
     }
 
-    if (process.env.COUNTLY_APP_KEY) {
-      Countly.add_event({
-        key: 'session_revealed_manual',
-        count: 1,
-        segmentation: {},
-      });
-    }
-
     return res.send();
   }
 
@@ -1219,14 +1171,6 @@ export class InteractivityRoute {
         text: errorMessage,
         response_type: 'ephemeral',
         replace_original: false,
-      });
-    }
-
-    if (process.env.COUNTLY_APP_KEY) {
-      Countly.add_event({
-        key: 'session_cancelled',
-        count: 1,
-        segmentation: {},
       });
     }
 
