@@ -60,22 +60,6 @@ docker run -d \
   --name slack-poker-planner \
   dgurkaynak/slack-poker-planner
 ```
-- *(optional)* If you wanna persist poker sessions, you can provide a Redis server.
-```sh
-docker run -d \
-  --restart=unless-stopped \
-  -p 3000:3000 \
-  -e SLACK_CLIENT_ID=xxx \
-  -e SLACK_CLIENT_SECRET=xxx \
-  -e SLACK_VERIFICATION_TOKEN=xxx \
-  -e SLACK_APP_ID=xxx \
-  -e DATA_FOLDER=/data \
-  -v /host/data/folder/slack-poker-planner:/data \
-  -e USE_REDIS=true \
-  -e REDIS_URL="redis://X.X.X.X:6379" \
-  --name slack-poker-planner \
-  dgurkaynak/slack-poker-planner
-```
 
 > Check out [.env](https://github.com/dgurkaynak/slack-poker-planner/blob/master/.env) file for the complete list of environment variables.
 
