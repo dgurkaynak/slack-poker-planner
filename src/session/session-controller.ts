@@ -396,14 +396,59 @@ export class SessionController {
   }
 
   /**
-   * For a given slack slash-command text, remove mentions
+   * When `/pp {message}` is used, Slack auto-formats the {message} part.
+   * How Slack formats can be seen at: https://api.slack.com/reference/surfaces/formatting
+   *
+   * We don't want that. We want:
+   * - Strip user mentions
+   * - Strip usergroup mentions
+   * - Strip channel mentions
+   * - Unformat URL links
+   *
+   * In Slack docs, there is a guide on how to parse formatted messages:
+   * https://api.slack.com/reference/surfaces/formatting#retrieving-messages
    */
-  static stripMentions(text: string) {
-    return text
-      .replace(/<@(.*?)>/g, '')
-      .replace(/<!(.*?)>/g, '')
-      .replace(/\s\s+/g, ' ')
-      .trim();
+  static extractTitle(formattedText: string) {
+    const matches = formattedText.matchAll(/<(.*?)>/g);
+    let title = formattedText;
+
+    // We're gonna modify the text, in order to get the indexes right, we need to loop in reverse.
+    const matchesReversed = Array.from(matches).reverse();
+
+    matchesReversed.forEach((match) => {
+      const startIndex = match.index;
+      const endIndex = startIndex + match[0].length;
+      const innerText = match[1];
+
+      // If it starts `#C`, it's a channel link -- let's remove that
+      if (innerText.startsWith('#C')) {
+        title = stringReplaceRange(title, startIndex, endIndex, '');
+        return;
+      }
+
+      // If it starts with `@U` or `@W`, it's a user mention -- let's remove that
+      if (innerText.startsWith('@U') || innerText.startsWith('@W')) {
+        title = stringReplaceRange(title, startIndex, endIndex, '');
+        return;
+      }
+
+      // If it starts with `!`, it's a user group mention -- let's remove that
+      if (innerText.startsWith('!')) {
+        title = stringReplaceRange(title, startIndex, endIndex, '');
+        return;
+      }
+
+      // Now, according to docs (https://api.slack.com/reference/surfaces/formatting#retrieving-messages),
+      // match should be a URL. But it can include `|` (pipe), we don't want after the pipe.
+      const pipeIndex = innerText.indexOf('|');
+      if (pipeIndex > -1) {
+        title = stringReplaceRange(title, startIndex, endIndex, innerText.substring(0, pipeIndex));
+      } else {
+        title = stringReplaceRange(title, startIndex, endIndex, innerText);
+      }
+    });
+
+    return title.trim();
   }
 }
 
@@ -735,4 +780,11 @@ function buildMessageAttachments(session: ISession) {
       ],
     },
   ];
+}
+
+/**
+ * Credit: https://stackoverflow.com/a/12568270
+ */
+function stringReplaceRange(s: string, start: number, end: number, substitute: string) {
+  return s.substring(0, start) + substitute + s.substring(end);
 }

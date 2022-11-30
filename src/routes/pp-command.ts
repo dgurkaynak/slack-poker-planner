@@ -210,7 +210,7 @@ export class PPCommandRoute {
         triggerId: cmd.trigger_id,
         team,
         channelId: cmd.channel_id,
-        title: SessionController.stripMentions(cmd.text).trim(),
+        title: SessionController.extractTitle(cmd.text),
         participants: settings[ChannelSettingKey.PARTICIPANTS],
         points: settings[ChannelSettingKey.POINTS],
         isProtected: settings[ChannelSettingKey.PROTECTED],
