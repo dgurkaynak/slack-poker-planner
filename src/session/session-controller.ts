@@ -747,6 +747,16 @@ function buildMessageAttachments(session: ISession) {
     return [];
   }
 
+  const restartButtonValue = JSON.stringify({
+    b: 0, // button type, 0 => restart, 1 => delete
+    vd: session.votingDuration,
+    ti: session.title,
+    po: session.points,
+    pa: session.participants,
+    pr: session.protected ? 1 : 0,
+    av: session.average ? 1 : 0,
+  });
+
   return [
     {
       text: '',
@@ -759,15 +769,7 @@ function buildMessageAttachments(session: ISession) {
           name: 'action',
           text: 'Restart voting',
           type: 'button',
-          value: JSON.stringify({
-            b: 0, // button type, 0 => restart, 1 => delete
-            vd: session.votingDuration,
-            ti: session.title,
-            po: session.points,
-            pa: session.participants,
-            pr: session.protected ? 1 : 0,
-            av: session.average ? 1 : 0,
-          }),
+          value: restartButtonValue,
           style: 'default',
         },
         {

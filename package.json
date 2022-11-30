@@ -37,6 +37,7 @@
     "express": "^4.17.1",
     "express-handlebars": "^6.0.6",
     "get-urls": "^10.0.1",
+    "html-entities": "^2.3.3",
     "lodash": "^4.17.19",
     "node-fetch": "^2.6.1",
     "parse-duration": "^1.0.2",

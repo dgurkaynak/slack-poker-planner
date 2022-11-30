@@ -23,6 +23,7 @@ import isObject from 'lodash/isObject';
 import splitSpacesExcludeQuotes from 'quoted-string-space-split';
 import parseDuration from 'parse-duration';
 import prettyMilliseconds from 'pretty-ms';
+import {decode} from 'html-entities';
 
 export class InteractivityRoute {
   /**
@@ -263,10 +264,11 @@ export class InteractivityRoute {
         if (buttonPayload.b === 0) {
           const {
             vd: votingDuration,
-            ti: title,
-            po: points,
             pa: participants,
           } = buttonPayload;
+
+          const title = decode(buttonPayload.ti);
+          const points = buttonPayload.po.map(decode);
 
           const session: ISession = {
             id: generateId(),
