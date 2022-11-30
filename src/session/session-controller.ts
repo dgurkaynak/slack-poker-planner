@@ -496,7 +496,7 @@ async function autoRevealEndedSessions() {
         });
       }
     } catch (err) {
-      logger.error({
+      logger.warn({
         msg: `Cannot auto-reveal an ended session, removing it...`,
         sessionId: session.id,
         err,
