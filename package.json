@@ -2,11 +2,10 @@
   "name": "slack-poker-planner",
   "version": "2.0.3",
   "description": "Poker planning app for slack",
-  "main": "dist/app.js",
   "scripts": {
     "build": "webpack --mode development",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node dist/app.js",
+    "start": "node dist/slack-poker-planner.js",
     "watch": "webpack --mode development --watch"
   },
   "repository": {

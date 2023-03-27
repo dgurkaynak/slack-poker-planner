@@ -18,7 +18,7 @@ module.exports = {
     extensions: ['.tsx', '.ts', '.js'],
   },
   output: {
-    filename: 'app.js',
+    filename: 'slack-poker-planner.js',
     path: path.resolve(__dirname, 'dist'),
   },
   externals: [nodeExternals()],
