@@ -13,11 +13,12 @@ export class OAuthRoute {
   static async handle(req: express.Request, res: express.Response) {
     // Slack-side error, display error message
     if (req.query.error) {
+      const sanitizedError = encodeURIComponent(req.query.error as string);
       logger.error({
         msg: `Could not oauth`,
         err: req.query.error,
       });
-      return res.status(500).send(req.query.error);
+      return res.status(500).send(sanitizedError);
     }
 
     // Installed!
