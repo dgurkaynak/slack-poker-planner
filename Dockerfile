@@ -1,4 +1,4 @@
-FROM node:16.17.0-alpine3.16
+FROM node:18.20.4-alpine3.19
 MAINTAINER Deniz Gurkaynak <dgurkaynak@gmail.com>
 
 WORKDIR /app

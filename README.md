@@ -81,7 +81,7 @@ docker run -d \
 
 ### Running Manually
 
-Node.js requirement `>= 16.17.0`
+Node.js requirement `>= 18.20`
 
 - Clone this repo
 - Install dependencies: `npm i`
