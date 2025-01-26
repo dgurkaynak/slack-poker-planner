@@ -799,7 +799,7 @@ export class InteractivityRoute {
       }
 
       // Once all tasks are done sequentially, send the response
-      res.send({ success: true });
+      res.send();
       
       const [upsertSettingErr] = await to(
         TeamStore.upsertSettings(team.id, channelId, {
