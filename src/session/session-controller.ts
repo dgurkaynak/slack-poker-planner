@@ -530,6 +530,8 @@ function buildMessageBlocks(session: ISession) {
     title = session.title;
   }
 
+  const requestedBy = `Requested by <@${session.userId}>`;
+
   if (session.state === 'active') {
     const votesText = map(session.participants.sort(), (userId) => {
       if (session.votes.hasOwnProperty(userId)) {
@@ -547,6 +549,15 @@ function buildMessageBlocks(session: ISession) {
           text: title.substring(0, 150),
           emoji: true,
         },
+      },
+      {
+        type: 'context',
+        elements: [
+          {
+            type: 'mrkdwn',
+            text: requestedBy,
+          },
+        ],
       },
       {
         type: 'context',
@@ -606,6 +617,15 @@ function buildMessageBlocks(session: ISession) {
         elements: [
           {
             type: 'mrkdwn',
+            text: requestedBy,
+          },
+        ],
+      },
+      {
+        type: 'context',
+        elements: [
+          {
+            type: 'mrkdwn',
             text: `${urlsText}${votesText}${averageText}`,
           },
         ],
@@ -622,6 +642,15 @@ function buildMessageBlocks(session: ISession) {
           text: title.substring(0, 150),
           emoji: true,
         },
+      },
+      {
+        type: 'context',
+        elements: [
+          {
+            type: 'mrkdwn',
+            text: requestedBy,
+          },
+        ],
       },
       {
         type: 'context',
