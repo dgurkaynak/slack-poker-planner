@@ -745,10 +745,9 @@ export class InteractivityRoute {
         selectedOptions,
         (option) => option.value == 'average'
       );
-
-      // Async tasks for slack `postMessage`
-      const tasks = titles.map(async (title) => {
-        // Create session struct
+      
+      //Implementing this as the order is getting mixed up by the promise.all()
+      for (const title of titles) {
         const session: ISession = {
           id: generateId(),
           votingDuration: votingDurationMs,
@@ -781,10 +780,7 @@ export class InteractivityRoute {
           bulkCount: titles.length,
         });
 
-        const postMessageResponse = await SessionController.postMessage(
-          session,
-          team
-        );
+        const postMessageResponse = await SessionController.postMessage(session, team);
         session.rawPostMessageResponse = postMessageResponse as any;
 
         SessionStore.upsert(session);
@@ -800,12 +796,11 @@ export class InteractivityRoute {
             },
           });
         }
-      });
+      }
 
-      await Promise.all(tasks);
-
-      res.send();
-
+      // Once all tasks are done sequentially, send the response
+      res.send({ success: true });
+      
       const [upsertSettingErr] = await to(
         TeamStore.upsertSettings(team.id, channelId, {
           [ChannelSettingKey.PARTICIPANTS]: participants.join(' '),
