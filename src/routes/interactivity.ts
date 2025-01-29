@@ -1,5 +1,5 @@
 import * as express from 'express';
-import logger from '../lib/logger';
+import { logger } from '../lib/logger';
 import { generate as generateId } from 'shortid';
 import { to } from '../lib/to';
 import { TeamStore, ITeam, ChannelSettingKey } from '../team/team-model';
@@ -23,7 +23,7 @@ import isObject from 'lodash/isObject';
 import splitSpacesExcludeQuotes from 'quoted-string-space-split';
 import parseDuration from 'parse-duration';
 import prettyMilliseconds from 'pretty-ms';
-import {decode} from 'html-entities';
+import { decode } from 'html-entities';
 
 export class InteractivityRoute {
   /**
@@ -262,10 +262,7 @@ export class InteractivityRoute {
         // Restart voting //
         ////////////////////
         if (buttonPayload.b === 0) {
-          const {
-            vd: votingDuration,
-            pa: participants,
-          } = buttonPayload;
+          const { vd: votingDuration, pa: participants } = buttonPayload;
 
           const title = decode(buttonPayload.ti);
           const points = buttonPayload.po.map(decode);
@@ -651,8 +648,7 @@ export class InteractivityRoute {
         isEmpty(participantsInputState)
       ) {
         logger.error({
-          msg:
-            'Could not create session: Participants is not an object or empty',
+          msg: 'Could not create session: Participants is not an object or empty',
           errorId,
           payload,
         });
@@ -702,8 +698,7 @@ export class InteractivityRoute {
         isEmpty(votingDurationInputState)
       ) {
         logger.error({
-          msg:
-            'Could not create session: Voting duration is not an object or empty',
+          msg: 'Could not create session: Voting duration is not an object or empty',
           errorId,
           payload,
         });
@@ -745,7 +740,7 @@ export class InteractivityRoute {
         selectedOptions,
         (option) => option.value == 'average'
       );
-      
+
       //Implementing this as the order is getting mixed up by the promise.all()
       for (const title of titles) {
         const session: ISession = {
@@ -780,7 +775,10 @@ export class InteractivityRoute {
           bulkCount: titles.length,
         });
 
-        const postMessageResponse = await SessionController.postMessage(session, team);
+        const postMessageResponse = await SessionController.postMessage(
+          session,
+          team
+        );
         session.rawPostMessageResponse = postMessageResponse as any;
 
         SessionStore.upsert(session);
@@ -800,7 +798,7 @@ export class InteractivityRoute {
 
       // Once all tasks are done sequentially, send the response
       res.send();
-      
+
       const [upsertSettingErr] = await to(
         TeamStore.upsertSettings(team.id, channelId, {
           [ChannelSettingKey.PARTICIPANTS]: participants.join(' '),
@@ -813,9 +811,8 @@ export class InteractivityRoute {
             .join(' '),
           [ChannelSettingKey.PROTECTED]: JSON.stringify(isProtected),
           [ChannelSettingKey.AVERAGE]: JSON.stringify(calculateAverage),
-          [ChannelSettingKey.VOTING_DURATION]: prettyMilliseconds(
-            votingDurationMs
-          ),
+          [ChannelSettingKey.VOTING_DURATION]:
+            prettyMilliseconds(votingDurationMs),
         })
       );
       if (upsertSettingErr) {

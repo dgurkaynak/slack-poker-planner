@@ -5,7 +5,7 @@ import map from 'lodash/map';
 import groupBy from 'lodash/groupBy';
 import { ITeam, TeamStore } from '../team/team-model';
 import { WebClient } from '@slack/web-api';
-import logger from '../lib/logger';
+import { logger } from '../lib/logger';
 import Countly from 'countly-sdk-nodejs';
 import getUrls from 'get-urls';
 
@@ -161,8 +161,7 @@ export class SessionController {
             },
             hint: {
               type: 'plain_text',
-              text:
-                'You can bulk-create voting sessions, every line will correspond to a new separate session (up to 10)',
+              text: 'You can bulk-create voting sessions, every line will correspond to a new separate session (up to 10)',
               emoji: true,
             },
           },
@@ -256,8 +255,7 @@ export class SessionController {
             type: 'section',
             text: {
               type: 'mrkdwn',
-              text:
-                '> :bulb: These options will be *remembered* the next time you create a session *on this channel*.',
+              text: '> :bulb: These options will be *remembered* the next time you create a session *on this channel*.',
             },
           },
         ],
@@ -442,7 +440,12 @@ export class SessionController {
       // match should be a URL. But it can include `|` (pipe), we don't want after the pipe.
       const pipeIndex = innerText.indexOf('|');
       if (pipeIndex > -1) {
-        title = stringReplaceRange(title, startIndex, endIndex, innerText.substring(0, pipeIndex));
+        title = stringReplaceRange(
+          title,
+          startIndex,
+          endIndex,
+          innerText.substring(0, pipeIndex)
+        );
       } else {
         title = stringReplaceRange(title, startIndex, endIndex, innerText);
       }
@@ -496,7 +499,7 @@ async function autoRevealEndedSessions() {
         });
       }
     } catch (err) {
-      logger.warn({
+      logger.warning({
         msg: `Cannot auto-reveal an ended session, removing it...`,
         sessionId: session.id,
         err,
@@ -517,7 +520,8 @@ function buildMessageBlocks(session: ISession) {
   // In slack's `header` block, URLs are not clickable
   // Extract them and put it as a normal text
   const urlsInTitle = getUrls(session.title, { requireSchemeOrWww: true });
-  const urlsText = urlsInTitle.size > 0 ? Array.from(urlsInTitle).join('\n') + '\n\n' : '';
+  const urlsText =
+    urlsInTitle.size > 0 ? Array.from(urlsInTitle).join('\n') + '\n\n' : '';
 
   // Remove the URLs from title
   let title = session.title;
@@ -816,6 +820,11 @@ function buildMessageAttachments(session: ISession) {
 /**
  * Credit: https://stackoverflow.com/a/12568270
  */
-function stringReplaceRange(s: string, start: number, end: number, substitute: string) {
+function stringReplaceRange(
+  s: string,
+  start: number,
+  end: number,
+  substitute: string
+) {
   return s.substring(0, start) + substitute + s.substring(end);
 }

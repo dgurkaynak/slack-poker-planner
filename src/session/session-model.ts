@@ -1,6 +1,6 @@
 import * as redis from '../lib/redis';
 import { ISession } from './isession';
-import logger from '../lib/logger';
+import { logger } from '../lib/logger';
 
 /**
  * Redis key stuff.

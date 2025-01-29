@@ -1,6 +1,6 @@
 require('dotenv').config();
 
-import logger from './lib/logger';
+import { logger } from './lib/logger';
 import * as sqlite from './lib/sqlite';
 import * as redis from './lib/redis';
 import Countly from 'countly-sdk-nodejs';
@@ -13,11 +13,15 @@ import { InteractivityRoute } from './routes/interactivity';
 import * as SessionStore from './session/session-model';
 
 async function main() {
+  logger.init();
+
   await sqlite.init();
+
   if (process.env.USE_REDIS) {
     await redis.init();
     await SessionStore.restore();
   }
+
   await initServer();
 
   // If countly env variables exists, start countly stat reporting

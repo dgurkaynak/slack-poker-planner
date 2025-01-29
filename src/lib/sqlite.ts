@@ -1,13 +1,13 @@
 import * as path from 'path';
 import * as sqlite3 from 'sqlite3';
 import { open, Database } from 'sqlite';
-import logger from './logger';
+import { logger } from './logger';
 
 let db: Database<sqlite3.Database, sqlite3.Statement>;
 
 export async function init() {
   if (db) {
-    logger.warn({ msg: `Trying to init sqlite multiple times!` });
+    logger.warning({ msg: `Trying to init sqlite multiple times!` });
     return db;
   }
 

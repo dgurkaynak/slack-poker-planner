@@ -1,5 +1,5 @@
 import * as express from 'express';
-import logger from '../lib/logger';
+import { logger } from '../lib/logger';
 import Countly from 'countly-sdk-nodejs';
 import { TeamStore, ChannelSettingKey } from '../team/team-model';
 import { generate as generateId } from 'shortid';
@@ -179,9 +179,8 @@ export class PPCommandRoute {
         [ChannelSettingKey.VOTING_DURATION]: '24h',
       };
       if (channelSettings?.[ChannelSettingKey.PARTICIPANTS]) {
-        settings[ChannelSettingKey.PARTICIPANTS] = channelSettings[
-          ChannelSettingKey.PARTICIPANTS
-        ].split(' ');
+        settings[ChannelSettingKey.PARTICIPANTS] =
+          channelSettings[ChannelSettingKey.PARTICIPANTS].split(' ');
       }
       if (team.custom_points) {
         settings[ChannelSettingKey.POINTS] = team.custom_points.split(' ');
