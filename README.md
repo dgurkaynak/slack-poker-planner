@@ -56,6 +56,7 @@ docker run -d \
   -e SLACK_VERIFICATION_TOKEN=xxx \
   -e SLACK_APP_ID=xxx \
   -e DATA_FOLDER=/data \
+  -e ENABLE_JSONL_LOGGING=true \
   -v /host/data/folder/slack-poker-planner:/data \
   --name slack-poker-planner \
   dgurkaynak/slack-poker-planner
@@ -70,6 +71,7 @@ docker run -d \
   -e SLACK_VERIFICATION_TOKEN=xxx \
   -e SLACK_APP_ID=xxx \
   -e DATA_FOLDER=/data \
+  -e ENABLE_JSONL_LOGGING=true \
   -v /host/data/folder/slack-poker-planner:/data \
   -e USE_REDIS=true \
   -e REDIS_URL="redis://X.X.X.X:6379" \
@@ -81,7 +83,7 @@ docker run -d \
 
 ### Running Manually
 
-Node.js requirement `>= 16.17.0`
+Node.js requirement `>= 22.11.0`
 
 - Clone this repo
 - Install dependencies: `npm i`
