@@ -79,7 +79,7 @@ docker run -d \
   dgurkaynak/slack-poker-planner
 ```
 
-> Check out [.env](https://github.com/dgurkaynak/slack-poker-planner/blob/master/.env) file for the complete list of environment variables.
+> Check out [.env.default](https://github.com/dgurkaynak/slack-poker-planner/blob/master/.env.default) file for the complete list of environment variables.
 
 ### Running Manually
 
