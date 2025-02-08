@@ -222,6 +222,8 @@ export class PPCommandRoute {
       const errorId = generateId();
       logger.error({
         msg: `Could not open modal`,
+        teamId: team.id,
+        channelId: cmd.channel_id,
         errorId,
         err,
         cmd,

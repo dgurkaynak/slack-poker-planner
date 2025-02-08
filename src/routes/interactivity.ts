@@ -940,7 +940,8 @@ export class InteractivityRoute {
 
       if (shouldLog) {
         logger[logLevel]({
-          msg: `Could not create session`,
+          msg: `Could not create session(s)`,
+          teamId: team.id,
           errorId,
           err,
           payload,
