@@ -16,7 +16,6 @@ class Logger {
   public init() {
     this.isJSONLLoggingEnabled =
       process.env['ENABLE_JSONL_LOGGING']?.toLowerCase() === 'true';
-    console.log('this.isJSONLLoggingEnabled', this.isJSONLLoggingEnabled);
   }
 
   public info(log: Log) {
