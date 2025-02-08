@@ -69,49 +69,6 @@ export interface ISlackCommandRequestBody {
 }
 
 /**
- * When we use Slack's `chat.postMessage` API, this it's response.
- * https://api.slack.com/methods/chat.postMessage#response
- *
- * A sample:
- * ```json
- * {
- *   "ok": true,
- *   "channel": "C1H9RESGL",
- *   "ts": "1503435956.000247",
- *   "message": {
- *       "text": "Here's a message for you",
- *       "username": "ecto1",
- *       "bot_id": "B19LU7CSY",
- *       "attachments": [
- *           {
- *               "text": "This is an attachment",
- *               "id": 1,
- *               "fallback": "This is an attachment's fallback"
- *           }
- *       ],
- *       "type": "message",
- *       "subtype": "bot_message",
- *       "ts": "1503435956.000247"
- *   }
- * }
- * ```
- */
-export interface ISlackChatPostMessageResponse {
-  ok: boolean;
-  channel: string;
-  ts: string;
-  message: {
-    text: string;
-    username: string;
-    bot_id: string;
-    attachments: any[];
-    type: string;
-    subtype: string;
-    ts: string;
-  };
-}
-
-/**
  *
  * Sample:
  * ```json

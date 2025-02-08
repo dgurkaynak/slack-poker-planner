@@ -1,4 +1,4 @@
-import { ISlackChatPostMessageResponse } from '../vendor/slack-api-interfaces';
+import type { ChatPostMessageResponse } from '@slack/web-api';
 
 export interface ISession {
   /**
@@ -49,7 +49,7 @@ export interface ISession {
    * The result of `chat.postMessage` that sent by our bot to
    * the channel/conversation to /pp command used in.
    */
-  rawPostMessageResponse: ISlackChatPostMessageResponse;
+  rawPostMessageResponse: ChatPostMessageResponse;
   /**
    * Whether this session is protected, which means only the owner
    * can cancel and reveal session.
