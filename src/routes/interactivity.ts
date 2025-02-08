@@ -10,7 +10,6 @@ import {
   SessionControllerErrorCode,
   DEFAULT_POINTS,
 } from '../session/session-controller';
-import Countly from 'countly-sdk-nodejs';
 import isEmpty from 'lodash/isEmpty';
 import {
   IInteractiveMessageActionPayload,
@@ -24,6 +23,7 @@ import splitSpacesExcludeQuotes from 'quoted-string-space-split';
 import parseDuration from 'parse-duration';
 import prettyMilliseconds from 'pretty-ms';
 import { decode } from 'html-entities';
+import { getOlay } from '../lib/olay';
 
 export class InteractivityRoute {
   /**
@@ -267,7 +267,7 @@ export class InteractivityRoute {
           const title = decode(buttonPayload.ti);
           const points = buttonPayload.po.map(decode);
 
-          const session: ISession = {
+          const newSession: ISession = {
             id: generateId(),
             votingDuration: votingDuration,
             endsAt: Date.now() + votingDuration,
@@ -296,27 +296,35 @@ export class InteractivityRoute {
               name: payload.user.name,
             },
             channelId: payload.channel.id,
-            sessionId: session.id,
+            sessionId: newSession.id,
           });
 
           try {
             const postMessageResponse = await SessionController.postMessage(
-              session,
+              newSession,
               team
             );
-            session.rawPostMessageResponse = postMessageResponse as any;
+            newSession.rawPostMessageResponse = postMessageResponse as any;
 
-            SessionStore.upsert(session);
+            SessionStore.upsert(newSession);
 
             res.send();
 
-            if (process.env.COUNTLY_APP_KEY) {
-              Countly.add_event({
-                key: 'topic_restarted',
-                count: 1,
-                segmentation: {},
-              });
-            }
+            getOlay()?.addEvent(sessionId, 'restarted', {
+              userId: payload.user.id,
+            });
+            getOlay()?.updateMetadata(newSession.id, {
+              sessionId: newSession.id,
+              teamId: team.id,
+              userId: payload.user.id,
+              channelId: newSession.channelId,
+              votingDurationMs: newSession.votingDuration,
+              points: newSession.points,
+              participantsCount: newSession.participants.length,
+              isProtected: newSession.protected,
+              calculateAverage: newSession.average,
+              bulkCount: 1,
+            });
           } catch (err) {
             const errorId = generateId();
             let shouldLog = true;
@@ -365,6 +373,7 @@ export class InteractivityRoute {
             if (shouldLog) {
               logger[logLevel]({
                 msg: `Could not restart session`,
+                sessionId,
                 errorId,
                 err,
                 payload,
@@ -407,13 +416,9 @@ export class InteractivityRoute {
 
             res.send();
 
-            if (process.env.COUNTLY_APP_KEY) {
-              Countly.add_event({
-                key: 'topic_deleted',
-                count: 1,
-                segmentation: {},
-              });
-            }
+            getOlay()?.addEvent(sessionId, 'deleted', {
+              userId: payload.user.id,
+            });
           } catch (err) {
             const errorId = generateId();
             let errorMessage =
@@ -429,6 +434,7 @@ export class InteractivityRoute {
 
             logger.error({
               msg: `Could not delete session message`,
+              sessionId,
               errorId,
               err,
               payload,
@@ -783,22 +789,25 @@ export class InteractivityRoute {
 
         SessionStore.upsert(session);
 
-        if (process.env.COUNTLY_APP_KEY) {
-          Countly.add_event({
-            key: 'topic_created',
-            count: 1,
-            segmentation: {
-              participants: session.participants.length,
-              votingDuration: votingDurationMs,
-              bulkCount: titles.length,
-            },
-          });
-        }
+        // Some analytics
+        getOlay()?.updateMetadata(session.id, {
+          sessionId: session.id,
+          teamId: team.id,
+          userId: payload.user.id,
+          channelId,
+          votingDurationMs,
+          points,
+          participantsCount: participants.length,
+          isProtected,
+          calculateAverage,
+          bulkCount: titles.length, // Beware, this number will be repeated for each session. So, in order to properly analyze the bulk count, we need to divide the total bulk count by the number of sessions.
+        });
       }
 
       // Once all tasks are done sequentially, send the response
       res.send();
 
+      // Save the channel settings
       const [upsertSettingErr] = await to(
         TeamStore.upsertSettings(team.id, channelId, {
           [ChannelSettingKey.PARTICIPANTS]: participants.join(' '),
@@ -1034,6 +1043,7 @@ export class InteractivityRoute {
 
           logger.error({
             msg: `Could not vote`,
+            sessionId: session.id,
             errorId,
             err: voteErr,
             payload,
@@ -1048,17 +1058,10 @@ export class InteractivityRoute {
       }
     }
 
-    // Successfully voted
-
-    if (process.env.COUNTLY_APP_KEY) {
-      Countly.add_event({
-        key: 'topic_voted',
-        count: 1,
-        segmentation: {
-          points: payload.actions[0].value,
-        },
-      });
-    }
+    getOlay()?.addEvent(session.id, 'voted', {
+      userId: payload.user.id,
+      points: payload.actions[0].value,
+    });
 
     return res.send();
   }
@@ -1121,7 +1124,8 @@ export class InteractivityRoute {
       }
 
       logger.error({
-        msg: `Could not reveal session`,
+        msg: `Could not manually reveal session`,
+        sessionId: session.id,
         errorId,
         err: revealErr,
         payload,
@@ -1134,13 +1138,9 @@ export class InteractivityRoute {
       });
     }
 
-    if (process.env.COUNTLY_APP_KEY) {
-      Countly.add_event({
-        key: 'session_revealed_manual',
-        count: 1,
-        segmentation: {},
-      });
-    }
+    getOlay()?.addEvent(session.id, 'manuallyRevealed', {
+      userId: payload.user.id,
+    });
 
     return res.send();
   }
@@ -1204,6 +1204,7 @@ export class InteractivityRoute {
 
       logger.error({
         msg: `Could not cancel session`,
+        sessionId: session.id,
         errorId,
         err: cancelErr,
         payload,
@@ -1216,13 +1217,9 @@ export class InteractivityRoute {
       });
     }
 
-    if (process.env.COUNTLY_APP_KEY) {
-      Countly.add_event({
-        key: 'session_cancelled',
-        count: 1,
-        segmentation: {},
-      });
-    }
+    getOlay()?.addEvent(session.id, 'cancelled', {
+      userId: payload.user.id,
+    });
 
     return res.send();
   }

@@ -3,7 +3,6 @@ require('dotenv').config();
 import { logger } from './lib/logger';
 import * as sqlite from './lib/sqlite';
 import * as redis from './lib/redis';
-import Countly from 'countly-sdk-nodejs';
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import * as exphbs from 'express-handlebars';
@@ -11,6 +10,7 @@ import { OAuthRoute } from './routes/oauth';
 import { PPCommandRoute } from './routes/pp-command';
 import { InteractivityRoute } from './routes/interactivity';
 import * as SessionStore from './session/session-model';
+import { getOlay } from './lib/olay';
 
 async function main() {
   logger.init();
@@ -24,17 +24,14 @@ async function main() {
 
   await initServer();
 
-  // If countly env variables exists, start countly stat reporting
-  if (process.env.COUNTLY_APP_KEY && process.env.COUNTLY_URL) {
+  // If olay env variables exists, init olay client
+  if (process.env.OLAY_WS_URL && process.env.OLAY_WS_PROJECT) {
     logger.info({
-      msg: `Initing countly`,
-      url: process.env.COUNTLY_URL,
-      appKey: process.env.COUNTLY_APP_KEY,
+      msg: `Initing olay`,
+      url: process.env.OLAY_WS_URL,
+      project: process.env.OLAY_WS_PROJECT,
     });
-    Countly.init({
-      app_key: process.env.COUNTLY_APP_KEY,
-      url: process.env.COUNTLY_URL,
-    });
+    const _olay = getOlay();
   }
 
   logger.info({ msg: 'Boot successful!' });
@@ -76,8 +73,6 @@ function initRoutes(server: express.Express) {
         SLACK_CLIENT_ID: process.env.SLACK_CLIENT_ID,
         SLACK_SCOPE: process.env.SLACK_SCOPE,
         SLACK_APP_ID: process.env.SLACK_APP_ID,
-        COUNTLY_URL: process.env.COUNTLY_URL,
-        COUNTLY_APP_KEY: process.env.COUNTLY_APP_KEY,
       },
     });
   });
@@ -87,8 +82,6 @@ function initRoutes(server: express.Express) {
       layout: false,
       data: {
         SLACK_APP_ID: process.env.SLACK_APP_ID,
-        COUNTLY_URL: process.env.COUNTLY_URL,
-        COUNTLY_APP_KEY: process.env.COUNTLY_APP_KEY,
       },
     });
   });

@@ -1,6 +1,5 @@
 import * as express from 'express';
 import { logger } from '../lib/logger';
-import Countly from 'countly-sdk-nodejs';
 import { TeamStore, ChannelSettingKey } from '../team/team-model';
 import { generate as generateId } from 'shortid';
 import { to } from '../lib/to';
@@ -219,14 +218,6 @@ export class PPCommandRoute {
 
       // Send acknowledgement back to API -- HTTP 200
       res.send();
-
-      if (process.env.COUNTLY_APP_KEY) {
-        Countly.add_event({
-          key: 'new_session_modal_opened',
-          count: 1,
-          segmentation: {},
-        });
-      }
     } catch (err) {
       const errorId = generateId();
       logger.error({
