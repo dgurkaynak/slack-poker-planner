@@ -46,9 +46,9 @@
     "ws": "^8.18.0"
   },
   "devDependencies": {
-    "@types/express": "^4.17.6",
-    "@types/lodash": "^4.17.14",
-    "@types/node-fetch": "^2.5.7",
+    "@types/express": "^4.17.21",
+    "@types/lodash": "^4.17.15",
+    "@types/node-fetch": "^2.6.12",
     "@types/shortid": "2.2.0",
     "@types/sqlite3": "^3.1.11",
     "@types/ws": "^8.5.14",
