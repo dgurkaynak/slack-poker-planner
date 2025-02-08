@@ -17,6 +17,12 @@ export async function init() {
     driver: sqlite3.Database,
   });
 
+  const version = await db.get('SELECT sqlite_version()');
+  logger.info({
+    msg: `Connected to SQLite`,
+    version: version['sqlite_version()'],
+  });
+
   logger.info({ msg: `Migrating sqlite...` });
   await db.migrate();
 

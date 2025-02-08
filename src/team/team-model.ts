@@ -30,7 +30,7 @@ export class TeamStore {
     return db.get('SELECT * FROM team WHERE id = ?', id);
   }
 
-  static async create({
+  private static async create({
     id,
     name,
     access_token,
@@ -40,20 +40,22 @@ export class TeamStore {
     const db = sqlite.getSingleton();
     await db.run(
       `INSERT INTO
-          team (id, name, access_token, scope, user_id)
+          team (id, name, access_token, scope, user_id, created_at, updated_at)
         VALUES
-          ($id, $name, $access_token, $scope, $user_id)`,
+          ($id, $name, $access_token, $scope, $user_id, $created_at, $updated_at)`,
       {
         $id: id,
         $name: name,
         $access_token: access_token,
         $scope: scope,
         $user_id: user_id,
+        $created_at: Date.now(),
+        $updated_at: Date.now(),
       }
     );
   }
 
-  static async update({
+  private static async update({
     id,
     name,
     access_token,
@@ -68,7 +70,8 @@ export class TeamStore {
         name = $name,
         access_token = $access_token,
         scope = $scope,
-        user_id = $user_id
+        user_id = $user_id,
+        updated_at = $updated_at
       WHERE
         id = $id`,
       {
@@ -77,6 +80,7 @@ export class TeamStore {
         $access_token: access_token,
         $scope: scope,
         $user_id: user_id,
+        $updated_at: Date.now(),
       }
     );
   }
@@ -145,22 +149,29 @@ export class TeamStore {
     value: string
   ) {
     const db = sqlite.getSingleton();
+    const now = Date.now();
     await db.run(
       `INSERT INTO
-        channel_settings (team_id, channel_id, setting_key, setting_value)
+        channel_settings (team_id, channel_id, setting_key, setting_value, created_at, updated_at)
       VALUES (
         $teamId,
         $channelId,
         $settingKey,
-        $settingValue
+        $settingValue,
+        $createdAt,
+        $updatedAt
       )
       ON CONFLICT(team_id, channel_id, setting_key)
-      DO UPDATE SET setting_value = $settingValue;`,
+      DO UPDATE SET 
+        setting_value = $settingValue,
+        updated_at = $updatedAt;`,
       {
         $teamId: teamId,
         $channelId: channelId,
         $settingKey: key,
         $settingValue: value,
+        $createdAt: now,
+        $updatedAt: now,
       }
     );
   }
