@@ -6,7 +6,7 @@ let client: redis.RedisClientType;
 export async function init() {
   logger.info({ msg: `Creating redis client...` });
   client = redis.createClient({
-    url: process.env.REDIS_URL,
+    url: process.env.REDIS_URL || 'redis://localhost:6379',
   });
 
   await client.connect();

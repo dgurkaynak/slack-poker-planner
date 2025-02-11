@@ -25,6 +25,14 @@ import prettyMilliseconds from 'pretty-ms';
 import { decode } from 'html-entities';
 import { getOlay } from '../lib/olay';
 
+const APP_INSTALL_LINK =
+  process.env.APP_INSTALL_LINK || 'https://deniz.co/slack-poker-planner';
+const ISSUES_LINK =
+  process.env.ISSUES_LINK ||
+  'https://github.com/dgurkaynak/slack-poker-planner/issues';
+const MAX_VOTING_DURATION =
+  Number(process.env.MAX_VOTING_DURATION) || 604800000;
+
 export class InteractivityRoute {
   /**
    * POST /slack/action-endpoint
@@ -48,7 +56,7 @@ export class InteractivityRoute {
       return res.json({
         text:
           `Unexpected slack action payload (error code: ${errorId})\n\n` +
-          `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
+          `If this problem is persistent, you can open an issue on <${ISSUES_LINK}>`,
         response_type: 'ephemeral',
         replace_original: false,
       });
@@ -87,7 +95,7 @@ export class InteractivityRoute {
         return res.json({
           text:
             `Unexpected payload type (error code: ${errorId})\n\n` +
-            `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
+            `If this problem is persistent, you can open an issue on <${ISSUES_LINK}>`,
           response_type: 'ephemeral',
           replace_original: false,
         });
@@ -118,7 +126,7 @@ export class InteractivityRoute {
       return res.json({
         text:
           `Unexpected interactive message callback id (error code: ${errorId})\n\n` +
-          `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
+          `If this problem is persistent, you can open an issue on <${ISSUES_LINK}>`,
         response_type: 'ephemeral',
         replace_original: false,
       });
@@ -141,7 +149,7 @@ export class InteractivityRoute {
       return res.json({
         text:
           `Internal server error, please try again later (error code: ${errorId})\n\n` +
-          `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
+          `If this problem is persistent, you can open an issue on <${ISSUES_LINK}>`,
         response_type: 'ephemeral',
         replace_original: false,
       });
@@ -149,7 +157,7 @@ export class InteractivityRoute {
 
     if (!team) {
       return res.json({
-        text: `Your Slack team (${payload.team.domain}) could not be found, please reinstall Poker Planner on <${process.env.APP_INSTALL_LINK}>`,
+        text: `Your Slack team (${payload.team.domain}) could not be found, please reinstall Poker Planner on <${APP_INSTALL_LINK}>`,
         response_type: 'ephemeral',
         replace_original: false,
       });
@@ -200,7 +208,7 @@ export class InteractivityRoute {
           res.json({
             text:
               `Unexpected action button (error code: ${errorId})\n\n` +
-              `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
+              `If this problem is persistent, you can open an issue on <${ISSUES_LINK}>`,
             response_type: 'ephemeral',
             replace_original: false,
           });
@@ -250,7 +258,7 @@ export class InteractivityRoute {
           res.json({
             text:
               `Unexpected button payload (error code: ${errorId})\n\n` +
-              `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
+              `If this problem is persistent, you can open an issue on <${ISSUES_LINK}>`,
             response_type: 'ephemeral',
             replace_original: false,
           });
@@ -331,13 +339,13 @@ export class InteractivityRoute {
             let logLevel: 'info' | 'warn' | 'error' = 'error';
             let errorMessage =
               `Internal server error, please try again later (error code: ${errorId})\n\n` +
-              `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`;
+              `If this problem is persistent, you can open an issue on <${ISSUES_LINK}>`;
 
             const slackErrorCode = err.data && err.data.error;
             if (slackErrorCode) {
               errorMessage =
                 `Unexpected Slack API Error: "*${slackErrorCode}*" (error code: ${errorId})\n\n` +
-                `If you think this is an issue, please report to <${process.env.ISSUES_LINK}>`;
+                `If you think this is an issue, please report to <${ISSUES_LINK}>`;
             }
 
             /**
@@ -362,7 +370,7 @@ export class InteractivityRoute {
               errorMessage =
                 `Poker Planner's access has been revoked for this workspace. ` +
                 `In order to use it, you need to install the app again on ` +
-                `<${process.env.APP_INSTALL_LINK}>`;
+                `<${APP_INSTALL_LINK}>`;
             } else if (
               slackErrorCode == 'method_not_supported_for_channel_type'
             ) {
@@ -423,13 +431,13 @@ export class InteractivityRoute {
             const errorId = generateId();
             let errorMessage =
               `Internal server error, please try again later (error code: ${errorId})\n\n` +
-              `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`;
+              `If this problem is persistent, you can open an issue on <${ISSUES_LINK}>`;
 
             const slackErrorCode = err.data && err.data.error;
             if (slackErrorCode) {
               errorMessage =
                 `Unexpected Slack API Error: "*${slackErrorCode}*" (error code: ${errorId})\n\n` +
-                `If you think this is an issue, please report to <${process.env.ISSUES_LINK}>`;
+                `If you think this is an issue, please report to <${ISSUES_LINK}>`;
             }
 
             logger.error({
@@ -464,7 +472,7 @@ export class InteractivityRoute {
           res.json({
             text:
               `Unexpected button type (error code: ${errorId})\n\n` +
-              `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
+              `If this problem is persistent, you can open an issue on <${ISSUES_LINK}>`,
             response_type: 'ephemeral',
             replace_original: false,
           });
@@ -490,7 +498,7 @@ export class InteractivityRoute {
         return res.json({
           text:
             `Unexpected action (error code: ${errorId})\n\n` +
-            `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
+            `If this problem is persistent, you can open an issue on <${ISSUES_LINK}>`,
           response_type: 'ephemeral',
           replace_original: false,
         });
@@ -521,7 +529,7 @@ export class InteractivityRoute {
       return res.json({
         text:
           `Internal server error, please try again later (error code: ${errorId})\n\n` +
-          `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
+          `If this problem is persistent, you can open an issue on <${ISSUES_LINK}>`,
         response_type: 'ephemeral',
         replace_original: false,
       });
@@ -534,7 +542,7 @@ export class InteractivityRoute {
       });
 
       return res.json({
-        text: `Your Slack team (${payload.team.domain}) could not be found, please reinstall Poker Planner on <${process.env.APP_INSTALL_LINK}>`,
+        text: `Your Slack team (${payload.team.domain}) could not be found, please reinstall Poker Planner on <${APP_INSTALL_LINK}>`,
         response_type: 'ephemeral',
         replace_original: false,
       });
@@ -559,7 +567,7 @@ export class InteractivityRoute {
         return res.json({
           text:
             `Unexpected view-submission callback id (error code: ${errorId})\n\n` +
-            `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
+            `If this problem is persistent, you can open an issue on <${ISSUES_LINK}>`,
           response_type: 'ephemeral',
           replace_original: false,
         });
@@ -722,10 +730,7 @@ export class InteractivityRoute {
       if (typeof votingDurationMs !== 'number') {
         throw new Error(SessionControllerErrorCode.INVALID_VOTING_DURATION);
       }
-      if (
-        votingDurationMs < 60000 ||
-        votingDurationMs > Number(process.env.MAX_VOTING_DURATION)
-      ) {
+      if (votingDurationMs < 60000 || votingDurationMs > MAX_VOTING_DURATION) {
         throw new Error(SessionControllerErrorCode.INVALID_VOTING_DURATION);
       }
 
@@ -837,14 +842,14 @@ export class InteractivityRoute {
       let logLevel: 'info' | 'warn' | 'error' = 'error';
       let errorMessage =
         `Internal server error, please try again later (error code: ${errorId})\n\n` +
-        `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`;
+        `If this problem is persistent, you can open an issue on <${ISSUES_LINK}>`;
       let modalErrors: { [key: string]: string } = {};
 
       const slackErrorCode = err.data && err.data.error;
       if (slackErrorCode) {
         errorMessage =
           `Unexpected Slack API Error: "*${slackErrorCode}*" (error code: ${errorId})\n\n` +
-          `If you think this is an issue, please report to <${process.env.ISSUES_LINK}>`;
+          `If you think this is an issue, please report to <${ISSUES_LINK}>`;
       }
 
       /**
@@ -869,7 +874,7 @@ export class InteractivityRoute {
         errorMessage =
           `Poker Planner's access has been revoked for this workspace. ` +
           `In order to use it, you need to install the app again on ` +
-          `<${process.env.APP_INSTALL_LINK}>`;
+          `<${APP_INSTALL_LINK}>`;
       } else if (slackErrorCode == 'method_not_supported_for_channel_type') {
         logLevel = 'info';
         errorMessage = `Poker Planner cannot be used in this type of conversations.`;
@@ -879,13 +884,13 @@ export class InteractivityRoute {
           errorMessage =
             `Poker Planner now supports Group DMs! However it requires ` +
             `additional permissions that we didn't obtained previously. You need to visit ` +
-            `<${process.env.APP_INSTALL_LINK}> and reinstall the app to enable this feature.`;
+            `<${APP_INSTALL_LINK}> and reinstall the app to enable this feature.`;
         } else if (err.data.needed == 'usergroups:read') {
           logLevel = 'info';
           errorMessage =
             `Poker Planner now supports @usergroup mentions! However it requires ` +
             `additional permissions that we didn't obtained previously. You need to visit ` +
-            `<${process.env.APP_INSTALL_LINK}> and reinstall the app to enable this feature.`;
+            `<${APP_INSTALL_LINK}> and reinstall the app to enable this feature.`;
         }
       } else if (
         /**
@@ -924,14 +929,14 @@ export class InteractivityRoute {
         shouldLog = false;
         errorMessage =
           `Oops, Slack API sends a payload that we don't expect. Please try again.\n\n` +
-          `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}> ` +
+          `If this problem is persistent, you can open an issue on <${ISSUES_LINK}> ` +
           `with following error code: ${errorId}`;
       } else if (
         err.message == SessionControllerErrorCode.INVALID_VOTING_DURATION
       ) {
         shouldLog = false;
         errorMessage = `Voting window must be between 1m and ${prettyMilliseconds(
-          Number(process.env.MAX_VOTING_DURATION)
+          MAX_VOTING_DURATION
         )}`;
         modalErrors = {
           votingDuration: errorMessage,
@@ -1027,19 +1032,19 @@ export class InteractivityRoute {
           const errorId = generateId();
           let errorMessage =
             `Internal server error, please try again later (error code: ${errorId})\n\n` +
-            `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`;
+            `If this problem is persistent, you can open an issue on <${ISSUES_LINK}>`;
 
           const slackErrorCode = (voteErr as any)?.data?.error;
           if (slackErrorCode) {
             errorMessage =
               `Unexpected Slack API Error: "*${slackErrorCode}*", please try again later (error code: ${errorId})\n\n` +
-              `If you think this is an issue, please report to <${process.env.ISSUES_LINK}>`;
+              `If you think this is an issue, please report to <${ISSUES_LINK}>`;
           }
           if (slackErrorCode == 'channel_not_found') {
             errorMessage =
               `Unexpected Slack API Error: "*${slackErrorCode}*". Are you using Poker Planner on a shared channel? ` +
               `Shared channels are not supported due to Slack API limitations.\n\n` +
-              `If you think this is an issue, please report to <${process.env.ISSUES_LINK}> with this error code: ${errorId}`;
+              `If you think this is an issue, please report to <${ISSUES_LINK}> with this error code: ${errorId}`;
           }
 
           logger.error({
@@ -1109,19 +1114,19 @@ export class InteractivityRoute {
       const errorId = generateId();
       let errorMessage =
         `Internal server error, please try again later (error code: ${errorId})\n\n` +
-        `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`;
+        `If this problem is persistent, you can open an issue on <${ISSUES_LINK}>`;
 
       const slackErrorCode = (revealErr as any)?.data?.error;
       if (slackErrorCode) {
         errorMessage =
           `Unexpected Slack API Error: "*${slackErrorCode}*", please try again later (error code: ${errorId})\n\n` +
-          `If you think this is an issue, please report to <${process.env.ISSUES_LINK}>`;
+          `If you think this is an issue, please report to <${ISSUES_LINK}>`;
       }
       if (slackErrorCode == 'channel_not_found') {
         errorMessage =
           `Unexpected Slack API Error: "*${slackErrorCode}*". Are you using Poker Planner on a shared channel? ` +
           `Shared channels are not supported due to Slack API limitations.\n\n` +
-          `If you think this is an issue, please report to <${process.env.ISSUES_LINK}> with this error code: ${errorId}`;
+          `If you think this is an issue, please report to <${ISSUES_LINK}> with this error code: ${errorId}`;
       }
 
       logger.error({
@@ -1188,19 +1193,19 @@ export class InteractivityRoute {
       const errorId = generateId();
       let errorMessage =
         `Internal server error, please try again later (error code: ${errorId})\n\n` +
-        `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`;
+        `If this problem is persistent, you can open an issue on <${ISSUES_LINK}>`;
 
       const slackErrorCode = (cancelErr as any)?.data?.error;
       if (slackErrorCode) {
         errorMessage =
           `Unexpected Slack API Error: "*${slackErrorCode}*", please try again later (error code: ${errorId})\n\n` +
-          `If you think this is an issue, please report to <${process.env.ISSUES_LINK}>`;
+          `If you think this is an issue, please report to <${ISSUES_LINK}>`;
       }
       if (slackErrorCode == 'channel_not_found') {
         errorMessage =
           `Unexpected Slack API Error: "*${slackErrorCode}*". Are you using Poker Planner on a shared channel? ` +
           `Shared channels are not supported due to Slack API limitations.\n\n` +
-          `If you think this is an issue, please report to <${process.env.ISSUES_LINK}> with this error code: ${errorId}`;
+          `If you think this is an issue, please report to <${ISSUES_LINK}> with this error code: ${errorId}`;
       }
 
       logger.error({

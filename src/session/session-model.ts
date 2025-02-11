@@ -2,15 +2,18 @@ import * as redis from '../lib/redis';
 import { ISession } from './isession';
 import { logger } from '../lib/logger';
 
+const USE_REDIS = process.env.USE_REDIS?.toLowerCase() === 'true' || false;
+const REDIS_NAMESPACE = process.env.REDIS_NAMESPACE || 'pp';
+
 /**
  * Redis key stuff.
  */
 function getRedisKeyMatcher() {
-  return `${process.env.REDIS_NAMESPACE}:session:*`;
+  return `${REDIS_NAMESPACE}:session:*`;
 }
 
 function buildRedisKey(sessionId: string) {
-  return `${process.env.REDIS_NAMESPACE}:session:${sessionId}`;
+  return `${REDIS_NAMESPACE}:session:${sessionId}`;
 }
 
 /**
@@ -29,7 +32,7 @@ export function findById(id: string): ISession {
  * Restores all the sessions from redis.
  */
 export async function restore(): Promise<void> {
-  if (!process.env.USE_REDIS) return;
+  if (!USE_REDIS) return;
 
   // Scan session keys in redis
   const client = redis.getSingleton();
@@ -78,7 +81,7 @@ export function upsert(session: ISession) {
   sessions[session.id] = session;
 
   // If using redis, debounce persisting
-  if (process.env.USE_REDIS) {
+  if (USE_REDIS) {
     if (persistTimeouts[session.id]) clearTimeout(persistTimeouts[session.id]);
     persistTimeouts[session.id] = setTimeout(
       () => persist(session.id),
@@ -91,7 +94,7 @@ export function upsert(session: ISession) {
  * Reads a session from in-memory db, and persists to redis.
  */
 async function persist(sessionId: string) {
-  if (!process.env.USE_REDIS) return;
+  if (!USE_REDIS) return;
 
   // Immediately delete the timeout key
   delete persistTimeouts[sessionId];
@@ -128,7 +131,7 @@ async function persist(sessionId: string) {
 export async function remove(id: string) {
   delete sessions[id];
 
-  if (process.env.USE_REDIS) {
+  if (USE_REDIS) {
     const client = redis.getSingleton();
     await client.del(buildRedisKey(id));
   }

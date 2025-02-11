@@ -13,7 +13,7 @@ export async function init() {
 
   logger.info({ msg: `Opening sqlite...` });
   db = await open({
-    filename: path.join(process.env.DATA_FOLDER, 'db.sqlite'),
+    filename: path.join(process.env.DATA_FOLDER || './', 'db.sqlite'),
     driver: sqlite3.Database,
   });
 

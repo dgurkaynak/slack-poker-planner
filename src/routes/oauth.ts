@@ -5,6 +5,10 @@ import { TeamStore } from '../team/team-model';
 import { generate as generateId } from 'shortid';
 import { to } from '../lib/to';
 
+const ISSUES_LINK =
+  process.env.ISSUES_LINK ||
+  'https://github.com/dgurkaynak/slack-poker-planner/issues';
+
 export class OAuthRoute {
   /**
    * GET /oauth
@@ -41,7 +45,7 @@ export class OAuthRoute {
           .status(500)
           .send(
             `Internal server error, please try again (error code: ${errorId})\n\n` +
-              `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`
+              `If this problem is persistent, you can open an issue on <${ISSUES_LINK}>`
           );
       }
 
@@ -66,7 +70,7 @@ export class OAuthRoute {
           .status(500)
           .send(
             `Internal server error, please try again later (error code: ${errorId})\n\n` +
-              `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`
+              `If this problem is persistent, you can open an issue on <${ISSUES_LINK}>`
           );
       }
 
@@ -95,7 +99,7 @@ export class OAuthRoute {
       .status(500)
       .send(
         `Unknown error (error code: ${errorId})\n\n` +
-          `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`
+          `If this problem is persistent, you can open an issue on <${ISSUES_LINK}>`
       );
   }
 }

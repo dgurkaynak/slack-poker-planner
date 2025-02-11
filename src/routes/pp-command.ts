@@ -11,6 +11,12 @@ import {
 } from '../session/session-controller';
 import { splitSpacesExcludeQuotes } from 'quoted-string-space-split';
 
+const APP_INSTALL_LINK =
+  process.env.APP_INSTALL_LINK || 'https://deniz.co/slack-poker-planner';
+const ISSUES_LINK =
+  process.env.ISSUES_LINK ||
+  'https://github.com/dgurkaynak/slack-poker-planner/issues';
+
 export class PPCommandRoute {
   /**
    * POST /slack/pp-command
@@ -41,7 +47,7 @@ export class PPCommandRoute {
       return res.json({
         text:
           `Unexpected command usage (error code: ${errorId})\n\n` +
-          `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
+          `If this problem is persistent, you can open an issue on <${ISSUES_LINK}>`,
         response_type: 'ephemeral',
         replace_original: false,
       });
@@ -91,7 +97,7 @@ export class PPCommandRoute {
       return res.json({
         text:
           `Internal server error, please try again later (error code: ${errorId})\n\n` +
-          `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
+          `If this problem is persistent, you can open an issue on <${ISSUES_LINK}>`,
         response_type: 'ephemeral',
         replace_original: false,
       });
@@ -104,7 +110,7 @@ export class PPCommandRoute {
       });
 
       return res.json({
-        text: `Your Slack team (${cmd.team_domain}) could not be found, please reinstall Poker Planner on <${process.env.APP_INSTALL_LINK}>`,
+        text: `Your Slack team (${cmd.team_domain}) could not be found, please reinstall Poker Planner on <${APP_INSTALL_LINK}>`,
         response_type: 'ephemeral',
         replace_original: false,
       });
@@ -135,7 +141,7 @@ export class PPCommandRoute {
           'user permissions. So that you can explicitly manage which channels/conversations Poker Planner can ' +
           'access. However, this requires a couple of changes:\n\n• In order to obtain new bot permissions ' +
           'and drop user ones, *you need to reinstall Poker Planner* to your workspace on ' +
-          `<${process.env.APP_INSTALL_LINK}>\n• Before using \`/pp\` command, *Poker Planner app must be ` +
+          `<${APP_INSTALL_LINK}>\n• Before using \`/pp\` command, *Poker Planner app must be ` +
           'added to that channel/conversation*. You can simply add or invite it by just mentioning the app like ' +
           '`@poker_planner`. You can also do that from channel/converstion details menu.',
         response_type: 'ephemeral',
@@ -232,7 +238,7 @@ export class PPCommandRoute {
       return res.json({
         text:
           `Could not open modal (error code: ${errorId})\n\n` +
-          `If this problem is persistent, you can open an issue on <${process.env.ISSUES_LINK}>`,
+          `If this problem is persistent, you can open an issue on <${ISSUES_LINK}>`,
         response_type: 'ephemeral',
         replace_original: false,
       });
