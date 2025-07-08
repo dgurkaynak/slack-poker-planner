@@ -374,9 +374,27 @@ export class SessionController {
    * For given votes, calculate average point
    */
   static getAverage(votes: { [key: string]: string }): string | boolean {
+    const specialValues: { [key: string]: number } = {
+      'e': Math.E,
+      'π': Math.PI,
+      'pi': Math.PI, // allow both 'π' and 'pi'
+      '∞': Number.MAX_VALUE,
+      'infinity': Number.MAX_VALUE, // allow both '∞' and 'infinity'
+    };
+
     const numericPoints = Object.values(votes)
-      .filter(SessionController.isNumeric)
-      .map(parseFloat);
+      .map((val) => {
+        const normalized = val.trim().toLowerCase();
+        if (specialValues.hasOwnProperty(normalized)) {
+          return specialValues[normalized];
+        }
+        if (SessionController.isNumeric(val)) {
+          return parseFloat(val);
+        }
+        return undefined;
+      })
+      .filter((v): v is number => typeof v === 'number' && isFinite(v));
+
     if (numericPoints.length < 1) return false;
     return (
       numericPoints.reduce((a, b) => a + b) / numericPoints.length
