@@ -2,8 +2,8 @@ import * as redis from '../lib/redis.ts';
 import type { ISession } from './isession.ts';
 import { logger } from '../lib/logger.ts';
 
-const USE_REDIS = process.env.USE_REDIS?.toLowerCase() === 'true' || false;
-const REDIS_NAMESPACE = process.env.REDIS_NAMESPACE || 'pp';
+const USE_REDIS = process.env['USE_REDIS']?.toLowerCase() === 'true' || false;
+const REDIS_NAMESPACE = process.env['REDIS_NAMESPACE'] || 'pp';
 
 /**
  * Redis key stuff.
@@ -24,7 +24,7 @@ let sessions: { [key: string]: ISession } = {};
 /**
  * Simple getter by session id.
  */
-export function findById(id: string): ISession {
+export function findById(id: string): ISession | undefined {
   return sessions[id];
 }
 

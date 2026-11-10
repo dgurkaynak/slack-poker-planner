@@ -1,4 +1,5 @@
 {
+  "extends": "@tsconfig/strictest/tsconfig.json",
   "compilerOptions": {
     "target": "esnext",
     "module": "nodenext",
@@ -6,9 +7,6 @@
     "allowImportingTsExtensions": true,
     "erasableSyntaxOnly": true,
     "verbatimModuleSyntax": true,
-    "strict": false,
-    "noImplicitAny": true,
-    "skipLibCheck": true,
     "types": ["node"]
   },
   "include": ["src", "scripts"]

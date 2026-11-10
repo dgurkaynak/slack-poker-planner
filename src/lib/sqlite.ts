@@ -15,7 +15,7 @@ export function init() {
 
   logger.info({ msg: `Opening sqlite...` });
   const database = new Database(
-    path.join(process.env.DATA_FOLDER || './', 'db.sqlite')
+    path.join(process.env['DATA_FOLDER'] || './', 'db.sqlite')
   );
 
   const version = database.prepare('SELECT sqlite_version() AS v').get() as {

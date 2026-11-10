@@ -6,7 +6,7 @@ import { generate as generateId } from 'shortid';
 import { to } from '../lib/to.ts';
 
 const ISSUES_LINK =
-  process.env.ISSUES_LINK ||
+  process.env['ISSUES_LINK'] ||
   'https://github.com/dgurkaynak/slack-poker-planner/issues';
 
 export class OAuthRoute {
@@ -15,22 +15,24 @@ export class OAuthRoute {
    */
   static async handle(req: express.Request, res: express.Response) {
     // Slack-side error, display error message
-    if (req.query.error) {
+    if (req.query['error']) {
       logger.error({
         msg: `Could not oauth`,
-        qsError: req.query.error,
+        qsError: req.query['error'],
       });
-      return res.status(500).send(req.query.error);
+      return res.status(500).send(req.query['error']);
     }
 
     // Installed!
-    if (req.query.code) {
+    const clientId = process.env['SLACK_CLIENT_ID'];
+    const clientSecret = process.env['SLACK_CLIENT_SECRET'];
+    if (req.query['code'] && clientId && clientSecret) {
       const slackWebClient = new WebClient();
       const [oauthErr, accessResponse] = await to(
         slackWebClient.oauth.v2.access({
-          client_id: process.env.SLACK_CLIENT_ID,
-          client_secret: process.env.SLACK_CLIENT_SECRET,
-          code: req.query.code as string,
+          client_id: clientId,
+          client_secret: clientSecret,
+          code: req.query['code'] as string,
         })
       );
 
@@ -59,14 +61,14 @@ export class OAuthRoute {
         })
       );
 
-      if (upsertErr) {
+      if (upsertErr || !team) {
         const errorId = generateId();
         logger.error({
           msg: `Could not oauth, sqlite upsert failed`,
           errorId,
           err: upsertErr,
         });
-        res
+        return res
           .status(500)
           .send(
             `Internal server error, please try again later (error code: ${errorId})\n\n` +
@@ -82,7 +84,7 @@ export class OAuthRoute {
       return res.render('oauth-success', {
         layout: false,
         data: {
-          SLACK_APP_ID: process.env.SLACK_APP_ID,
+          SLACK_APP_ID: process.env['SLACK_APP_ID'],
           TEAM_NAME: team.name,
         },
       });

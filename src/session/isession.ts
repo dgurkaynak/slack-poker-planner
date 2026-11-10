@@ -48,8 +48,9 @@ export interface ISession {
   /**
    * The result of `chat.postMessage` that sent by our bot to
    * the channel/conversation to /pp command used in.
+   * It's missing until the message is posted.
    */
-  rawPostMessageResponse: ChatPostMessageResponse;
+  rawPostMessageResponse?: ChatPostMessageResponse;
   /**
    * Whether this session is protected, which means only the owner
    * can cancel and reveal session.

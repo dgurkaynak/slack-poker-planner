@@ -7,13 +7,13 @@ export function getOlay() {
     return olay;
   }
 
-  if (!process.env.OLAY_WS_URL || !process.env.OLAY_WS_PROJECT) {
+  if (!process.env['OLAY_WS_URL'] || !process.env['OLAY_WS_PROJECT']) {
     return undefined;
   }
 
   olay = new NodeClient({
-    wsRoot: process.env.OLAY_WS_URL,
-    project: process.env.OLAY_WS_PROJECT,
+    wsRoot: process.env['OLAY_WS_URL'],
+    project: process.env['OLAY_WS_PROJECT'],
   });
 
   return olay;

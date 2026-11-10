@@ -6,7 +6,7 @@ export type Severity = 'info' | 'warning' | 'error';
 
 export type Log = {
   msg: string;
-  err?: Error;
+  err?: unknown;
   [key: string]: unknown;
 };
 

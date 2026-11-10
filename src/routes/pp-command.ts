@@ -12,9 +12,9 @@ import {
 import { splitSpacesExcludeQuotes } from 'quoted-string-space-split';
 
 const APP_INSTALL_LINK =
-  process.env.APP_INSTALL_LINK || 'https://deniz.co/slack-poker-planner';
+  process.env['APP_INSTALL_LINK'] || 'https://deniz.co/slack-poker-planner';
 const ISSUES_LINK =
-  process.env.ISSUES_LINK ||
+  process.env['ISSUES_LINK'] ||
   'https://github.com/dgurkaynak/slack-poker-planner/issues';
 
 export class PPCommandRoute {
@@ -25,7 +25,7 @@ export class PPCommandRoute {
   static async handle(req: express.Request, res: express.Response) {
     const cmd = req.body as ISlackCommandRequestBody;
 
-    if (cmd.token != process.env.SLACK_VERIFICATION_TOKEN) {
+    if (cmd.token != process.env['SLACK_VERIFICATION_TOKEN']) {
       logger.error({
         msg: `Could not created session, slack verification token is invalid`,
         cmd,
@@ -173,7 +173,7 @@ export class PPCommandRoute {
 
     try {
       // Prepare settings (participants, points...)
-      const [settingsFetchErr, channelSettings] = await to(
+      const [, channelSettings] = await to(
         TeamStore.fetchSettings(team.id, cmd.channel_id)
       );
       const settings = {
@@ -183,31 +183,32 @@ export class PPCommandRoute {
         [ChannelSettingKey.AVERAGE]: false,
         [ChannelSettingKey.VOTING_DURATION]: '24h',
       };
-      if (channelSettings?.[ChannelSettingKey.PARTICIPANTS]) {
+      const participantsSetting =
+        channelSettings?.[ChannelSettingKey.PARTICIPANTS];
+      if (participantsSetting) {
         settings[ChannelSettingKey.PARTICIPANTS] =
-          channelSettings[ChannelSettingKey.PARTICIPANTS].split(' ');
+          participantsSetting.split(' ');
       }
       if (team.custom_points) {
         settings[ChannelSettingKey.POINTS] = team.custom_points.split(' ');
       }
-      if (channelSettings?.[ChannelSettingKey.POINTS]) {
-        settings[ChannelSettingKey.POINTS] = splitSpacesExcludeQuotes(
-          channelSettings[ChannelSettingKey.POINTS]
-        );
+      const pointsSetting = channelSettings?.[ChannelSettingKey.POINTS];
+      if (pointsSetting) {
+        settings[ChannelSettingKey.POINTS] =
+          splitSpacesExcludeQuotes(pointsSetting);
       }
-      if (channelSettings?.[ChannelSettingKey.PROTECTED]) {
-        settings[ChannelSettingKey.PROTECTED] = JSON.parse(
-          channelSettings[ChannelSettingKey.PROTECTED]
-        );
+      const protectedSetting = channelSettings?.[ChannelSettingKey.PROTECTED];
+      if (protectedSetting) {
+        settings[ChannelSettingKey.PROTECTED] = JSON.parse(protectedSetting);
       }
-      if (channelSettings?.[ChannelSettingKey.AVERAGE]) {
-        settings[ChannelSettingKey.AVERAGE] = JSON.parse(
-          channelSettings[ChannelSettingKey.AVERAGE]
-        );
+      const averageSetting = channelSettings?.[ChannelSettingKey.AVERAGE];
+      if (averageSetting) {
+        settings[ChannelSettingKey.AVERAGE] = JSON.parse(averageSetting);
       }
-      if (channelSettings?.[ChannelSettingKey.VOTING_DURATION]) {
-        settings[ChannelSettingKey.VOTING_DURATION] =
-          channelSettings[ChannelSettingKey.VOTING_DURATION];
+      const votingDurationSetting =
+        channelSettings?.[ChannelSettingKey.VOTING_DURATION];
+      if (votingDurationSetting) {
+        settings[ChannelSettingKey.VOTING_DURATION] = votingDurationSetting;
       }
 
       await SessionController.openModal({
@@ -223,7 +224,7 @@ export class PPCommandRoute {
       });
 
       // Send acknowledgement back to API -- HTTP 200
-      res.send();
+      return res.send();
     } catch (err) {
       const errorId = generateId();
       logger.error({
@@ -248,7 +249,10 @@ export class PPCommandRoute {
   /**
    * `/pp config ...`
    */
-  static async configure(cmd: ISlackCommandRequestBody, res: express.Response) {
+  static async configure(
+    _cmd: ISlackCommandRequestBody,
+    res: express.Response
+  ) {
     return res.json({
       text:
         'This command is deprecated. The session settings (points, participants, ...) ' +
