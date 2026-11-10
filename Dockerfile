@@ -1,13 +1,14 @@
-FROM node:18-alpine3.20
+FROM node:26.13.0-alpine
 
 LABEL maintainer="Deniz Gurkaynak <dgurkaynak@gmail.com>"
 
 WORKDIR /app
-ADD . .
 
-RUN npm ci
-RUN npm run build
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+
+COPY . .
 
 ENV NODE_ENV=production
 
-CMD ["node", "dist/slack-poker-planner.js"]
+CMD ["node", "src/slack-poker-planner.ts"]
