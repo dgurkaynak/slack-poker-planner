@@ -26,7 +26,7 @@
   },
   "homepage": "https://github.com/dgurkaynak/slack-poker-planner#readme",
   "dependencies": {
-    "@slack/web-api": "7.8.0",
+    "@slack/web-api": "8.3.0",
     "better-sqlite3": "^12.11.1",
     "body-parser": "^1.20.9",
     "chalk": "^6.0.1",
