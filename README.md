@@ -83,10 +83,16 @@ docker run -d \
 
 ### Running Manually
 
-Node.js requirement `>= 22.11.0`
+Node.js requirement `>= 26.13.0`
 
 - Clone this repo
 - Install dependencies: `npm i`
-- Build: `npm run build`
 - Start the app: `npm start`
 
+There is no build step, Node.js runs the TypeScript sources directly.
+
+### Development
+
+- `npm run dev`: Starts the app, and restarts it when a file changes
+- `npm run typecheck`: Checks the types
+- `npm run db:types`: Regenerates `src/lib/db-types.ts` from the migrations. Run it after adding a new migration.

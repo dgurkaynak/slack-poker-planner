@@ -1,9 +1,9 @@
-import * as redis from '../lib/redis';
-import { ISession } from './isession';
-import { logger } from '../lib/logger';
+import * as redis from '../lib/redis.ts';
+import type { ISession } from './isession.ts';
+import { logger } from '../lib/logger.ts';
 
-const USE_REDIS = process.env.USE_REDIS?.toLowerCase() === 'true' || false;
-const REDIS_NAMESPACE = process.env.REDIS_NAMESPACE || 'pp';
+const USE_REDIS = process.env['USE_REDIS']?.toLowerCase() === 'true' || false;
+const REDIS_NAMESPACE = process.env['REDIS_NAMESPACE'] || 'pp';
 
 /**
  * Redis key stuff.
@@ -24,7 +24,7 @@ let sessions: { [key: string]: ISession } = {};
 /**
  * Simple getter by session id.
  */
-export function findById(id: string): ISession {
+export function findById(id: string): ISession | undefined {
   return sessions[id];
 }
 
@@ -37,27 +37,31 @@ export async function restore(): Promise<void> {
   // Scan session keys in redis
   const client = redis.getSingleton();
 
-  for await (const key of client.scanIterator({
+  // `scanIterator` yields keys in batches
+  for await (const keys of client.scanIterator({
     MATCH: getRedisKeyMatcher(),
   })) {
-    const rawSession = await client.get(key);
+    for (const key of keys) {
+      const rawSession = await client.get(key);
+      if (typeof rawSession !== 'string') continue; // expired in the meantime
 
-    try {
-      const session = JSON.parse(rawSession) as ISession;
+      try {
+        const session = JSON.parse(rawSession) as ISession;
 
-      // Migrate `expiresAt`
-      // TODO: You can delete here after 7 days of production release
-      if (
-        typeof session.endsAt !== 'number' &&
-        typeof (session as any).expiresAt === 'number'
-      ) {
-        session.endsAt = (session as any).expiresAt;
-        delete (session as any).expiresAt;
+        // Migrate `expiresAt`
+        // TODO: You can delete here after 7 days of production release
+        if (
+          typeof session.endsAt !== 'number' &&
+          typeof (session as any).expiresAt === 'number'
+        ) {
+          session.endsAt = (session as any).expiresAt;
+          delete (session as any).expiresAt;
+        }
+
+        sessions[session.id] = session;
+      } catch (err) {
+        // NOOP
       }
-
-      sessions[session.id] = session;
-    } catch (err) {
-      // NOOP
     }
   }
 

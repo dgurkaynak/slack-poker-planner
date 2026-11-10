@@ -1,37 +1,62 @@
-import * as express from 'express';
-import { logger } from '../lib/logger';
+import express from 'express';
+import { logger } from '../lib/logger.ts';
 import { generate as generateId } from 'shortid';
-import { to } from '../lib/to';
-import { TeamStore, ITeam, ChannelSettingKey } from '../team/team-model';
-import * as SessionStore from '../session/session-model';
-import { ISession } from '../session/isession';
+import { to, toError } from '../lib/to.ts';
+import {
+  TeamStore,
+  type ITeam,
+  ChannelSettingKey,
+} from '../team/team-model.ts';
+import * as SessionStore from '../session/session-model.ts';
+import type { ISession } from '../session/isession.ts';
 import {
   SessionController,
   SessionControllerErrorCode,
   DEFAULT_POINTS,
-} from '../session/session-controller';
-import isEmpty from 'lodash/isEmpty';
+} from '../session/session-controller.ts';
+import isEmpty from 'lodash/isEmpty.js';
 import {
-  IInteractiveMessageActionPayload,
-  IViewSubmissionActionPayload,
-} from '../vendor/slack-api-interfaces';
-import uniq from 'lodash/uniq';
-import find from 'lodash/find';
-import get from 'lodash/get';
-import isObject from 'lodash/isObject';
-import splitSpacesExcludeQuotes from 'quoted-string-space-split';
+  type IInteractiveMessageActionPayload,
+  type IViewSubmissionActionPayload,
+} from '../vendor/slack-api-interfaces.ts';
+import uniq from 'lodash/uniq.js';
+import find from 'lodash/find.js';
+import get from 'lodash/get.js';
+import isObject from 'lodash/isObject.js';
+import { splitSpacesExcludeQuotes } from 'quoted-string-space-split';
 import parseDuration from 'parse-duration';
 import prettyMilliseconds from 'pretty-ms';
 import { decode } from 'html-entities';
-import { getOlay } from '../lib/olay';
+import { getOlay } from '../lib/olay.ts';
 
 const APP_INSTALL_LINK =
-  process.env.APP_INSTALL_LINK || 'https://deniz.co/slack-poker-planner';
+  process.env['APP_INSTALL_LINK'] || 'https://deniz.co/slack-poker-planner';
 const ISSUES_LINK =
-  process.env.ISSUES_LINK ||
+  process.env['ISSUES_LINK'] ||
   'https://github.com/dgurkaynak/slack-poker-planner/issues';
 const MAX_VOTING_DURATION =
-  Number(process.env.MAX_VOTING_DURATION) || 604800000;
+  Number(process.env['MAX_VOTING_DURATION']) || 604800000;
+
+/**
+ * Slack API platform errors carry the details in their `data` property,
+ * like `{ error: 'missing_scope', needed: 'mpim:read' }`.
+ */
+function getSlackErrorData(err: unknown): {
+  error?: unknown;
+  needed?: unknown;
+} {
+  const data = (err as { data?: unknown } | null | undefined)?.data;
+  return isObject(data) ? data : {};
+}
+
+/**
+ * Slack sends the state of an input keyed by its (auto-generated) action id,
+ * like `{ 'x3F': { type: 'plain_text_input', value: '...' } }`.
+ * Returns that inner object.
+ */
+function firstValue(inputState: object): any {
+  return Object.values(inputState)[0];
+}
 
 export class InteractivityRoute {
   /**
@@ -41,8 +66,7 @@ export class InteractivityRoute {
    */
   static async handle(req: express.Request, res: express.Response) {
     let payload:
-      | IInteractiveMessageActionPayload
-      | IViewSubmissionActionPayload;
+      IInteractiveMessageActionPayload | IViewSubmissionActionPayload;
 
     try {
       payload = JSON.parse(req.body.payload);
@@ -62,7 +86,7 @@ export class InteractivityRoute {
       });
     }
 
-    if (payload.token != process.env.SLACK_VERIFICATION_TOKEN) {
+    if (payload.token != process.env['SLACK_VERIFICATION_TOKEN']) {
       logger.error({
         msg: `Could not process action, invalid verification token`,
         payload,
@@ -132,7 +156,7 @@ export class InteractivityRoute {
       });
     }
 
-    const [action, sessionId] = parts;
+    const [action, sessionId] = parts as [string, string];
 
     // Get team
     const [teamErr, team] = await to(TeamStore.findById(payload.team.id));
@@ -180,7 +204,7 @@ export class InteractivityRoute {
           });
         }
 
-        const sessionAction = payload.actions[0].value;
+        const sessionAction = payload.actions[0]?.value;
 
         if (sessionAction == 'reveal') {
           await InteractivityRoute.revealSession({
@@ -241,7 +265,7 @@ export class InteractivityRoute {
        * - Delete message
        */
       case 'end_action': {
-        const buttonPayloadStr = payload.actions[0].value;
+        const buttonPayloadStr = payload.actions[0]?.value ?? '';
         let buttonPayload: any;
 
         try {
@@ -287,7 +311,6 @@ export class InteractivityRoute {
             channelId: payload.channel.id,
             userId: payload.user.id,
             participants,
-            rawPostMessageResponse: undefined,
             protected: buttonPayload.pr === 1 ? true : false,
             average: buttonPayload.av === 1 ? true : false,
           };
@@ -341,7 +364,7 @@ export class InteractivityRoute {
               `Internal server error, please try again later (error code: ${errorId})\n\n` +
               `If this problem is persistent, you can open an issue on <${ISSUES_LINK}>`;
 
-            const slackErrorCode = err.data && err.data.error;
+            const slackErrorCode = getSlackErrorData(err).error;
             if (slackErrorCode) {
               errorMessage =
                 `Unexpected Slack API Error: "*${slackErrorCode}*" (error code: ${errorId})\n\n` +
@@ -433,7 +456,7 @@ export class InteractivityRoute {
               `Internal server error, please try again later (error code: ${errorId})\n\n` +
               `If this problem is persistent, you can open an issue on <${ISSUES_LINK}>`;
 
-            const slackErrorCode = err.data && err.data.error;
+            const slackErrorCode = getSlackErrorData(err).error;
             if (slackErrorCode) {
               errorMessage =
                 `Unexpected Slack API Error: "*${slackErrorCode}*" (error code: ${errorId})\n\n` +
@@ -479,8 +502,6 @@ export class InteractivityRoute {
 
           return;
         }
-
-        return;
       }
 
       /**
@@ -629,8 +650,7 @@ export class InteractivityRoute {
         throw new Error(SessionControllerErrorCode.TITLE_REQUIRED);
       }
 
-      const rawTitle = (titleInputState as any)[Object.keys(titleInputState)[0]]
-        .value;
+      const rawTitle = firstValue(titleInputState).value;
       if (typeof rawTitle !== 'string') {
         throw new Error(SessionControllerErrorCode.TITLE_REQUIRED);
       }
@@ -668,9 +688,7 @@ export class InteractivityRoute {
         });
         throw new Error(SessionControllerErrorCode.NO_PARTICIPANTS);
       }
-      const participants = (participantsInputState as any)[
-        Object.keys(participantsInputState)[0]
-      ].selected_users;
+      const participants = firstValue(participantsInputState).selected_users;
 
       if (participants.length == 0) {
         throw new Error(SessionControllerErrorCode.NO_PARTICIPANTS);
@@ -688,8 +706,7 @@ export class InteractivityRoute {
         });
         throw new Error(SessionControllerErrorCode.INVALID_POINTS);
       }
-      const pointsStr =
-        (pointsInputState as any)[Object.keys(pointsInputState)[0]].value || '';
+      const pointsStr = firstValue(pointsInputState).value || '';
       let points: string[] = uniq(splitSpacesExcludeQuotes(pointsStr)) || [];
 
       if (points.length == 1 && points[0] == 'reset') {
@@ -718,9 +735,7 @@ export class InteractivityRoute {
         });
         throw new Error(SessionControllerErrorCode.INVALID_VOTING_DURATION);
       }
-      const votingDurationStr = (votingDurationInputState as any)[
-        Object.keys(votingDurationInputState)[0]
-      ].value;
+      const votingDurationStr = firstValue(votingDurationInputState).value;
 
       if (!votingDurationStr || votingDurationStr.trim().length == 0) {
         throw new Error(SessionControllerErrorCode.INVALID_VOTING_DURATION);
@@ -740,8 +755,7 @@ export class InteractivityRoute {
       const otherCheckboxesState = get(payload, 'view.state.values.other');
       const selectedOptions =
         isObject(otherCheckboxesState) && !isEmpty(otherCheckboxesState)
-          ? (otherCheckboxesState as any)[Object.keys(otherCheckboxesState)[0]]
-              .selected_options
+          ? firstValue(otherCheckboxesState).selected_options
           : [];
       const isProtected = !!find(
         selectedOptions,
@@ -766,7 +780,6 @@ export class InteractivityRoute {
           channelId,
           userId: payload.user.id,
           participants,
-          rawPostMessageResponse: undefined,
           protected: isProtected,
           average: calculateAverage,
         };
@@ -837,6 +850,8 @@ export class InteractivityRoute {
           err: upsertSettingErr,
         });
       }
+
+      return;
     } catch (err) {
       let shouldLog = true;
       let logLevel: 'info' | 'warn' | 'error' = 'error';
@@ -845,7 +860,8 @@ export class InteractivityRoute {
         `If this problem is persistent, you can open an issue on <${ISSUES_LINK}>`;
       let modalErrors: { [key: string]: string } = {};
 
-      const slackErrorCode = err.data && err.data.error;
+      const errMessage = toError(err).message;
+      const slackErrorCode = getSlackErrorData(err).error;
       if (slackErrorCode) {
         errorMessage =
           `Unexpected Slack API Error: "*${slackErrorCode}*" (error code: ${errorId})\n\n` +
@@ -879,13 +895,13 @@ export class InteractivityRoute {
         logLevel = 'info';
         errorMessage = `Poker Planner cannot be used in this type of conversations.`;
       } else if (slackErrorCode == 'missing_scope') {
-        if (err.data.needed == 'mpim:read') {
+        if (getSlackErrorData(err).needed == 'mpim:read') {
           logLevel = 'info';
           errorMessage =
             `Poker Planner now supports Group DMs! However it requires ` +
             `additional permissions that we didn't obtained previously. You need to visit ` +
             `<${APP_INSTALL_LINK}> and reinstall the app to enable this feature.`;
-        } else if (err.data.needed == 'usergroups:read') {
+        } else if (getSlackErrorData(err).needed == 'usergroups:read') {
           logLevel = 'info';
           errorMessage =
             `Poker Planner now supports @usergroup mentions! However it requires ` +
@@ -896,28 +912,28 @@ export class InteractivityRoute {
         /**
          * Internal errors
          */
-        err.message == SessionControllerErrorCode.NO_PARTICIPANTS
+        errMessage == SessionControllerErrorCode.NO_PARTICIPANTS
       ) {
         shouldLog = false;
         errorMessage = `You must add at least 1 person.`;
         modalErrors = {
           participants: errorMessage,
         };
-      } else if (err.message == SessionControllerErrorCode.TITLE_REQUIRED) {
+      } else if (errMessage == SessionControllerErrorCode.TITLE_REQUIRED) {
         shouldLog = false;
         errorMessage = `At least one title is required`;
         modalErrors = {
           title: errorMessage,
         };
       } else if (
-        err.message == SessionControllerErrorCode.MAX_TITLE_LIMIT_EXCEEDED
+        errMessage == SessionControllerErrorCode.MAX_TITLE_LIMIT_EXCEEDED
       ) {
         shouldLog = false;
         errorMessage = `You can bulk-create up to 10 sessions`;
         modalErrors = {
           title: errorMessage,
         };
-      } else if (err.message == SessionControllerErrorCode.INVALID_POINTS) {
+      } else if (errMessage == SessionControllerErrorCode.INVALID_POINTS) {
         shouldLog = false;
         errorMessage =
           `You must provide at least 2 poker points seperated by space, ` +
@@ -925,14 +941,14 @@ export class InteractivityRoute {
         modalErrors = {
           points: errorMessage,
         };
-      } else if (err.message == SessionControllerErrorCode.UNEXPECTED_PAYLOAD) {
+      } else if (errMessage == SessionControllerErrorCode.UNEXPECTED_PAYLOAD) {
         shouldLog = false;
         errorMessage =
           `Oops, Slack API sends a payload that we don't expect. Please try again.\n\n` +
           `If this problem is persistent, you can open an issue on <${ISSUES_LINK}> ` +
           `with following error code: ${errorId}`;
       } else if (
-        err.message == SessionControllerErrorCode.INVALID_VOTING_DURATION
+        errMessage == SessionControllerErrorCode.INVALID_VOTING_DURATION
       ) {
         shouldLog = false;
         errorMessage = `Voting window must be between 1m and ${prettyMilliseconds(
@@ -1004,7 +1020,12 @@ export class InteractivityRoute {
     session: ISession;
     res: express.Response;
   }) {
-    const point = payload.actions[0].value;
+    const point = payload.actions[0]?.value;
+    if (point === undefined) {
+      logger.error({ msg: `Could not vote, no action in payload`, payload });
+      return res.send();
+    }
+
     const [voteErr] = await to(
       SessionController.vote(session, team, payload.user.id, point)
     );
@@ -1066,7 +1087,7 @@ export class InteractivityRoute {
 
     getOlay()?.addEvent(session.id, 'voted', {
       userId: payload.user.id,
-      points: payload.actions[0].value,
+      points: point,
     });
 
     return res.send();

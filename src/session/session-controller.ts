@@ -1,13 +1,13 @@
-import * as SessionStore from './session-model';
-import { ISession } from './isession';
-import chunk from 'lodash/chunk';
-import map from 'lodash/map';
-import groupBy from 'lodash/groupBy';
-import { ITeam, TeamStore } from '../team/team-model';
+import * as SessionStore from './session-model.ts';
+import type { ISession } from './isession.ts';
+import chunk from 'lodash/chunk.js';
+import map from 'lodash/map.js';
+import groupBy from 'lodash/groupBy.js';
+import { type ITeam, TeamStore } from '../team/team-model.ts';
 import { WebClient } from '@slack/web-api';
-import { logger } from '../lib/logger';
+import { logger } from '../lib/logger.ts';
 import getUrls from 'get-urls';
-import { getOlay } from '../lib/olay';
+import { getOlay } from '../lib/olay.ts';
 
 export const DEFAULT_POINTS = [
   '0',
@@ -25,16 +25,19 @@ export const DEFAULT_POINTS = [
   '?',
 ];
 
-export enum SessionControllerErrorCode {
-  NO_PARTICIPANTS = 'no_participants',
-  TITLE_REQUIRED = 'title_required',
-  MAX_TITLE_LIMIT_EXCEEDED = 'max_title_limit_exceeded',
-  UNEXPECTED_PAYLOAD = 'unexpected_payload',
-  INVALID_POINTS = 'invalid_points',
-  SESSION_NOT_ACTIVE = 'session_not_active',
-  ONLY_PARTICIPANTS_CAN_VOTE = 'only_participants_can_vote',
-  INVALID_VOTING_DURATION = 'invalid_voting_duration',
-}
+export const SessionControllerErrorCode = {
+  NO_PARTICIPANTS: 'no_participants',
+  TITLE_REQUIRED: 'title_required',
+  MAX_TITLE_LIMIT_EXCEEDED: 'max_title_limit_exceeded',
+  UNEXPECTED_PAYLOAD: 'unexpected_payload',
+  INVALID_POINTS: 'invalid_points',
+  SESSION_NOT_ACTIVE: 'session_not_active',
+  ONLY_PARTICIPANTS_CAN_VOTE: 'only_participants_can_vote',
+  INVALID_VOTING_DURATION: 'invalid_voting_duration',
+} as const;
+
+export type SessionControllerErrorCode =
+  (typeof SessionControllerErrorCode)[keyof typeof SessionControllerErrorCode];
 
 export class SessionController {
   /**
@@ -109,13 +112,11 @@ export class SessionController {
       value: 'average',
     } as any;
 
-    let initialOptions = undefined;
+    const initialOptions: any[] = [];
     if (isProtected) {
-      initialOptions = initialOptions || [];
       initialOptions.push(protectedCheckboxesOption);
     }
     if (calculateAverage) {
-      initialOptions = initialOptions || [];
       initialOptions.push(averageCheckboxesOption);
     }
 
@@ -243,7 +244,10 @@ export class SessionController {
             element: {
               type: 'checkboxes',
               options: [protectedCheckboxesOption, averageCheckboxesOption],
-              initial_options: initialOptions,
+              // Slack does not accept an empty array here
+              ...(initialOptions.length > 0
+                ? { initial_options: initialOptions }
+                : {}),
             },
             label: {
               type: 'plain_text',
@@ -270,7 +274,7 @@ export class SessionController {
   static async revealAndUpdateMessage(
     session: ISession,
     team: ITeam,
-    userId: string
+    _userId: string
   ) {
     session.state = 'revealed';
     await SessionController.updateMessage(session, team);
@@ -284,7 +288,7 @@ export class SessionController {
   static async cancelAndUpdateMessage(
     session: ISession,
     team: ITeam,
-    userId: string
+    _userId: string
   ) {
     session.state = 'cancelled';
     await SessionController.updateMessage(session, team);
@@ -343,31 +347,18 @@ export class SessionController {
   static async updateMessage(session: ISession, team: ITeam) {
     const slackWebClient = new WebClient(team.access_token);
 
-    if (session.state == 'revealed') {
-      await slackWebClient.chat.update({
-        ts: session.rawPostMessageResponse.ts,
-        channel: session.rawPostMessageResponse.channel,
-        blocks: buildMessageBlocks(session),
-        text: buildMessageText(session),
-        attachments: buildMessageAttachments(session) as any,
-      });
-    } else if (session.state == 'cancelled') {
-      await slackWebClient.chat.update({
-        ts: session.rawPostMessageResponse.ts,
-        channel: session.rawPostMessageResponse.channel,
-        blocks: buildMessageBlocks(session),
-        text: buildMessageText(session),
-        attachments: buildMessageAttachments(session) as any,
-      });
-    } else {
-      await slackWebClient.chat.update({
-        ts: session.rawPostMessageResponse.ts,
-        channel: session.rawPostMessageResponse.channel,
-        blocks: buildMessageBlocks(session),
-        text: buildMessageText(session),
-        attachments: buildMessageAttachments(session) as any,
-      });
+    const { ts, channel } = session.rawPostMessageResponse ?? {};
+    if (!ts || !channel) {
+      throw new Error('Session message could not be found');
     }
+
+    await slackWebClient.chat.update({
+      ts,
+      channel,
+      blocks: buildMessageBlocks(session),
+      text: buildMessageText(session),
+      attachments: buildMessageAttachments(session) as any,
+    });
   }
 
   /**
@@ -410,7 +401,7 @@ export class SessionController {
     matchesReversed.forEach((match) => {
       const startIndex = match.index;
       const endIndex = startIndex + match[0].length;
-      const innerText = match[1];
+      const innerText = match[1] ?? '';
 
       // If it starts `#C`, it's a channel link -- let's remove that
       if (innerText.startsWith('#C')) {
@@ -452,10 +443,7 @@ export class SessionController {
 /**
  * Set a interval that auto-reveals ended sessions
  */
-let autoRevealEndedSessionsTimeoutId: number = setTimeout(
-  autoRevealEndedSessions,
-  60000
-) as any;
+setTimeout(autoRevealEndedSessions, 60000);
 async function autoRevealEndedSessions() {
   const now = Date.now();
   const sessions = SessionStore.getAllSessions();
@@ -480,6 +468,7 @@ async function autoRevealEndedSessions() {
       });
 
       const team = await TeamStore.findById(session.teamId);
+      if (!team) throw new Error('Team could not be found');
 
       session.state = 'revealed';
       await SessionController.updateMessage(session, team);
@@ -498,10 +487,7 @@ async function autoRevealEndedSessions() {
 
   await Promise.all(tasks);
 
-  autoRevealEndedSessionsTimeoutId = setTimeout(
-    autoRevealEndedSessions,
-    60000
-  ) as any;
+  setTimeout(autoRevealEndedSessions, 60000);
 }
 
 function buildMessageBlocks(session: ISession) {
@@ -571,7 +557,7 @@ function buildMessageBlocks(session: ISession) {
     const votesText = Object.keys(voteGroups)
       .sort((a, b) => session.points.indexOf(a) - session.points.indexOf(b))
       .map((point) => {
-        const votes = voteGroups[point];
+        const votes = voteGroups[point] ?? [];
         const peopleText =
           votes.length == 1 ? `1 person` : `${votes.length} people`;
         const userIds = votes
@@ -680,7 +666,7 @@ function buildMessageText(session: ISession) {
     const votesText = Object.keys(voteGroups)
       .sort((a, b) => session.points.indexOf(a) - session.points.indexOf(b))
       .map((point) => {
-        const votes = voteGroups[point];
+        const votes = voteGroups[point] ?? [];
         const peopleText =
           votes.length == 1 ? `1 person` : `${votes.length} people`;
         const userIds = votes
