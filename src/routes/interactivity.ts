@@ -1,4 +1,5 @@
 import express from 'express';
+import { WebAPIPlatformError } from '@slack/web-api';
 import { logger } from '../lib/logger.ts';
 import { generate as generateId } from 'shortid';
 import { to, toError } from '../lib/to.ts';
@@ -40,13 +41,13 @@ const MAX_VOTING_DURATION =
 /**
  * Slack API platform errors carry the details in their `data` property,
  * like `{ error: 'missing_scope', needed: 'mpim:read' }`.
+ * Returns `undefined` for any other error.
  */
-function getSlackErrorData(err: unknown): {
-  error?: unknown;
-  needed?: unknown;
-} {
-  const data = (err as { data?: unknown } | null | undefined)?.data;
-  return isObject(data) ? data : {};
+function getSlackErrorData(
+  err: unknown
+): (WebAPIPlatformError['data'] & { needed?: string }) | undefined {
+  // `needed` is sent along with `missing_scope`, but missing in the SDK types
+  return err instanceof WebAPIPlatformError ? err.data : undefined;
 }
 
 /**
@@ -364,7 +365,7 @@ export class InteractivityRoute {
               `Internal server error, please try again later (error code: ${errorId})\n\n` +
               `If this problem is persistent, you can open an issue on <${ISSUES_LINK}>`;
 
-            const slackErrorCode = getSlackErrorData(err).error;
+            const slackErrorCode = getSlackErrorData(err)?.error;
             if (slackErrorCode) {
               errorMessage =
                 `Unexpected Slack API Error: "*${slackErrorCode}*" (error code: ${errorId})\n\n` +
@@ -456,7 +457,7 @@ export class InteractivityRoute {
               `Internal server error, please try again later (error code: ${errorId})\n\n` +
               `If this problem is persistent, you can open an issue on <${ISSUES_LINK}>`;
 
-            const slackErrorCode = getSlackErrorData(err).error;
+            const slackErrorCode = getSlackErrorData(err)?.error;
             if (slackErrorCode) {
               errorMessage =
                 `Unexpected Slack API Error: "*${slackErrorCode}*" (error code: ${errorId})\n\n` +
@@ -861,7 +862,7 @@ export class InteractivityRoute {
       let modalErrors: { [key: string]: string } = {};
 
       const errMessage = toError(err).message;
-      const slackErrorCode = getSlackErrorData(err).error;
+      const slackErrorCode = getSlackErrorData(err)?.error;
       if (slackErrorCode) {
         errorMessage =
           `Unexpected Slack API Error: "*${slackErrorCode}*" (error code: ${errorId})\n\n` +
@@ -895,13 +896,13 @@ export class InteractivityRoute {
         logLevel = 'info';
         errorMessage = `Poker Planner cannot be used in this type of conversations.`;
       } else if (slackErrorCode == 'missing_scope') {
-        if (getSlackErrorData(err).needed == 'mpim:read') {
+        if (getSlackErrorData(err)?.needed == 'mpim:read') {
           logLevel = 'info';
           errorMessage =
             `Poker Planner now supports Group DMs! However it requires ` +
             `additional permissions that we didn't obtained previously. You need to visit ` +
             `<${APP_INSTALL_LINK}> and reinstall the app to enable this feature.`;
-        } else if (getSlackErrorData(err).needed == 'usergroups:read') {
+        } else if (getSlackErrorData(err)?.needed == 'usergroups:read') {
           logLevel = 'info';
           errorMessage =
             `Poker Planner now supports @usergroup mentions! However it requires ` +
@@ -1055,7 +1056,7 @@ export class InteractivityRoute {
             `Internal server error, please try again later (error code: ${errorId})\n\n` +
             `If this problem is persistent, you can open an issue on <${ISSUES_LINK}>`;
 
-          const slackErrorCode = (voteErr as any)?.data?.error;
+          const slackErrorCode = getSlackErrorData(voteErr)?.error;
           if (slackErrorCode) {
             errorMessage =
               `Unexpected Slack API Error: "*${slackErrorCode}*", please try again later (error code: ${errorId})\n\n` +
@@ -1137,7 +1138,7 @@ export class InteractivityRoute {
         `Internal server error, please try again later (error code: ${errorId})\n\n` +
         `If this problem is persistent, you can open an issue on <${ISSUES_LINK}>`;
 
-      const slackErrorCode = (revealErr as any)?.data?.error;
+      const slackErrorCode = getSlackErrorData(revealErr)?.error;
       if (slackErrorCode) {
         errorMessage =
           `Unexpected Slack API Error: "*${slackErrorCode}*", please try again later (error code: ${errorId})\n\n` +
@@ -1216,7 +1217,7 @@ export class InteractivityRoute {
         `Internal server error, please try again later (error code: ${errorId})\n\n` +
         `If this problem is persistent, you can open an issue on <${ISSUES_LINK}>`;
 
-      const slackErrorCode = (cancelErr as any)?.data?.error;
+      const slackErrorCode = getSlackErrorData(cancelErr)?.error;
       if (slackErrorCode) {
         errorMessage =
           `Unexpected Slack API Error: "*${slackErrorCode}*", please try again later (error code: ${errorId})\n\n` +
