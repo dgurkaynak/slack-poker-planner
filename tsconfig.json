@@ -1,13 +1,10 @@
 {
   "extends": "@tsconfig/strictest/tsconfig.json",
   "compilerOptions": {
-    "target": "esnext",
     "module": "nodenext",
     "noEmit": true,
     "allowImportingTsExtensions": true,
     "erasableSyntaxOnly": true,
-    "verbatimModuleSyntax": true,
-    "types": ["node"]
-  },
-  "include": ["src", "scripts"]
+    "verbatimModuleSyntax": true
+  }
 }
