@@ -1,7 +1,7 @@
-import * as path from 'path';
-import * as sqlite3 from 'sqlite3';
+import * as path from 'node:path';
+import sqlite3 from 'sqlite3';
 import { open, Database } from 'sqlite';
-import { logger } from './logger';
+import { logger } from './logger.ts';
 
 let db: Database<sqlite3.Database, sqlite3.Statement>;
 

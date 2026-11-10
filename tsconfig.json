@@ -1,13 +1,15 @@
 {
   "compilerOptions": {
-    "outDir": "./dist/",
-    "sourceMap": true,
+    "target": "esnext",
+    "module": "nodenext",
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "strict": false,
     "noImplicitAny": true,
-    "module": "es6",
-    "target": "ES2021",
-    "jsx": "react",
-    "moduleResolution": "node",
-    "allowSyntheticDefaultImports": true,
-    "experimentalDecorators": true
-  }
+    "skipLibCheck": true,
+    "types": ["node"]
+  },
+  "include": ["src"]
 }

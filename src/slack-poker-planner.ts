@@ -1,16 +1,16 @@
-require('dotenv').config();
+import 'dotenv/config';
 
-import { logger } from './lib/logger';
-import * as sqlite from './lib/sqlite';
-import * as redis from './lib/redis';
-import * as express from 'express';
-import * as bodyParser from 'body-parser';
+import { logger } from './lib/logger.ts';
+import * as sqlite from './lib/sqlite.ts';
+import * as redis from './lib/redis.ts';
+import express from 'express';
+import bodyParser from 'body-parser';
 import * as exphbs from 'express-handlebars';
-import { OAuthRoute } from './routes/oauth';
-import { PPCommandRoute } from './routes/pp-command';
-import { InteractivityRoute } from './routes/interactivity';
-import * as SessionStore from './session/session-model';
-import { getOlay } from './lib/olay';
+import { OAuthRoute } from './routes/oauth.ts';
+import { PPCommandRoute } from './routes/pp-command.ts';
+import { InteractivityRoute } from './routes/interactivity.ts';
+import * as SessionStore from './session/session-model.ts';
+import { getOlay } from './lib/olay.ts';
 
 const PORT = process.env.PORT || 3000;
 const BASE_PATH = process.env.BASE_PATH || '/';

@@ -14,12 +14,15 @@ export type CustomClientUpdateMetadataMessageData = {
   metadata: { [key: string]: unknown };
 };
 
-export enum WebSocketMessageType {
-  WEB_CLIENT_INIT = 'wc_inited',
-  WEB_CLIENT_ADD_EVENT = 'wc_add_event',
-  CUSTOM_CLIENT_UPDATE_METADATA = 'cc_update_metadata',
-  CUSTOM_CLIENT_ADD_EVENT = 'cc_add_event',
-}
+export const WebSocketMessageType = {
+  WEB_CLIENT_INIT: 'wc_inited',
+  WEB_CLIENT_ADD_EVENT: 'wc_add_event',
+  CUSTOM_CLIENT_UPDATE_METADATA: 'cc_update_metadata',
+  CUSTOM_CLIENT_ADD_EVENT: 'cc_add_event',
+} as const;
+
+export type WebSocketMessageType =
+  (typeof WebSocketMessageType)[keyof typeof WebSocketMessageType];
 
 export type WebSocketMessage<TData = { [key: string]: unknown }> = {
   type: WebSocketMessageType;
@@ -33,9 +36,12 @@ export type WebSocketMessage<TData = { [key: string]: unknown }> = {
 // because I want it portable as much as possible. Because
 // I don't have any plan to distribute it via npm.
 
-enum ReconnectingWebSocketError {
-  NOT_OPEN = 'not-open',
-}
+const ReconnectingWebSocketError = {
+  NOT_OPEN: 'not-open',
+} as const;
+
+type ReconnectingWebSocketError =
+  (typeof ReconnectingWebSocketError)[keyof typeof ReconnectingWebSocketError];
 
 type ReconnectingWebSocketOptions = {
   url: string;

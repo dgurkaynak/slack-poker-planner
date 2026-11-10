@@ -1,4 +1,4 @@
-import { NodeClient } from '../vendor/olay-node-client';
+import { NodeClient } from '../vendor/olay-node-client.ts';
 
 let olay: NodeClient | undefined;
 

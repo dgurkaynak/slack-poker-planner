@@ -267,9 +267,9 @@ export interface IViewSubmissionActionPayload {
                 selected_users: string[];
               }
             | {
-              type: 'checkboxes';
-              selected_options?: { value: string }[];
-            };
+                type: 'checkboxes';
+                selected_options?: { value: string }[];
+              };
         };
       };
     };

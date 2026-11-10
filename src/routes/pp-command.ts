@@ -1,14 +1,14 @@
-import * as express from 'express';
-import { logger } from '../lib/logger';
-import { TeamStore, ChannelSettingKey } from '../team/team-model';
+import express from 'express';
+import { logger } from '../lib/logger.ts';
+import { TeamStore, ChannelSettingKey } from '../team/team-model.ts';
 import { generate as generateId } from 'shortid';
-import { to } from '../lib/to';
-import isString from 'lodash/isString';
-import { ISlackCommandRequestBody } from '../vendor/slack-api-interfaces';
+import { to } from '../lib/to.ts';
+import isString from 'lodash/isString.js';
+import type { ISlackCommandRequestBody } from '../vendor/slack-api-interfaces.ts';
 import {
   SessionController,
   DEFAULT_POINTS,
-} from '../session/session-controller';
+} from '../session/session-controller.ts';
 import { splitSpacesExcludeQuotes } from 'quoted-string-space-split';
 
 const APP_INSTALL_LINK =

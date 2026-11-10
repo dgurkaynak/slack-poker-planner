@@ -1,4 +1,4 @@
-import * as sqlite from '../lib/sqlite';
+import * as sqlite from '../lib/sqlite.ts';
 
 export interface ITeam {
   id: string;
@@ -9,13 +9,16 @@ export interface ITeam {
   custom_points: string;
 }
 
-export enum ChannelSettingKey {
-  PARTICIPANTS = 'participants',
-  POINTS = 'points',
-  PROTECTED = 'protected',
-  AVERAGE = 'average',
-  VOTING_DURATION = 'votingDuration',
-}
+export const ChannelSettingKey = {
+  PARTICIPANTS: 'participants',
+  POINTS: 'points',
+  PROTECTED: 'protected',
+  AVERAGE: 'average',
+  VOTING_DURATION: 'votingDuration',
+} as const;
+
+export type ChannelSettingKey =
+  (typeof ChannelSettingKey)[keyof typeof ChannelSettingKey];
 
 export interface IChannelSetting {
   team_id: string;

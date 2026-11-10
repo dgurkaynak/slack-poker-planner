@@ -1,13 +1,13 @@
-import * as SessionStore from './session-model';
-import { ISession } from './isession';
-import chunk from 'lodash/chunk';
-import map from 'lodash/map';
-import groupBy from 'lodash/groupBy';
-import { ITeam, TeamStore } from '../team/team-model';
+import * as SessionStore from './session-model.ts';
+import type { ISession } from './isession.ts';
+import chunk from 'lodash/chunk.js';
+import map from 'lodash/map.js';
+import groupBy from 'lodash/groupBy.js';
+import { type ITeam, TeamStore } from '../team/team-model.ts';
 import { WebClient } from '@slack/web-api';
-import { logger } from '../lib/logger';
+import { logger } from '../lib/logger.ts';
 import getUrls from 'get-urls';
-import { getOlay } from '../lib/olay';
+import { getOlay } from '../lib/olay.ts';
 
 export const DEFAULT_POINTS = [
   '0',
@@ -25,16 +25,19 @@ export const DEFAULT_POINTS = [
   '?',
 ];
 
-export enum SessionControllerErrorCode {
-  NO_PARTICIPANTS = 'no_participants',
-  TITLE_REQUIRED = 'title_required',
-  MAX_TITLE_LIMIT_EXCEEDED = 'max_title_limit_exceeded',
-  UNEXPECTED_PAYLOAD = 'unexpected_payload',
-  INVALID_POINTS = 'invalid_points',
-  SESSION_NOT_ACTIVE = 'session_not_active',
-  ONLY_PARTICIPANTS_CAN_VOTE = 'only_participants_can_vote',
-  INVALID_VOTING_DURATION = 'invalid_voting_duration',
-}
+export const SessionControllerErrorCode = {
+  NO_PARTICIPANTS: 'no_participants',
+  TITLE_REQUIRED: 'title_required',
+  MAX_TITLE_LIMIT_EXCEEDED: 'max_title_limit_exceeded',
+  UNEXPECTED_PAYLOAD: 'unexpected_payload',
+  INVALID_POINTS: 'invalid_points',
+  SESSION_NOT_ACTIVE: 'session_not_active',
+  ONLY_PARTICIPANTS_CAN_VOTE: 'only_participants_can_vote',
+  INVALID_VOTING_DURATION: 'invalid_voting_duration',
+} as const;
+
+export type SessionControllerErrorCode =
+  (typeof SessionControllerErrorCode)[keyof typeof SessionControllerErrorCode];
 
 export class SessionController {
   /**

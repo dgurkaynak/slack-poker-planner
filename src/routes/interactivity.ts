@@ -1,29 +1,33 @@
-import * as express from 'express';
-import { logger } from '../lib/logger';
+import express from 'express';
+import { logger } from '../lib/logger.ts';
 import { generate as generateId } from 'shortid';
-import { to } from '../lib/to';
-import { TeamStore, ITeam, ChannelSettingKey } from '../team/team-model';
-import * as SessionStore from '../session/session-model';
-import { ISession } from '../session/isession';
+import { to } from '../lib/to.ts';
+import {
+  TeamStore,
+  type ITeam,
+  ChannelSettingKey,
+} from '../team/team-model.ts';
+import * as SessionStore from '../session/session-model.ts';
+import type { ISession } from '../session/isession.ts';
 import {
   SessionController,
   SessionControllerErrorCode,
   DEFAULT_POINTS,
-} from '../session/session-controller';
-import isEmpty from 'lodash/isEmpty';
+} from '../session/session-controller.ts';
+import isEmpty from 'lodash/isEmpty.js';
 import {
-  IInteractiveMessageActionPayload,
-  IViewSubmissionActionPayload,
-} from '../vendor/slack-api-interfaces';
-import uniq from 'lodash/uniq';
-import find from 'lodash/find';
-import get from 'lodash/get';
-import isObject from 'lodash/isObject';
-import splitSpacesExcludeQuotes from 'quoted-string-space-split';
+  type IInteractiveMessageActionPayload,
+  type IViewSubmissionActionPayload,
+} from '../vendor/slack-api-interfaces.ts';
+import uniq from 'lodash/uniq.js';
+import find from 'lodash/find.js';
+import get from 'lodash/get.js';
+import isObject from 'lodash/isObject.js';
+import { splitSpacesExcludeQuotes } from 'quoted-string-space-split';
 import parseDuration from 'parse-duration';
 import prettyMilliseconds from 'pretty-ms';
 import { decode } from 'html-entities';
-import { getOlay } from '../lib/olay';
+import { getOlay } from '../lib/olay.ts';
 
 const APP_INSTALL_LINK =
   process.env.APP_INSTALL_LINK || 'https://deniz.co/slack-poker-planner';
@@ -41,8 +45,7 @@ export class InteractivityRoute {
    */
   static async handle(req: express.Request, res: express.Response) {
     let payload:
-      | IInteractiveMessageActionPayload
-      | IViewSubmissionActionPayload;
+      IInteractiveMessageActionPayload | IViewSubmissionActionPayload;
 
     try {
       payload = JSON.parse(req.body.payload);

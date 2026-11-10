@@ -1,9 +1,9 @@
-import * as express from 'express';
+import express from 'express';
 import { WebClient } from '@slack/web-api';
-import { logger } from '../lib/logger';
-import { TeamStore } from '../team/team-model';
+import { logger } from '../lib/logger.ts';
+import { TeamStore } from '../team/team-model.ts';
 import { generate as generateId } from 'shortid';
-import { to } from '../lib/to';
+import { to } from '../lib/to.ts';
 
 const ISSUES_LINK =
   process.env.ISSUES_LINK ||

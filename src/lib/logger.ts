@@ -1,6 +1,6 @@
 import chalk from 'chalk';
-import isEmpty from 'lodash/isEmpty';
-import omit from 'lodash/omit';
+import isEmpty from 'lodash/isEmpty.js';
+import omit from 'lodash/omit.js';
 
 export type Severity = 'info' | 'warning' | 'error';
 
@@ -53,8 +53,8 @@ class Logger {
       log.level === 'error'
         ? chalk.bgRed(`[${log.level}]`)
         : log.level === 'warning'
-        ? chalk.bgYellow(`[${log.level}]`)
-        : chalk.inverse(`[${log.level}]`);
+          ? chalk.bgYellow(`[${log.level}]`)
+          : chalk.inverse(`[${log.level}]`);
 
     const extraPayload = omit(log, ['msg', 'level']);
 
