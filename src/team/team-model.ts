@@ -1,13 +1,13 @@
+import type { Selectable } from 'kysely';
+import type { Team } from '../lib/db-types.ts';
 import * as sqlite from '../lib/sqlite.ts';
 
-export interface ITeam {
-  id: string;
-  name: string;
-  access_token: string;
-  scope: string;
-  user_id: string;
-  custom_points: string;
-}
+/**
+ * `team.id` is the primary key without an explicit `NOT NULL`, so sqlite
+ * (and the generated types) technically allow `NULL` for it. We never
+ * insert a team without an id.
+ */
+export type ITeam = Omit<Selectable<Team>, 'id'> & { id: string };
 
 export const ChannelSettingKey = {
   PARTICIPANTS: 'participants',
@@ -20,72 +20,15 @@ export const ChannelSettingKey = {
 export type ChannelSettingKey =
   (typeof ChannelSettingKey)[keyof typeof ChannelSettingKey];
 
-export interface IChannelSetting {
-  team_id: string;
-  channel_id: string;
-  setting_key: string;
-  setting_value: string;
-}
-
 export class TeamStore {
-  static async findById(id: string): Promise<ITeam> {
+  static async findById(id: string): Promise<ITeam | undefined> {
     const db = sqlite.getSingleton();
-    return db.get('SELECT * FROM team WHERE id = ?', id);
-  }
-
-  private static async create({
-    id,
-    name,
-    access_token,
-    scope,
-    user_id,
-  }: Pick<ITeam, 'id' | 'name' | 'access_token' | 'scope' | 'user_id'>) {
-    const db = sqlite.getSingleton();
-    await db.run(
-      `INSERT INTO
-          team (id, name, access_token, scope, user_id, created_at, updated_at)
-        VALUES
-          ($id, $name, $access_token, $scope, $user_id, $created_at, $updated_at)`,
-      {
-        $id: id,
-        $name: name,
-        $access_token: access_token,
-        $scope: scope,
-        $user_id: user_id,
-        $created_at: Date.now(),
-        $updated_at: Date.now(),
-      }
-    );
-  }
-
-  private static async update({
-    id,
-    name,
-    access_token,
-    scope,
-    user_id,
-  }: Pick<ITeam, 'id' | 'name' | 'access_token' | 'scope' | 'user_id'>) {
-    const db = sqlite.getSingleton();
-    await db.run(
-      `UPDATE
-        team
-      SET
-        name = $name,
-        access_token = $access_token,
-        scope = $scope,
-        user_id = $user_id,
-        updated_at = $updated_at
-      WHERE
-        id = $id`,
-      {
-        $id: id,
-        $name: name,
-        $access_token: access_token,
-        $scope: scope,
-        $user_id: user_id,
-        $updated_at: Date.now(),
-      }
-    );
+    const team = await db
+      .selectFrom('team')
+      .selectAll()
+      .where('id', '=', id)
+      .executeTakeFirst();
+    return team && { ...team, id };
   }
 
   static async upsert({
@@ -95,34 +38,40 @@ export class TeamStore {
     scope,
     user_id,
   }: Pick<ITeam, 'id' | 'name' | 'access_token' | 'scope' | 'user_id'>) {
-    const team = await TeamStore.findById(id);
-    if (!team) {
-      await TeamStore.create({ id, name, access_token, scope, user_id });
-    } else {
-      await TeamStore.update({ id, name, access_token, scope, user_id });
-    }
+    const db = sqlite.getSingleton();
+    const now = Date.now();
+    await db
+      .insertInto('team')
+      .values({
+        id,
+        name,
+        access_token,
+        scope,
+        user_id,
+        created_at: now,
+        updated_at: now,
+      })
+      .onConflict((oc) =>
+        oc
+          .column('id')
+          .doUpdateSet({ name, access_token, scope, user_id, updated_at: now })
+      )
+      .execute();
     return TeamStore.findById(id);
   }
 
   static async fetchSettings(teamId: string, channelId: string) {
     const db = sqlite.getSingleton();
-    const settingRows = await db.all(
-      `SELECT
-        setting_key,
-        setting_value
-      FROM
-        channel_settings
-      WHERE
-        team_id = $teamId AND
-        channel_id = $channelId;`,
-      {
-        $teamId: teamId,
-        $channelId: channelId,
-      }
-    );
+    const settingRows = await db
+      .selectFrom('channel_settings')
+      .select(['setting_key', 'setting_value'])
+      .where('team_id', '=', teamId)
+      .where('channel_id', '=', channelId)
+      .execute();
 
     const rv: { [key: string]: string } = {};
-    settingRows.forEach((row: IChannelSetting) => {
+    settingRows.forEach((row) => {
+      if (row.setting_value === null) return;
       rv[row.setting_key] = row.setting_value;
     });
 
@@ -134,13 +83,8 @@ export class TeamStore {
     channelId: string,
     settings: { [key: string]: string }
   ) {
-    const tasks = Object.keys(settings).map((settingKey) =>
-      TeamStore.upsertSetting(
-        teamId,
-        channelId,
-        settingKey,
-        settings[settingKey]
-      )
+    const tasks = Object.entries(settings).map(([settingKey, settingValue]) =>
+      TeamStore.upsertSetting(teamId, channelId, settingKey, settingValue)
     );
     await Promise.all(tasks);
   }
@@ -153,29 +97,21 @@ export class TeamStore {
   ) {
     const db = sqlite.getSingleton();
     const now = Date.now();
-    await db.run(
-      `INSERT INTO
-        channel_settings (team_id, channel_id, setting_key, setting_value, created_at, updated_at)
-      VALUES (
-        $teamId,
-        $channelId,
-        $settingKey,
-        $settingValue,
-        $createdAt,
-        $updatedAt
+    await db
+      .insertInto('channel_settings')
+      .values({
+        team_id: teamId,
+        channel_id: channelId,
+        setting_key: key,
+        setting_value: value,
+        created_at: now,
+        updated_at: now,
+      })
+      .onConflict((oc) =>
+        oc
+          .columns(['team_id', 'channel_id', 'setting_key'])
+          .doUpdateSet({ setting_value: value, updated_at: now })
       )
-      ON CONFLICT(team_id, channel_id, setting_key)
-      DO UPDATE SET 
-        setting_value = $settingValue,
-        updated_at = $updatedAt;`,
-      {
-        $teamId: teamId,
-        $channelId: channelId,
-        $settingKey: key,
-        $settingValue: value,
-        $createdAt: now,
-        $updatedAt: now,
-      }
-    );
+      .execute();
   }
 }

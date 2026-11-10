@@ -20,7 +20,7 @@ const USE_REDIS = process.env.USE_REDIS?.toLowerCase() === 'true' || false;
 async function main() {
   logger.init();
 
-  await sqlite.init();
+  sqlite.init();
 
   if (USE_REDIS) {
     await redis.init();
